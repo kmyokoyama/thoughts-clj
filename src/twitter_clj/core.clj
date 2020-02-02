@@ -18,6 +18,10 @@
   [tweet]
   (update tweet :likes dec))
 
+(defn retweet
+  [user-id tweet]
+  (->Tweet (UUID/randomUUID) user-id (:text tweet) (ZonedDateTime/now) 0))
+
 (defn new-tweet
   [user-id text]
   (->Tweet (UUID/randomUUID) user-id text (ZonedDateTime/now) 0))
@@ -56,15 +60,24 @@
 
 (defn -main
   [& args]
-  (let [{user-id :id} (-> (new-user "Kazuki Yokoyama" "yokoyama.km@gmail.com" "kmyokoyama")
-                          (update-user! *system-map*))]
+  (let [{user-id :id :as user} (new-user "Kazuki Yokoyama" "yokoyama.km@gmail.com" "kmyokoyama")]
+    (-> user
+        (update-user! *system-map*))
+
     (println (inspect-users! *system-map*))
 
-    (->
-      (new-tweet user-id "My first tweet.")
-      (update-tweet! *system-map*)
-      (like)
-      (like)
-      (unlike)
-      (update-tweet! *system-map*))
-    (println (inspect-tweets! *system-map*))))
+    (let [{tweet-id :id :as tweet } (new-tweet user-id "My first tweet.")]
+      (-> tweet
+          (update-tweet! *system-map*)
+          (like)
+          (like)
+          (unlike)
+          (update-tweet! *system-map*))
+
+      (println (inspect-tweets! *system-map*))
+
+      (let [{user-id' :id :as user'} (new-user "John Dun" "john.dun@gmail.com" "johndun")]
+        (-> (retweet user-id' tweet)
+            (update-tweet! *system-map*))
+
+        (println (inspect-tweets! *system-map*))))))
