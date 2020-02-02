@@ -9,7 +9,7 @@
 (defrecord Tweet [id user-id text publish-date likes retweets replies thread-id])
 (defrecord TwitterThread [id source-tweet-id tweet-replies])
 
-;; Tweet-related functions
+;; Tweet-related functions.
 
 (defn like
   [tweet]
@@ -69,7 +69,7 @@
   (storage/update-thread! storage thread)
   thread)
 
-;; User-related functions
+;; User-related functions.
 
 (defn new-user
   [name email nickname]
@@ -94,8 +94,11 @@
   [storage]
   (println (storage/fetch-threads! storage)))
 
-;(def ^:dynamic *system-map* infra.in-mem/system-map)
+;; Instantiation of driven-side.
+
 (def storage (storage.in-mem/->InMemoryStorage))
+
+;; Utilities.
 
 (defn third [x] (nth x 2))
 
