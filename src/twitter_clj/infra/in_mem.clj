@@ -2,6 +2,7 @@
 
 (def users (atom {})) ;; It could also be a ref.
 (def tweets (atom {})) ;; It could also be a ref.
+(def threads (atom {})) ;; It could also be a ref.
 
 ;; Driven-side.
 
@@ -13,6 +14,10 @@
   [{tweet-id :id :as tweet}]
   (swap! tweets (fn [tweets] (assoc tweets tweet-id tweet))))
 
+(defn save-thread-in-memory
+  [{thread-id :id :as thread}]
+  (swap! threads (fn [threads] (assoc threads thread-id thread))))
+
 (defn inspect-users-in-memory
   []
   @users)
@@ -21,18 +26,16 @@
   []
   @tweets)
 
-(defn get-awards-by-id-in-memory
-  [id]
-  (get @tweets id))
+(defn inspect-threads-in-memory
+  []
+  @threads)
 
 ;; System configuration.
 
 (def system-map
   {:update-user-fn!        save-user-in-memory
    :update-tweet-fn!       save-tweet-in-memory
+   :update-thread-fn! save-thread-in-memory
    :inspect-users-fn! inspect-users-in-memory
-   :inspect-tweets-fn! inspect-tweets-in-memory})
-
-
-
-
+   :inspect-tweets-fn! inspect-tweets-in-memory
+   :inspect-threads-fn! inspect-threads-in-memory})
