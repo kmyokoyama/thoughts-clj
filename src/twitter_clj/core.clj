@@ -52,17 +52,19 @@
   (let [inspect-tweets-fn! (:inspect-tweets-fn! system-map)]
      (inspect-tweets-fn!)))
 
+(def ^:dynamic *system-map* infra.in-mem/system-map)
+
 (defn -main
   [& args]
   (let [{user-id :id} (-> (new-user "Kazuki Yokoyama" "yokoyama.km@gmail.com" "kmyokoyama")
-                          (update-user! infra.in-mem/system-map))]
-    (println (inspect-users! infra.in-mem/system-map))
+                          (update-user! *system-map*))]
+    (println (inspect-users! *system-map*))
 
     (->
       (new-tweet user-id "My first tweet.")
-      (update-tweet! infra.in-mem/system-map)
+      (update-tweet! *system-map*)
       (like)
       (like)
       (unlike)
-      (update-tweet! infra.in-mem/system-map))
-    (println (inspect-tweets! infra.in-mem/system-map))))
+      (update-tweet! *system-map*))
+    (println (inspect-tweets! *system-map*))))
