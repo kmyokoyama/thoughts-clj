@@ -2,7 +2,8 @@
   (:import (java.util UUID)
            (java.time ZonedDateTime))
   (:require [clojure.string :as s])
-  (:require [twitter-clj.infra.in-mem :as infra.in-mem]))
+  (:require [twitter-clj.storage.in-mem :as storage.in-mem])
+  (:require [twitter-clj.storage :as storage]))
 
 (defrecord User [id active name email nickname])
 
@@ -32,9 +33,8 @@
    (update tweet :retweets inc)])
 
 (defn update-tweet!
-  [tweet system-map]
-  (let [update! (:update-tweet-fn! system-map)]
-    (update! tweet))
+  [tweet storage]
+  (storage/update-tweet! storage tweet)
   tweet)
 
 ;; Thread-related functions.
@@ -60,17 +60,15 @@
     [reply-tweet source-tweet' thread']))
 
 (defn fetch-thread!
-  [source-tweet system-map]
+  [storage source-tweet]
   (let [thread-id (:thread-id source-tweet)]
     (if (nil? thread-id)
       (new-thread (:id source-tweet))
-      (let [fetch-thread-by-id! (:fetch-thread-by-id-fn! system-map)]
-        (fetch-thread-by-id! thread-id)))))
+      (storage/fetch-thread-by-id! storage thread-id))))
 
 (defn update-thread!
-  [thread system-map]
-  (let [update-thread! (:update-thread-fn! system-map)]
-    (update-thread! thread))
+  [thread storage]
+  (storage/update-thread! storage thread)
   thread)
 
 ;; User-related functions
@@ -80,59 +78,56 @@
   (->User (UUID/randomUUID) true name email nickname))
 
 (defn update-user!
-  [user system-map]
-  (let [update-user! (:update-user-fn! system-map)]
-    (update-user! user))
+  [user storage]
+  (storage/update-user! storage user)
   user)
 
 ;; Debug-mode functions.
 
-(defn inspect-users!
-  [system-map]
-  (let [inspect-users! (:inspect-users-fn! system-map)]
-    (inspect-users!)))
+(defn show-all-users!
+  [storage]
+  (println (storage/inspect-users! storage)))
 
-(defn inspect-tweets!
-  [system-map]
-  (let [inspect-tweets! (:inspect-tweets-fn! system-map)]
-     (inspect-tweets!)))
+(defn show-all-tweets!
+  [storage]
+  (println (storage/inspect-tweets! storage)))
 
-(defn inspect-threads!
-  [system-map]
-  (let [inspect-threads! (:inspect-threads-fn! system-map)]
-    (inspect-threads!)))
+(defn show-all-threads!
+  [storage]
+  (println (storage/inspect-threads! storage)))
 
-(def ^:dynamic *system-map* infra.in-mem/system-map)
+;(def ^:dynamic *system-map* infra.in-mem/system-map)
+(def storage (storage.in-mem/->InMemoryStorage))
 
 (defn third [x] (nth x 2))
 
 (defn -main
   [& _args]
   (let [{user-id :id :as user} (-> (new-user "Kazuki Yokoyama" "yokoyama.km@gmail.com" "kmyokoyama")
-                                   (update-user! *system-map*))]
-    (println (inspect-users! *system-map*))
+                                   (update-user! storage))]
+    (show-all-users! storage)
 
     (let [tweet (-> (new-tweet user-id "My first tweet.")
-                    (update-tweet! *system-map*)
+                    (update-tweet! storage)
                     (like)
                     (like)
                     (unlike)
-                    (update-tweet! *system-map*))]
-      (println (inspect-tweets! *system-map*))
+                    (update-tweet! storage))]
+      (show-all-tweets! storage)
 
       (let [{user-id' :id} (new-user "John Dun" "john.dun@gmail.com" "johndun")
-            tweet (second (map #(update-tweet! % *system-map*) (retweet user-id' tweet)))]
+            tweet (second (map #(update-tweet! % storage) (retweet user-id' tweet)))]
 
-        (println (inspect-tweets! *system-map*))
+        (show-all-tweets! storage)
 
-        (let [thread (fetch-thread! tweet *system-map*)
+        (let [thread (fetch-thread! tweet storage)
               reply' (reply (new-tweet user-id' "This is a reply.") tweet thread)
               reply-tweet (first reply')
               source-tweet (second reply')
               thread' (third reply')]
-          (update-tweet! reply-tweet *system-map*)
-          (update-tweet! source-tweet *system-map*)
-          (update-thread! thread' *system-map*)
+          (update-tweet! reply-tweet storage)
+          (update-tweet! source-tweet storage)
+          (update-thread! thread' storage)
 
-          (println (inspect-tweets! *system-map*))
-          (println (inspect-threads! *system-map*)))))))
+          (show-all-tweets! storage)
+          (show-all-threads! storage))))))
