@@ -1,10 +1,6 @@
 # twitter-clj
 
-A Clojure library designed to ... well, that part is up to you.
-
-## Usage
-
-FIXME
+Twitter-based API for experimentation with Clojure
 
 ## License
 
