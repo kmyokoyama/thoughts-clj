@@ -6,7 +6,7 @@
 
 (defrecord User [id active name email nickname])
 
-(defrecord Tweet [id user-id text publish-date likes])
+(defrecord Tweet [id user-id text publish-date likes retweets])
 
 ;; Tweet-related functions
 
@@ -18,13 +18,14 @@
   [tweet]
   (update tweet :likes dec))
 
-(defn retweet
-  [user-id tweet]
-  (->Tweet (UUID/randomUUID) user-id (:text tweet) (ZonedDateTime/now) 0))
-
 (defn new-tweet
   [user-id text]
-  (->Tweet (UUID/randomUUID) user-id text (ZonedDateTime/now) 0))
+  (->Tweet (UUID/randomUUID) user-id text (ZonedDateTime/now) 0 0))
+
+(defn retweet
+  [user-id tweet]
+  [(new-tweet user-id (:text tweet))
+   (update tweet :retweets inc)])
 
 (defn update-tweet!
   [tweet system-map]
@@ -59,25 +60,20 @@
 (def ^:dynamic *system-map* infra.in-mem/system-map)
 
 (defn -main
-  [& args]
-  (let [{user-id :id :as user} (new-user "Kazuki Yokoyama" "yokoyama.km@gmail.com" "kmyokoyama")]
-    (-> user
-        (update-user! *system-map*))
-
+  [& _args]
+  (let [{user-id :id :as user} (-> (new-user "Kazuki Yokoyama" "yokoyama.km@gmail.com" "kmyokoyama")
+                                   (update-user! *system-map*))]
     (println (inspect-users! *system-map*))
 
-    (let [{tweet-id :id :as tweet } (new-tweet user-id "My first tweet.")]
-      (-> tweet
-          (update-tweet! *system-map*)
-          (like)
-          (like)
-          (unlike)
-          (update-tweet! *system-map*))
-
+    (let [tweet (-> (new-tweet user-id "My first tweet.")
+                    (update-tweet! *system-map*)
+                    (like)
+                    (like)
+                    (unlike)
+                    (update-tweet! *system-map*))]
       (println (inspect-tweets! *system-map*))
 
-      (let [{user-id' :id :as user'} (new-user "John Dun" "john.dun@gmail.com" "johndun")]
-        (-> (retweet user-id' tweet)
-            (update-tweet! *system-map*))
+      (let [{user-id' :id} (new-user "John Dun" "john.dun@gmail.com" "johndun")]
+        (doall (map #(update-tweet! % *system-map*) (retweet user-id' tweet)))
 
         (println (inspect-tweets! *system-map*))))))
