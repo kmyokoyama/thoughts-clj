@@ -6,9 +6,7 @@
   (:require [twitter-clj.storage :as storage]))
 
 (defrecord User [id active name email nickname])
-
 (defrecord Tweet [id user-id text publish-date likes retweets replies thread-id])
-
 (defrecord TwitterThread [id source-tweet-id tweet-replies])
 
 ;; Tweet-related functions
@@ -86,15 +84,15 @@
 
 (defn show-all-users!
   [storage]
-  (println (storage/inspect-users! storage)))
+  (println (storage/fetch-users! storage)))
 
 (defn show-all-tweets!
   [storage]
-  (println (storage/inspect-tweets! storage)))
+  (println (storage/fetch-tweets! storage)))
 
 (defn show-all-threads!
   [storage]
-  (println (storage/inspect-threads! storage)))
+  (println (storage/fetch-threads! storage)))
 
 ;(def ^:dynamic *system-map* infra.in-mem/system-map)
 (def storage (storage.in-mem/->InMemoryStorage))

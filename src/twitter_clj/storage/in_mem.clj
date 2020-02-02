@@ -25,14 +25,14 @@
     [_ thread-id]
     (get @threads thread-id))
 
-  (inspect-users!
+  (fetch-users!
     [_]
     @users)
 
-  (inspect-tweets!
+  (fetch-tweets!
     [_]
     @tweets)
 
-  (inspect-threads!
+  (fetch-threads!
     [_]
     @threads))
