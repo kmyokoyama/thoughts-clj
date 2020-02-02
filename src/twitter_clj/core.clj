@@ -15,8 +15,10 @@
   (update tweet :likes inc))
 
 (defn unlike
-  [tweet]
-  (update tweet :likes dec))
+  [{likes :likes :as tweet}]
+  (if (pos? likes)
+    (update tweet :likes dec)
+    tweet))
 
 (defn new-tweet
   [user-id text]
