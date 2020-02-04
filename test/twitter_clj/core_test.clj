@@ -29,4 +29,4 @@
     (let [tweet (->Tweet (random-uuid) (random-uuid) "This is my tweet" (now) 10 0 0 (random-uuid))
           unliked-tweet (unlike tweet)]
       (equal-except-for tweet unliked-tweet :likes)
-      (is (= 10 (:likes (unlike tweet)))))))
+      (is (= 9 (:likes (unlike tweet)))))))
