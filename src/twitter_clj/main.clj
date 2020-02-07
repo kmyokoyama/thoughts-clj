@@ -5,7 +5,8 @@
             [ring.middleware.defaults :refer :all]
             [clojure.pprint :as pp]
             [clojure.string :as str]
-            [clojure.data.json :as json])
+            [clojure.data.json :as json]
+            [twitter-clj.operations :as app])
   (:gen-class))
 
 (defn get-parameter
@@ -57,9 +58,26 @@
            (let [p (partial get-parameter req)]
              (str (json/write-str (add-person (p :firstname) (p :surname))))))})
 
+(defn add-user
+  [req]
+  (let [name (get-parameter req :name)
+        email (get-parameter req :email)
+        nickname (get-parameter req :nickname)]
+    (app/create-user name email nickname)
+    {:status 200
+     :headers {"Content-Type" "text/html"}
+     :body "success"}))
+
+(defn get-users
+  [_req]
+  {:status 200
+   :headers {"Content-Type" "text/html"}
+   :body (app/get-users)})
+
 (defroutes app-routes
            (GET "/" [] simple-body-page)
-           (GET "/request" [] request-example)
+           (GET "/user" [] add-user)
+           (GET "/users" [] get-users)
            (GET "/hello" [] hello-name)
            (GET "/people" [] people-handler)
            (GET "/add-people" [] add-person-handler)
