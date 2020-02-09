@@ -62,26 +62,26 @@
   [req]
   (let [name (get-parameter req :name)
         email (get-parameter req :email)
-        nickname (get-parameter req :nickname)]
-    (app/create-user name email nickname)
+        nickname (get-parameter req :nickname)
+        user (app/create-user name email nickname)]
     {:status 200
-     :headers {"Content-Type" "text/html"}
-     :body "success"}))
+     :headers {"Content-Type" "application/json"}
+     :body (json/write-str user :value-fn app/value-writer)}))
 
 (defn get-users
   [_req]
   {:status 200
-   :headers {"Content-Type" "text/html"}
-   :body (app/get-users)})
+   :headers {"Content-Type" "application/json"}
+   :body (json/write-str (app/get-users) :value-fn app/value-writer)})
 
 (defn add-tweet
   [req]
   (let [user-id (get-parameter req :user-id)
         text (get-parameter req :text)
-        tweet-id (app/add-tweet user-id text)]
+        tweet (app/add-tweet user-id text)]
     {:status 200
-     :headers {"Content-Type" "text/html"}
-     :body (str tweet-id)}))
+     :headers {"Content-Type" "application/json"}
+     :body (json/write-str tweet :value-fn app/value-writer)}))
 
 (defn get-tweets-by-user
   [req]

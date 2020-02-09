@@ -13,7 +13,7 @@
 
 (defn get-users
   []
-  (storage/fetch-users! storage))
+  (vals (storage/fetch-users! storage)))
 
 (defn add-tweet
   [user-id text]
