@@ -7,14 +7,25 @@
 
 (defn create-user
   [name email nickname]
-  (let [user (core/new-user name email nickname)]
-    (core/update-user! user storage)))
+  (->
+    (core/new-user name email nickname)
+    (core/update-user! storage)))
 
 (defn get-users
   []
   (storage/fetch-users! storage))
 
-;(add-tweet [this user-id text])
+(defn add-tweet
+  [user-id text]
+  (->
+    (core/new-tweet user-id text)
+    (core/update-tweet! storage)))
+
+(defn get-tweets-by-user
+  [user-id]
+  (storage/fetch-tweets-by-user! storage user-id))
+
+
 ;(like [this tweet-id])
 ;(unlike [this tweet-id])
 ;(retweet [this user-id tweet-id])

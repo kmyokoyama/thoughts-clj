@@ -74,10 +74,30 @@
    :headers {"Content-Type" "text/html"}
    :body (app/get-users)})
 
+(defn add-tweet
+  [req]
+  (let [user-id (get-parameter req :user-id)
+        text (get-parameter req :text)
+        tweet-id (app/add-tweet user-id text)]
+    {:status 200
+     :headers {"Content-Type" "text/html"}
+     :body (str tweet-id)}))
+
+(defn get-tweets-by-user
+  [req]
+  (let [user-id (get-parameter req :user-id)
+        tweets (app/get-tweets-by-user user-id)]
+    {:status 200
+     :headers {"Content-Type" "text/html"}
+     :body (vec (map #(into {} %) tweets))}))
+
+
 (defroutes app-routes
            (GET "/" [] simple-body-page)
            (GET "/user" [] add-user)
            (GET "/users" [] get-users)
+           (GET "/tweet" [] add-tweet)
+           (GET "/tweets" [] get-tweets-by-user)
            (GET "/hello" [] hello-name)
            (GET "/people" [] people-handler)
            (GET "/add-people" [] add-person-handler)

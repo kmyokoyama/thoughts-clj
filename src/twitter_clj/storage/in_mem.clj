@@ -25,6 +25,10 @@
     [_ thread-id]
     (get @threads thread-id))
 
+  (fetch-tweets-by-user!
+    [_ user-id]
+    (filter #(= (:user-id %) user-id) (vals @tweets)))
+
   (fetch-users!
     [_]
     @users)
