@@ -5,7 +5,7 @@
 
 (def storage (storage.in-mem/->InMemoryStorage))
 
-(defn create-user
+(defn add-user
   [name email nickname]
   (->
     (core/new-user name email nickname)

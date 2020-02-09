@@ -64,23 +64,34 @@
    :headers {"Content-Type" "application/json"}
    :body body})
 
+(def success-response
+  {:status "success"})
+
+(def failure-response
+  {:status "failure"})
+
+(defn add-response-info
+  [info]
+  (assoc success-response :result info))
+
 (defn to-json
   [r]
   (json/write-str r :value-fn app/value-writer))
 
-(def respond-with (comp ok-json to-json))
+(def respond-with (comp ok-json to-json add-response-info))
 
 (defn add-user
   [req]
   (let [name (get-parameter req :name)
         email (get-parameter req :email)
         nickname (get-parameter req :nickname)
-        user (app/create-user name email nickname)]
+        user (app/add-user name email nickname)]
     (respond-with user)))
 
 (defn get-users
   [_req]
-  (ok-json (json/write-str (app/get-users) :value-fn app/value-writer)))
+  (let [users (app/get-users)]
+    (respond-with users)))
 
 (defn add-tweet
   [req]
