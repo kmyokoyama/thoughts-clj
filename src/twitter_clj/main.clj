@@ -88,8 +88,8 @@
   (let [user-id (get-parameter req :user-id)
         tweets (app/get-tweets-by-user user-id)]
     {:status 200
-     :headers {"Content-Type" "text/html"}
-     :body (vec (map #(into {} %) tweets))}))
+     :headers {"Content-Type" "application/json"}
+     :body (json/write-str (vec (map #(into {} %) tweets)) :value-fn app/value-writer)}))
 
 
 (defroutes app-routes

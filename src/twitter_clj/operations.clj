@@ -25,6 +25,14 @@
   [user-id]
   (storage/fetch-tweets-by-user! storage user-id))
 
+(defn value-writer
+  [key value]
+  (if (some #(= key %) [:id :user-id :thread-id])
+    (str value)
+    (if (some #(= key %) [:publish-date])
+      (str value)
+      value)))
+
 
 ;(like [this tweet-id])
 ;(unlike [this tweet-id])
