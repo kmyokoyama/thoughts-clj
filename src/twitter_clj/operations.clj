@@ -27,11 +27,9 @@
 
 (defn value-writer
   [key value]
-  (if (some #(= key %) [:id :user-id :thread-id])
+  (if (some #(= key %) [:id :user-id :thread-id :publish-date])
     (str value)
-    (if (some #(= key %) [:publish-date])
-      (str value)
-      value)))
+    value))
 
 
 ;(like [this tweet-id])

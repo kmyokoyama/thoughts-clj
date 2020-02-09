@@ -89,8 +89,7 @@
         tweets (app/get-tweets-by-user user-id)]
     {:status 200
      :headers {"Content-Type" "application/json"}
-     :body (json/write-str (vec (map #(into {} %) tweets)) :value-fn app/value-writer)}))
-
+     :body (json/write-str tweets :value-fn app/value-writer)}))
 
 (defroutes app-routes
            (GET "/" [] simple-body-page)
