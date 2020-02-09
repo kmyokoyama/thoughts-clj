@@ -25,9 +25,15 @@
   [user-id]
   (storage/fetch-tweets-by-user! storage user-id))
 
+(defn is-better-str
+  [key]
+  (or
+    (= key :id)
+    (some #(.endsWith (str key) %) ["-id", "-date"])))
+
 (defn value-writer
   [key value]
-  (if (some #(= key %) [:id :user-id :thread-id :publish-date])
+  (if (is-better-str key)
     (str value)
     value))
 

@@ -58,38 +58,42 @@
            (let [p (partial get-parameter req)]
              (str (json/write-str (add-person (p :firstname) (p :surname))))))})
 
+(defn ok-json
+  [body]
+  {:status 200
+   :headers {"Content-Type" "application/json"}
+   :body body})
+
+(defn to-json
+  [r]
+  (json/write-str r :value-fn app/value-writer))
+
+(def respond-with (comp ok-json to-json))
+
 (defn add-user
   [req]
   (let [name (get-parameter req :name)
         email (get-parameter req :email)
         nickname (get-parameter req :nickname)
         user (app/create-user name email nickname)]
-    {:status 200
-     :headers {"Content-Type" "application/json"}
-     :body (json/write-str user :value-fn app/value-writer)}))
+    (respond-with user)))
 
 (defn get-users
   [_req]
-  {:status 200
-   :headers {"Content-Type" "application/json"}
-   :body (json/write-str (app/get-users) :value-fn app/value-writer)})
+  (ok-json (json/write-str (app/get-users) :value-fn app/value-writer)))
 
 (defn add-tweet
   [req]
   (let [user-id (get-parameter req :user-id)
         text (get-parameter req :text)
         tweet (app/add-tweet user-id text)]
-    {:status 200
-     :headers {"Content-Type" "application/json"}
-     :body (json/write-str tweet :value-fn app/value-writer)}))
+    (respond-with tweet)))
 
 (defn get-tweets-by-user
   [req]
   (let [user-id (get-parameter req :user-id)
         tweets (app/get-tweets-by-user user-id)]
-    {:status 200
-     :headers {"Content-Type" "application/json"}
-     :body (json/write-str tweets :value-fn app/value-writer)}))
+    (respond-with tweets)))
 
 (defroutes app-routes
            (GET "/" [] simple-body-page)
