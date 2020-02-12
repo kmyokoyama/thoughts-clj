@@ -23,7 +23,7 @@
 (add-person "Kazuki" "Yokoyama")
 
 (defn simple-body-page
-  [req]
+  [_req]
   {:status 200
    :headers {"Content-Type" "text/html"}
    :body "Hello world"})
