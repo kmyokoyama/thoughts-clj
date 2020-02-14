@@ -1,5 +1,6 @@
 (ns twitter-clj.rest-test
   (:require [twitter-clj.rest.handler :refer [handler]]
+            [twitter-clj.operations :as app]
             [clojure.test :refer :all]
             [ring.server.standalone :as s]
             [clj-http.client :as client]
@@ -15,7 +16,8 @@
 (defn stop-server []
   (println "Stopping server.")
   (.stop @server)
-  (reset! server nil))
+  (reset! server nil)
+  (app/shutdown))
 
 (def url "http://localhost:3000/")
 

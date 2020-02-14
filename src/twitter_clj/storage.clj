@@ -8,4 +8,5 @@
   (fetch-tweets! [this])
   (fetch-tweets-by-user! [this user-id])
   (fetch-threads! [this])
-  (fetch-thread-by-id! [this thread-id]))
+  (fetch-thread-by-id! [this thread-id])
+  (shutdown! [this]))

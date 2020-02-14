@@ -39,4 +39,10 @@
 
   (fetch-threads!
     [_]
-    @threads))
+    @threads)
+
+  (shutdown!
+    [_]
+    (reset! users {})
+    (reset! tweets {})
+    (reset! threads {})))

@@ -21,6 +21,10 @@
     (core/new-tweet user-id text)
     (core/update-tweet! storage)))
 
+(defn shutdown
+  []
+  (storage/shutdown! storage))
+
 (defn get-tweets-by-user
   [user-id]
   (storage/fetch-tweets-by-user! storage user-id))
