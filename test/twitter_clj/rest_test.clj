@@ -63,8 +63,21 @@
           response (client/get (resource "tweet") {:query-params (new-tweet user-id text)})
           body (body-as-json response)
           result (:result body)]
-      (println result)
       (is (= "success" (:status body)))
       (is (= user-id (:user-id result)))
       (is (= text (:text result)))
       (is (= 0 (:likes result) (:retweets result) (:replies result))))))
+
+(deftest get-tweets-successfully
+  (testing "Get two tweets from the same user"
+    (let [user (client/get (resource "user") {:query-params (new-user "First User" "first@user.com" "first")})
+          user-id (get-in (body-as-json user) [:result :id])]
+
+      (client/get (resource "tweet") {:query-params (new-tweet user-id "First tweet")})
+      (client/get (resource "tweet") {:query-params (new-tweet user-id "Second tweet")})
+
+      (let [response (client/get (resource "tweets") {:query-params {:user-id user-id}})
+            body (body-as-json response)
+            result (:result body)]
+        (is (= "success" (:status body)))
+        (is (= 2 (count result)))))))
