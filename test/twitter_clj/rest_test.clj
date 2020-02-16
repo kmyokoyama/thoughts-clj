@@ -45,7 +45,7 @@
     (let [user (post-json (resource "user") (new-user))
           user-id (get-in (body-as-json user) [:result :id])
           text "My first tweet"
-          response (client/get (resource "tweet") {:query-params (new-tweet user-id text)})
+          response (post-json (resource "tweet") (new-tweet user-id text))
           body (body-as-json response)
           result (:result body)]
       (is (= "success" (:status body)))
@@ -57,8 +57,8 @@
   (testing "Get two tweets from the same user"
     (let [user (post-json (resource "user") (new-user))
           user-id (get-in (body-as-json user) [:result :id])
-          first-tweet (client/get (resource "tweet") {:query-params (new-tweet user-id)})
-          second-tweet (client/get (resource "tweet") {:query-params (new-tweet user-id)})
+          first-tweet (post-json (resource "tweet") (new-tweet user-id))
+          second-tweet (post-json (resource "tweet") (new-tweet user-id))
           first-tweet-id (get-in (body-as-json first-tweet) [:result :id])
           second-tweet-id (get-in (body-as-json second-tweet) [:result :id])
           response (client/get (resource "tweets") {:query-params {:user-id user-id}})

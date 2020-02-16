@@ -45,8 +45,7 @@
 
 (defn add-tweet
   [req]
-  (let [user-id (get-parameter req :user-id)
-        text (get-parameter req :text)
+  (let [{:keys [user-id text]} (:body req)
         tweet (app/add-tweet user-id text)]
     (respond-with tweet)))
 
@@ -59,7 +58,7 @@
 (defroutes app-routes
            (POST "/user" [] add-user)
            (GET "/users" [] get-users)
-           (GET "/tweet" [] add-tweet)
+           (POST "/tweet" [] add-tweet)
            (GET "/tweets" [] get-tweets-by-user)
            (route/not-found "Error, page not found!"))
 
