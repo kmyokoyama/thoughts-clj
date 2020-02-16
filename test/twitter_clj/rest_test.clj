@@ -4,7 +4,7 @@
             [twitter-clj.test-utils :refer [resource-path body-as-json new-user new-tweet new-user]]
             [clojure.test :refer :all]
             [clj-http.client :as client]
-            [ring.server.standalone :as s]))
+            [ring.server.standalone :as server]))
 
 (def ^:const url "http://localhost:3000/")
 
@@ -13,7 +13,7 @@
 (defn start-server [port]
   (println "Starting server...")
   (reset! server
-          (s/serve handler {:port port :open-browser? false :auto-reload? false})))
+          (server/serve handler {:port port :open-browser? false :auto-reload? false})))
 
 (defn stop-server []
   (println "Stopping server.")
