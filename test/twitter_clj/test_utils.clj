@@ -1,6 +1,7 @@
 (ns twitter-clj.test-utils
   (:require [clojure.test :refer :all]
-            [clojure.data.json :as json]))
+            [clojure.data.json :as json]
+            [clojure.data.generators :as random]))
 
 (defn resource-path
   [url path]
@@ -12,9 +13,12 @@
     body))
 
 (defn new-user
-  [name email nickname]
-  {:name name :email email :nickname nickname})
+  []
+  {:name (random/string) :email (random/string) :nickname (random/string)})
 
 (defn new-tweet
-  [user-id text]
-  {:user-id user-id :text text})
+  ([user-id]
+   {:user-id user-id :text (random/string)})
+
+  ([user-id text]
+   {:user-id user-id :text text}))

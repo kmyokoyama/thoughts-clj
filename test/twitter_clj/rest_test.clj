@@ -1,7 +1,7 @@
 (ns twitter-clj.rest-test
   (:require [twitter-clj.rest.handler :refer [handler]]
             [twitter-clj.operations :as app]
-            [twitter-clj.test-utils :refer [resource-path body-as-json new-user new-tweet]]
+            [twitter-clj.test-utils :refer [resource-path body-as-json new-user new-tweet new-user]]
             [clojure.test :refer :all]
             [clj-http.client :as client]
             [ring.server.standalone :as s]))
@@ -27,14 +27,14 @@
 
 (deftest add-single-user
   (testing "Add a single user"
-    (let [response (client/get (resource "user") {:query-params (new-user "First User" "first@user.com" "first")})]
+    (let [response (client/get (resource "user") {:query-params (new-user)})]
       (is (= "success" (:status (body-as-json response)))))))
 
 (deftest get-users-successfully
   (testing "Get two users successfully"
     ;; Given.
-    (client/get (resource "user") {:query-params (new-user "First User" "first@user.com" "first")})
-    (client/get (resource "user") {:query-params (new-user "Second User" "second@user.com" "second")})
+    (client/get (resource "user") {:query-params (new-user)})
+    (client/get (resource "user") {:query-params (new-user)})
     ;; Then.
     (let [response (client/get (resource "users") {})]
       (is (= "success" (:status (body-as-json response))))
@@ -42,7 +42,7 @@
 
 (deftest add-single-tweet
   (testing "Add a single tweet"
-    (let [user (client/get (resource "user") {:query-params (new-user "First User" "first@user.com" "first")})
+    (let [user (client/get (resource "user") {:query-params (new-user)})
           user-id (get-in (body-as-json user) [:result :id])
           text "My first tweet"
           response (client/get (resource "tweet") {:query-params (new-tweet user-id text)})
@@ -55,10 +55,10 @@
 
 (deftest get-tweets-successfully
   (testing "Get two tweets from the same user"
-    (let [user (client/get (resource "user") {:query-params (new-user "First User" "first@user.com" "first")})
+    (let [user (client/get (resource "user") {:query-params (new-user)})
           user-id (get-in (body-as-json user) [:result :id])
-          first-tweet (client/get (resource "tweet") {:query-params (new-tweet user-id "First tweet")})
-          second-tweet (client/get (resource "tweet") {:query-params (new-tweet user-id "Second tweet")})
+          first-tweet (client/get (resource "tweet") {:query-params (new-tweet user-id)})
+          second-tweet (client/get (resource "tweet") {:query-params (new-tweet user-id)})
           first-tweet-id (get-in (body-as-json first-tweet) [:result :id])
           second-tweet-id (get-in (body-as-json second-tweet) [:result :id])
           response (client/get (resource "tweets") {:query-params {:user-id user-id}})
@@ -70,11 +70,11 @@
 
 (deftest get-empty-tweets
   (testing "Get tweets returns no tweet if user has not tweet yet"
-    (let [user (client/get (resource "user") {:query-params (new-user "First User" "first@user.com" "first")})
+    (let [user (client/get (resource "user") {:query-params (new-user)})
           user-id (get-in (body-as-json user) [:result :id])]
       ;; No tweet.
       (let [response (client/get (resource "tweets") {:query-params {:user-id user-id}})
             body (body-as-json response)
             result (:result body)]
         (is (= "success" (:status body)))
-        (is (= 0 (count result)))))))
+        (is (= 0 (count result)))))))-

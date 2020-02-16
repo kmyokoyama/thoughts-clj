@@ -1,7 +1,6 @@
 (ns twitter-clj.main
   (:require [twitter-clj.rest.handler :as handler]
             [org.httpkit.server :as server]
-            [compojure.core :refer :all]
             [ring.middleware.defaults :refer :all])
   (:gen-class))
 
