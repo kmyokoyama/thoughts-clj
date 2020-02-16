@@ -70,7 +70,7 @@
 
 (deftest get-empty-tweets
   (testing "Get tweets returns no tweet if user has not tweet yet"
-    (let [user (client/post (resource "user") {:form-params (new-user) :content-type :json})
+    (let [user (post-json (resource "user") (new-user))
           user-id (get-in (body-as-json user) [:result :id])]
       ;; No tweet.
       (let [response (client/get (resource "tweets") {:query-params {:user-id user-id}})
