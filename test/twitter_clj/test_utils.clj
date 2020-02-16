@@ -1,7 +1,12 @@
 (ns twitter-clj.test-utils
   (:require [clojure.test :refer :all]
             [clojure.data.json :as json]
-            [clojure.data.generators :as random]))
+            [clojure.data.generators :as random]
+            [clj-http.client :as client]))
+
+(defn post-json
+  [url body]
+  (client/post url {:form-params body :content-type :json}))
 
 (defn resource-path
   [url path]

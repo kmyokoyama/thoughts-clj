@@ -1,7 +1,7 @@
 (ns twitter-clj.rest-test
   (:require [twitter-clj.rest.handler :refer [handler]]
             [twitter-clj.operations :as app]
-            [twitter-clj.test-utils :refer [resource-path body-as-json new-user new-tweet new-user]]
+            [twitter-clj.test-utils :refer :all]
             [clojure.test :refer :all]
             [clj-http.client :as client]
             [ring.server.standalone :as server]))
@@ -27,14 +27,14 @@
 
 (deftest add-single-user
   (testing "Add a single user"
-    (let [response (client/post (resource "user") {:form-params (new-user)})]
+    (let [response (post-json (resource "user") (new-user))]
       (is (= "success" (:status (body-as-json response)))))))
 
 (deftest get-users-successfully
   (testing "Get two users successfully"
     ;; Given.
-    (client/post (resource "user") {:form-params (new-user)})
-    (client/post (resource "user") {:form-params (new-user)})
+    (post-json (resource "user") (new-user))
+    (post-json (resource "user") (new-user))
     ;; Then.
     (let [response (client/get (resource "users") {})]
       (is (= "success" (:status (body-as-json response))))
@@ -42,7 +42,7 @@
 
 (deftest add-single-tweet
   (testing "Add a single tweet"
-    (let [user (client/post (resource "user") {:form-params (new-user)})
+    (let [user (post-json (resource "user") (new-user))
           user-id (get-in (body-as-json user) [:result :id])
           text "My first tweet"
           response (client/get (resource "tweet") {:query-params (new-tweet user-id text)})
@@ -55,7 +55,7 @@
 
 (deftest get-tweets-successfully
   (testing "Get two tweets from the same user"
-    (let [user (client/post (resource "user") {:form-params (new-user)})
+    (let [user (post-json (resource "user") (new-user))
           user-id (get-in (body-as-json user) [:result :id])
           first-tweet (client/get (resource "tweet") {:query-params (new-tweet user-id)})
           second-tweet (client/get (resource "tweet") {:query-params (new-tweet user-id)})

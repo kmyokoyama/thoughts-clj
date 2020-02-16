@@ -3,12 +3,12 @@
             [compojure.route :as route]
             [clojure.data.json :as json]
             [ring.middleware.defaults :refer [wrap-defaults api-defaults]]
-            [ring.middleware.json :only [wrap-json-body]]
+            [ring.middleware.json :refer [wrap-json-body]]
             [twitter-clj.operations :as app]))
 
-(defn get-query-parameter
+(defn get-parameter
   [req param]
-  (param (:query-params req)))
+  (param (:params req)))
 
 (defn ok-json
   [body]
@@ -34,8 +34,7 @@
 
 (defn add-user
   [req]
-  (let [body (:body req)
-        {:keys [name email nickname]} body
+  (let [{:keys [name email nickname]} (:body req)
         user (app/add-user name email nickname)]
     (respond-with user)))
 
@@ -46,14 +45,14 @@
 
 (defn add-tweet
   [req]
-  (let [user-id (get-query-parameter req :user-id)
-        text (get-query-parameter req :text)
+  (let [user-id (get-parameter req :user-id)
+        text (get-parameter req :text)
         tweet (app/add-tweet user-id text)]
     (respond-with tweet)))
 
 (defn get-tweets-by-user
   [req]
-  (let [user-id (get-query-parameter req :user-id)
+  (let [user-id (get-parameter req :user-id)
         tweets (app/get-tweets-by-user user-id)]
     (respond-with tweets)))
 
@@ -65,4 +64,6 @@
            (route/not-found "Error, page not found!"))
 
 (def handler
-  (wrap-defaults #'app-routes api-defaults))
+  (-> #'app-routes
+      (wrap-json-body {:keywords? true :bigdecimals? true})
+      (wrap-defaults api-defaults)))
