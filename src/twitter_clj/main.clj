@@ -1,11 +1,8 @@
 (ns twitter-clj.main
-  (:require [twitter-clj.rest.handler :refer [handler]]
+  (:require [twitter-clj.rest.handler :as handler]
             [org.httpkit.server :as server]
             [compojure.core :refer :all]
-            [compojure.route :as route]
-            [ring.middleware.defaults :refer :all]
-            [clojure.data.json :as json]
-            [twitter-clj.operations :as app])
+            [ring.middleware.defaults :refer :all])
   (:gen-class))
 
 (defn -main
