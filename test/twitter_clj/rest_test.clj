@@ -1,10 +1,12 @@
 (ns twitter-clj.rest-test
   (:require [twitter-clj.rest.handler :refer [handler]]
             [twitter-clj.operations :as app]
+            [twitter-clj.test-utils :refer [resource-path body-as-json new-user new-tweet]]
             [clojure.test :refer :all]
-            [ring.server.standalone :as s]
             [clj-http.client :as client]
-            [clojure.data.json :as json]))
+            [ring.server.standalone :as s]))
+
+(def ^:const url "http://localhost:3000/")
 
 (def server (atom nil))
 
@@ -19,26 +21,9 @@
   (reset! server nil)
   (app/shutdown))
 
-(def url "http://localhost:3000/")
-
-(defn- resource
-  [path]
-  (str url "/" path))
-
-(defn- body-as-json [{:keys [body]}]
-  (if (string? body)
-    (json/read-str body :key-fn keyword)
-    body))
-
-(defn- new-user
-  [name email nickname]
-  {:name name :email email :nickname nickname})
-
-(defn- new-tweet
-  [user-id text]
-  {:user-id user-id :text text})
-
 (use-fixtures :each (fn [f] (start-server 3000) (f) (stop-server)))
+
+(def resource (partial resource-path url))
 
 (deftest add-single-user
   (testing "Add a single user"
