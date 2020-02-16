@@ -77,4 +77,4 @@
             body (body-as-json response)
             result (:result body)]
         (is (= "success" (:status body)))
-        (is (= 0 (count result)))))))-
+        (is (= 0 (count result)))))))
