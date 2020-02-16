@@ -71,13 +71,25 @@
 (deftest get-tweets-successfully
   (testing "Get two tweets from the same user"
     (let [user (client/get (resource "user") {:query-params (new-user "First User" "first@user.com" "first")})
+          user-id (get-in (body-as-json user) [:result :id])
+          first-tweet (client/get (resource "tweet") {:query-params (new-tweet user-id "First tweet")})
+          second-tweet (client/get (resource "tweet") {:query-params (new-tweet user-id "Second tweet")})
+          first-tweet-id (get-in (body-as-json first-tweet) [:result :id])
+          second-tweet-id (get-in (body-as-json second-tweet) [:result :id])
+          response (client/get (resource "tweets") {:query-params {:user-id user-id}})
+          body (body-as-json response)
+          result (:result body)]
+      (is (= "success" (:status body)))
+      (is (= 2 (count result)))
+      (is (= #{first-tweet-id second-tweet-id} (into #{} (map :id result)))))))
+
+(deftest get-empty-tweets
+  (testing "Get tweets returns no tweet if user has not tweet yet"
+    (let [user (client/get (resource "user") {:query-params (new-user "First User" "first@user.com" "first")})
           user-id (get-in (body-as-json user) [:result :id])]
-
-      (client/get (resource "tweet") {:query-params (new-tweet user-id "First tweet")})
-      (client/get (resource "tweet") {:query-params (new-tweet user-id "Second tweet")})
-
+      ;; No tweet.
       (let [response (client/get (resource "tweets") {:query-params {:user-id user-id}})
             body (body-as-json response)
             result (:result body)]
         (is (= "success" (:status body)))
-        (is (= 2 (count result)))))))
+        (is (= 0 (count result)))))))
