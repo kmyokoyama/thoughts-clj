@@ -3,14 +3,12 @@
             [compojure.route :as route]
             [clojure.data.json :as json]
             [ring.middleware.defaults :refer [wrap-defaults api-defaults]]
+            [ring.middleware.json :only [wrap-json-body]]
             [twitter-clj.operations :as app]))
 
 (defn get-query-parameter
   [req param]
   (param (:query-params req)))
-
-(defn body-as-json [{:keys [body]}]
-  (json/read-str (slurp body) :key-fn keyword))
 
 (defn ok-json
   [body]
@@ -36,7 +34,7 @@
 
 (defn add-user
   [req]
-  (let [body (body-as-json req)
+  (let [body (:body req)
         {:keys [name email nickname]} body
         user (app/add-user name email nickname)]
     (respond-with user)))
