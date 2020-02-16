@@ -27,14 +27,14 @@
 
 (deftest add-single-user
   (testing "Add a single user"
-    (let [response (client/get (resource "user") {:query-params (new-user)})]
+    (let [response (client/post (resource "user") {:form-params (new-user)})]
       (is (= "success" (:status (body-as-json response)))))))
 
 (deftest get-users-successfully
   (testing "Get two users successfully"
     ;; Given.
-    (client/get (resource "user") {:query-params (new-user)})
-    (client/get (resource "user") {:query-params (new-user)})
+    (client/post (resource "user") {:form-params (new-user)})
+    (client/post (resource "user") {:form-params (new-user)})
     ;; Then.
     (let [response (client/get (resource "users") {})]
       (is (= "success" (:status (body-as-json response))))
@@ -42,7 +42,7 @@
 
 (deftest add-single-tweet
   (testing "Add a single tweet"
-    (let [user (client/get (resource "user") {:query-params (new-user)})
+    (let [user (client/post (resource "user") {:form-params (new-user)})
           user-id (get-in (body-as-json user) [:result :id])
           text "My first tweet"
           response (client/get (resource "tweet") {:query-params (new-tweet user-id text)})
@@ -55,7 +55,7 @@
 
 (deftest get-tweets-successfully
   (testing "Get two tweets from the same user"
-    (let [user (client/get (resource "user") {:query-params (new-user)})
+    (let [user (client/post (resource "user") {:form-params (new-user)})
           user-id (get-in (body-as-json user) [:result :id])
           first-tweet (client/get (resource "tweet") {:query-params (new-tweet user-id)})
           second-tweet (client/get (resource "tweet") {:query-params (new-tweet user-id)})
@@ -70,7 +70,7 @@
 
 (deftest get-empty-tweets
   (testing "Get tweets returns no tweet if user has not tweet yet"
-    (let [user (client/get (resource "user") {:query-params (new-user)})
+    (let [user (client/post (resource "user") {:form-params (new-user) :content-type :json})
           user-id (get-in (body-as-json user) [:result :id])]
       ;; No tweet.
       (let [response (client/get (resource "tweets") {:query-params {:user-id user-id}})
