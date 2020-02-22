@@ -29,6 +29,10 @@
     [_ user-id]
     (filter #(= (:user-id %) user-id) (vals @tweets)))
 
+  (fetch-tweet-by-id!
+    [_ tweet-id]
+    (get @tweets tweet-id {}))
+
   (fetch-users!
     [_]
     @users)

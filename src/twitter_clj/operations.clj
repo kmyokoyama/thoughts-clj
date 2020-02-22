@@ -21,13 +21,20 @@
     (core/new-tweet user-id text)
     (core/update-tweet! storage)))
 
-(defn shutdown
-  []
-  (storage/shutdown! storage))
-
 (defn get-tweets-by-user
   [user-id]
   (storage/fetch-tweets-by-user! storage user-id))
+
+(defn like
+  [tweet-id]
+  (let [tweet (storage/fetch-tweet-by-id! storage tweet-id)
+        updated-tweet (core/like tweet)]
+    (println tweet)
+    updated-tweet))
+
+(defn shutdown
+  []
+  (storage/shutdown! storage))
 
 (defn is-better-str
   [key]

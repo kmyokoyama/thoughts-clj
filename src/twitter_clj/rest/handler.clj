@@ -55,11 +55,20 @@
         tweets (app/get-tweets-by-user user-id)]
     (respond-with tweets)))
 
+(defn like-tweet
+  [req]
+  (let [tweet-id (get-parameter req :tweet-id)
+        updated-tweet (app/like tweet-id)]
+    (println tweet-id)
+    (respond-with {})))
+    ;(respond-with updated-tweet)))
+
 (defroutes app-routes
            (POST "/user" [] add-user)
            (GET "/users" [] get-users)
            (POST "/tweet" [] add-tweet)
            (GET "/tweets" [] get-tweets-by-user)
+           (PATCH "/tweet/like" [] like-tweet)
            (route/not-found "Error, page not found!"))
 
 (def handler
