@@ -30,3 +30,11 @@
           unliked-tweet (unlike tweet)]
       (equal-except-for tweet unliked-tweet :likes)
       (is (= 9 (:likes (unlike tweet)))))))
+
+(deftest retweet-creates-new-tweet-from-original
+  (testing "When retweets, then creates a tweet with same text and
+  increases rewteets counting from the original tweet"
+    (let [original-tweet (new-tweet (random-uuid) "This is my text")
+          [re-tweet, retweeted] (retweet (:user-id original-tweet) original-tweet)]
+      (is (= (inc (:retweets original-tweet)) (:retweets retweeted)))
+      (equal-except-for retweeted re-tweet :id :publish-date :likes :retweets))))

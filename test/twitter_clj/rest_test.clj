@@ -79,15 +79,14 @@
         (is (= "success" (:status body)))
         (is (= 0 (count result)))))))
 
-(deftest like-existing-tweet
-  (testing "Like an existing tweet"
-    (let [user (post-json (resource "user") (new-user))
-          user-id (get-in (body-as-json user) [:result :id])
-          tweet (post-json (resource "tweet") (new-tweet user-id))
-          tweet-id (get-in (body-as-json tweet) [:result :id])
-          updated-tweet (client/patch (resource "tweet/like") {:query-params {:tweet-id tweet-id}})
-          body (body-as-json updated-tweet)
-          result (:result body)]
-      (println tweet-id)
-      (is (= "success" (:status body)))
-      (is (= 1 (:likes result))))))
+;(deftest like-existing-tweet
+;  (testing "Like an existing tweet"
+;    (let [user (post-json (resource "user") (new-user))
+;          user-id (get-in (body-as-json user) [:result :id])
+;          tweet (post-json (resource "tweet") (new-tweet user-id))
+;          tweet-id (get-in (body-as-json tweet) [:result :id])
+;          updated-tweet (client/patch (resource "tweet/like") {:query-params {:tweet-id tweet-id}})
+;          body (body-as-json updated-tweet)
+;          result (:result body)]
+;      (is (= "success" (:status body)))
+;      (is (= 1 (:likes result))))))
