@@ -12,6 +12,7 @@
                  [ring/ring-defaults "0.3.2"]
                  [ring-server "0.4.0"]
                  [ring/ring-json "0.5.0"]
-                 [org.clojure/data.json "0.2.6"]]
+                 [org.clojure/data.json "0.2.6"]
+                 [com.stuartsierra/component "0.4.0"]]
   :repl-options {:init-ns twitter-clj.core}
   :main twitter-clj.main)

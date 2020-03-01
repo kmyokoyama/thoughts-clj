@@ -1,9 +1,8 @@
-(ns twitter-clj.core
+(ns twitter-clj.application.core
   (:import (java.util UUID)
            (java.time ZonedDateTime))
   (:require [clojure.string :as s])
-  (:require [twitter-clj.storage.in-mem :as storage.in-mem])
-  (:require [twitter-clj.storage :as storage]))
+  (:require [twitter-clj.application.port.storage :as storage]))
 
 (defrecord User [id active name email nickname])
 (defrecord Tweet [id user-id text publish-date likes retweets replies thread-id])

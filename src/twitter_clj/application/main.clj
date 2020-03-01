@@ -1,4 +1,4 @@
-(ns twitter-clj.main
+(ns twitter-clj.application.main
   (:require [twitter-clj.rest.handler :refer [handler]]
             [org.httpkit.server :as server]
             [ring.middleware.defaults :refer :all])

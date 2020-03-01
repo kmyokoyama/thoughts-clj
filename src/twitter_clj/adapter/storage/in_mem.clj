@@ -1,5 +1,5 @@
-(ns twitter-clj.storage.in-mem
-  (:require [twitter-clj.storage :as storage]))
+(ns twitter-clj.adapter.storage.in-mem
+  (:require [twitter-clj.application.port.storage :as storage]))
 
 (def users (atom {})) ;; It could also be a ref.
 (def tweets (atom {})) ;; It could also be a ref.

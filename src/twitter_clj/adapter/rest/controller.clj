@@ -1,10 +1,10 @@
-(ns twitter-clj.rest.handler
-  (:require [compojure.core :refer :all]
+(ns twitter-clj.adapter.rest.controller
+  (:require [twitter-clj.applications.operations :as app]
+            [compojure.core :refer :all]
             [compojure.route :as route]
             [clojure.data.json :as json]
             [ring.middleware.defaults :refer [wrap-defaults api-defaults]]
-            [ring.middleware.json :refer [wrap-json-body]]
-            [twitter-clj.operations :as app]))
+            [ring.middleware.json :refer [wrap-json-body]]))
 
 (defn get-parameter
   [req param]

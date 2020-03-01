@@ -1,4 +1,4 @@
-(ns twitter-clj.storage)
+(ns twitter-clj.application.port.storage)
 
 (defprotocol Storage
   (update-user! [this user])

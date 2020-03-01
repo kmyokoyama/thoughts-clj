@@ -1,7 +1,7 @@
-(ns twitter-clj.operations
-  (:require [twitter-clj.core :as core]
-            [twitter-clj.storage.in-mem :as storage.in-mem]
-            [twitter-clj.storage :as storage]))
+(ns twitter-clj.application.operations
+  (:require [twitter-clj.application.core :as core]
+            [twitter-clj.adapter.storage.in-mem :as storage.in-mem]
+            [twitter-clj.application.port.storage :as storage]))
 
 (def storage (storage.in-mem/->InMemoryStorage))
 
@@ -47,7 +47,6 @@
   (if (is-better-str key)
     (str value)
     value))
-
 
 ;(like [this tweet-id])
 ;(unlike [this tweet-id])
