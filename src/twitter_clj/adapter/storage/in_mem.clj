@@ -16,6 +16,7 @@
 
   (stop [this]
     (println "Stopping in-memory database")
+    (storage/shutdown! this)
     this)
 
   storage/Storage
@@ -61,6 +62,6 @@
     (reset! tweets {})
     (reset! threads {})))
 
-(defn make-in-mem-storage
+(defn make-in-mem-storage ;; Constructor.
   []
   (->InMemoryStorage))

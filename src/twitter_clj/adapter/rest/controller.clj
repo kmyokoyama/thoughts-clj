@@ -65,24 +65,15 @@
     (respond-with {})))
     ;(respond-with updated-tweet)))
 
-;(defroutes app-routes
-;           (POST "/user" [] add-user)
-;           (GET "/users" [] get-users)
-;           (POST "/tweet" [] add-tweet)
-;           (GET "/tweets" [] get-tweets-by-user)
-;           (PATCH "/tweet/like" [] like-tweet)
-;           (route/not-found "Error, page not found!"))
-
-(defn hello-world
-  [req app]
-  (let [name (get-parameter req :name)]
-    (app/hello-world app name)))
-
 (defn app-routes
   [app]
   (compojure.core/routes
-    (GET "/" req (hello-world req app))
-    (POST "/user" req (add-user req app))))
+    (POST "/user" req (add-user req app))
+    (GET "/users" req (get-users req app))
+    (POST "/tweet" req (add-tweet req app))
+    (GET "/tweets" req (get-tweets-by-user req app))
+    (PATCH "/tweet/like" req (like-tweet req app))
+    (route/not-found "Error, page not found!")))
 
 (defn handler
   [app]
@@ -94,13 +85,16 @@
   component/Lifecycle
   (start [this]
     (println "Starting HTTP server.")
-    (server/run-server (handler app) {:port 3000}) ;; TODO: Pass configuration.
-    this)
+    (println this)
+    (assoc this :http-server (server/run-server (handler app) {:port 3000}))) ;; TODO: Pass configuration for port.
 
   (stop [this]
     (println "Stopping HTTP server.")
-    this))
+    (println this)
+    (let [stop-fn (:http-server this)]
+      (stop-fn)
+      this)))
 
-(defn make-http-controller
+(defn make-http-controller ;; Constructor.
   []
-  (map->HttpServer {}))
+  (map->HttpServer {:http-server {}}))

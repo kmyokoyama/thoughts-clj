@@ -12,11 +12,11 @@
     (println "Starting app.")
     this)
 
-  (stop [this]
+  (stop [this] ;; TODO: Add shutdown.
     (println "Stopping app.")
     this))
 
-(defn make-app
+(defn make-app ;; Constructor.
   []
   (map->App {}))
 
@@ -51,10 +51,6 @@
 (defn shutdown
   [app]
   (storage/shutdown! (:storage app)))
-
-(defn hello-world
-  [app name]
-  (str "Hello world, " name))
 
 ;; Not part of the App API.
 

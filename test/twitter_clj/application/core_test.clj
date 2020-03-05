@@ -1,7 +1,7 @@
-(ns twitter-clj.core-test
+(ns twitter-clj.application.core-test
   (:require [clojure.set :as set]
             [clojure.test :refer :all]
-            [twitter-clj.core :refer :all])
+            [twitter-clj.application.core :refer :all])
   (:import (java.util UUID)
            (java.time ZonedDateTime)))
 
