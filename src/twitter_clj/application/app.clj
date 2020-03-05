@@ -1,40 +1,62 @@
 (ns twitter-clj.application.app
   (:require [twitter-clj.application.core :as core]
             [twitter-clj.adapter.storage.in-mem :as storage.in-mem]
-            [twitter-clj.application.port.storage :as storage]))
+            [twitter-clj.application.port.storage :as storage]
+            [com.stuartsierra.component :as component]))
 
-(def storage (storage.in-mem/->InMemoryStorage))
+;(def storage (storage.in-mem/->InMemoryStorage))
+
+(defrecord App [storage]
+  component/Lifecycle
+  (start [this]
+    (println "Starting app.")
+    this)
+
+  (stop [this]
+    (println "Stopping app.")
+    this))
+
+(defn make-app
+  []
+  (map->App {}))
+
+;; We can make it part of a protocol.
 
 (defn add-user
-  [name email nickname]
+  [app name email nickname]
   (->
     (core/new-user name email nickname)
-    (core/update-user! storage)))
+    (core/update-user! (:storage app))))
 
 (defn get-users
-  []
-  (vals (storage/fetch-users! storage)))
+  [app]
+  (vals (storage/fetch-users! (:storage app))))
 
 (defn add-tweet
-  [user-id text]
+  [app user-id text]
   (->
     (core/new-tweet user-id text)
-    (core/update-tweet! storage)))
+    (core/update-tweet! (:storage app))))
 
 (defn get-tweets-by-user
-  [user-id]
-  (storage/fetch-tweets-by-user! storage user-id))
+  [app user-id]
+  (storage/fetch-tweets-by-user! (:storage app) user-id))
 
 (defn like
-  [tweet-id]
-  (let [tweet (storage/fetch-tweet-by-id! storage tweet-id)
+  [app tweet-id]
+  (let [tweet (storage/fetch-tweet-by-id! (:storage app) tweet-id)
         updated-tweet (core/like tweet)]
-    (println tweet)
     updated-tweet))
 
 (defn shutdown
-  []
-  (storage/shutdown! storage))
+  [app]
+  (storage/shutdown! (:storage app)))
+
+(defn hello-world
+  [app name]
+  (str "Hello world, " name))
+
+;; Not part of the App API.
 
 (defn is-better-str
   [key]

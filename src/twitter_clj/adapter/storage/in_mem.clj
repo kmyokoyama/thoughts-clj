@@ -10,13 +10,13 @@
 
 (defrecord InMemoryStorage []
   component/Lifecycle
-  (start [component]
+  (start [this]
     (println "Starting in-memory database")
-    component)
+    this)
 
-  (stop [component]
+  (stop [this]
     (println "Stopping in-memory database")
-    component)
+    this)
 
   storage/Storage
   (update-user!
@@ -60,3 +60,7 @@
     (reset! users {})
     (reset! tweets {})
     (reset! threads {})))
+
+(defn make-in-mem-storage
+  []
+  (->InMemoryStorage))

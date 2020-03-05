@@ -15,4 +15,4 @@
                  [org.clojure/data.json "0.2.6"]
                  [com.stuartsierra/component "0.4.0"]]
   :repl-options {:init-ns twitter-clj.core}
-  :main twitter-clj.main)
+  :main twitter-clj.application.main)
