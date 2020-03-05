@@ -2,13 +2,11 @@
   (:require [twitter-clj.application.port.storage :as storage]
             [com.stuartsierra.component :as component]))
 
-(def users (atom {})) ;; It could also be a ref.
-(def tweets (atom {})) ;; It could also be a ref.
-(def threads (atom {})) ;; It could also be a ref.
+(declare shutdown)
 
 ;; Driven-side.
 
-(defrecord InMemoryStorage []
+(defrecord InMemoryStorage [users tweets threads]
   component/Lifecycle
   (start [this]
     (println "Starting in-memory database")
@@ -16,8 +14,7 @@
 
   (stop [this]
     (println "Stopping in-memory database")
-    (storage/shutdown! this)
-    this)
+    (shutdown this))
 
   storage/Storage
   (update-user!
@@ -54,14 +51,17 @@
 
   (fetch-threads!
     [_]
-    @threads)
-
-  (shutdown!
-    [_]
-    (reset! users {})
-    (reset! tweets {})
-    (reset! threads {})))
+    @threads))
 
 (defn make-in-mem-storage ;; Constructor.
   []
-  (->InMemoryStorage))
+  (map->InMemoryStorage {:users (atom {})
+                         :tweets (atom {})
+                         :threads (atom {})}))
+
+(defn shutdown
+  [storage]
+  (reset! (:users storage) {})
+  (reset! (:tweets storage) {})
+  (reset! (:threads storage) {})
+  storage)

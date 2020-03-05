@@ -9,5 +9,4 @@
   (fetch-tweets-by-user! [this user-id])
   (fetch-tweet-by-id! [this tweet-id])
   (fetch-threads! [this])
-  (fetch-thread-by-id! [this thread-id])
-  (shutdown! [this]))
+  (fetch-thread-by-id! [this thread-id]))

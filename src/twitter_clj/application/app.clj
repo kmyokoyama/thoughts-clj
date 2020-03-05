@@ -48,10 +48,6 @@
         updated-tweet (core/like tweet)]
     updated-tweet))
 
-(defn shutdown
-  [app]
-  (storage/shutdown! (:storage app)))
-
 ;; Not part of the App API.
 
 (defn is-better-str
