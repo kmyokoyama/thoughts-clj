@@ -1,16 +1,17 @@
 (ns twitter-clj.application.app
   (:require [com.stuartsierra.component :as component]
+            [taoensso.timbre :as log]
             [twitter-clj.application.core :as core]
             [twitter-clj.application.port.storage :as storage]))
 
 (defrecord App [storage]
   component/Lifecycle
   (start [this]
-    (println "Starting app.")
+    (log/info "Starting app.")
     this)
 
   (stop [this]
-    (println "Stopping app.")
+    (log/info "Stopping app.")
     this))
 
 (defn make-app ;; Constructor.

@@ -1,5 +1,6 @@
 (ns twitter-clj.application.core
-  (:require [twitter-clj.application.port.storage :as storage])
+  (:require [twitter-clj.application.port.storage :as storage]
+            [taoensso.timbre :as log])
   (:import (java.util UUID)
            (java.time ZonedDateTime)))
 
@@ -78,16 +79,16 @@
   (storage/update-user! storage user)
   user)
 
-;; Debug-mode functions.
+;; Debug-mode functions. TODO: Are they necessary?
 
 (defn show-all-users!
   [storage]
-  (println (storage/fetch-users! storage)))
+  (log/debug (storage/fetch-users! storage)))
 
 (defn show-all-tweets!
   [storage]
-  (println (storage/fetch-tweets! storage)))
+  (log/debug (storage/fetch-tweets! storage)))
 
 (defn show-all-threads!
   [storage]
-  (println (storage/fetch-threads! storage)))
+  (log/debug (storage/fetch-threads! storage)))

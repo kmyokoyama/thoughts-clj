@@ -1,5 +1,6 @@
 (ns twitter-clj.adapter.storage.in-mem
   (:require [com.stuartsierra.component :as component]
+            [taoensso.timbre :as log]
             [twitter-clj.application.port.storage :as storage]))
 
 
@@ -10,11 +11,11 @@
 (defrecord InMemoryStorage [users tweets threads]
   component/Lifecycle
   (start [this]
-    (println "Starting in-memory database.")
+    (log/info "Starting in-memory database.")
     this)
 
   (stop [this]
-    (println "Stopping in-memory database.")
+    (log/info "Stopping in-memory database.")
     (shutdown this))
 
   storage/Storage

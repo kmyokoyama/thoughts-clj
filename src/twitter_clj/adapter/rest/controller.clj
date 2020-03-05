@@ -6,6 +6,7 @@
             [org.httpkit.server :as server]
             [ring.middleware.defaults :refer [wrap-defaults api-defaults]]
             [ring.middleware.json :refer [wrap-json-body]]
+            [taoensso.timbre :as log]
             [twitter-clj.application.app :as app]))
 
 (defn get-parameter
@@ -61,7 +62,6 @@
   [req app]
   (let [tweet-id (get-parameter req :tweet-id)
         updated-tweet (app/like app tweet-id)]
-    (println tweet-id)
     (respond-with {})))
     ;(respond-with updated-tweet)))
 
@@ -84,13 +84,13 @@
 (defrecord HttpServer [http-server app server-config]
   component/Lifecycle
   (start [this]
-    (println "Starting HTTP server.")
+    (log/info "Starting HTTP server.")
     (let [port (:port server-config)]
       (assoc this :http-server
                   (server/run-server (handler app) {:port port}))))
 
   (stop [this]
-    (println "Stopping HTTP server.")
+    (log/info "Stopping HTTP server.")
     (let [stop-fn (:http-server this)]
       (stop-fn)
       this)))

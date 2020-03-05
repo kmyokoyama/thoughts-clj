@@ -1,6 +1,7 @@
 (ns twitter-clj.application.main
   (:require [com.stuartsierra.component :as component]
             [ring.middleware.defaults :refer :all]
+            [taoensso.timbre :as log]
             [twitter-clj.adapter.rest.controller :refer [make-http-controller]]
             [twitter-clj.adapter.storage.in-mem :refer [make-in-mem-storage]]
             [twitter-clj.application.app :refer [make-app]])
@@ -20,7 +21,7 @@
 (defn on-exit
   [system]
   (fn []
-    (println "Stopping system...")
+    (log/info "Stopping system...")
     (component/stop system)))
 
 (defn handle-sigint
@@ -30,6 +31,7 @@
 (defn -main
   [& _args]
   (let [port (Integer/parseInt (or (System/getenv "PORT") "3000"))]
+    (log/info "Starting system...")
     (let [system (component/start (system {:server-config {:port port}}))]
-      (println (str "Running server at http://127.0.01:" port "/"))
+      (log/info (str "Running server at http://127.0.01:" port "/"))
       (handle-sigint on-exit system))))

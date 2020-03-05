@@ -13,6 +13,8 @@
                  [ring-server "0.4.0"]
                  [ring/ring-json "0.5.0"]
                  [org.clojure/data.json "0.2.6"]
-                 [com.stuartsierra/component "0.4.0"]]
+                 [com.stuartsierra/component "0.4.0"]
+                 [com.taoensso/timbre "4.10.0"]]
   :repl-options {:init-ns twitter-clj.core}
+  :jvm-opts ["-Dclojure.tools.logging.factory=clojure.tools.logging.impl/log4j-factory"]
   :main twitter-clj.application.main)
