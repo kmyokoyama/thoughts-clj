@@ -3,8 +3,6 @@
             [twitter-clj.application.core :as core]
             [twitter-clj.application.port.storage :as storage]))
 
-;(def storage (storage.in-mem/->InMemoryStorage))
-
 (defrecord App [storage]
   component/Lifecycle
   (start [this]
