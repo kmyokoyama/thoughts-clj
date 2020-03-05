@@ -1,8 +1,7 @@
 (ns twitter-clj.application.app
-  (:require [twitter-clj.application.core :as core]
-            [twitter-clj.adapter.storage.in-mem :as storage.in-mem]
-            [twitter-clj.application.port.storage :as storage]
-            [com.stuartsierra.component :as component]))
+  (:require [com.stuartsierra.component :as component]
+            [twitter-clj.application.core :as core]
+            [twitter-clj.application.port.storage :as storage]))
 
 ;(def storage (storage.in-mem/->InMemoryStorage))
 
@@ -12,7 +11,7 @@
     (println "Starting app.")
     this)
 
-  (stop [this] ;; TODO: Add shutdown.
+  (stop [this]
     (println "Stopping app.")
     this))
 

@@ -1,12 +1,12 @@
 (ns twitter-clj.adapter.rest.controller
-  (:require [twitter-clj.application.app :as app]
+  (:require [clojure.data.json :as json]
+            [com.stuartsierra.component :as component]
             [compojure.core :refer :all]
             [compojure.route :as route]
-            [clojure.data.json :as json]
+            [org.httpkit.server :as server]
             [ring.middleware.defaults :refer [wrap-defaults api-defaults]]
             [ring.middleware.json :refer [wrap-json-body]]
-            [com.stuartsierra.component :as component]
-            [org.httpkit.server :as server]))
+            [twitter-clj.application.app :as app]))
 
 (defn get-parameter
   [req param]
@@ -87,7 +87,7 @@
     (println "Starting HTTP server.")
     (let [port (:port server-config)]
       (assoc this :http-server
-                  (server/run-server (handler app) {:port port})))) ;; TODO: Pass configuration for port.
+                  (server/run-server (handler app) {:port port}))))
 
   (stop [this]
     (println "Stopping HTTP server.")

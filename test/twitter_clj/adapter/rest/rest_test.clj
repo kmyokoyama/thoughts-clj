@@ -15,8 +15,12 @@
   [system-config]
   (component/system-map
     :storage (make-in-mem-storage)
-    :app (component/using(make-app) [:storage])
-    :controller (component/using (make-http-controller (:server-config system-config)) [:app]))) ;; TODO: Create a test controller.
+    :app (component/using
+           (make-app)
+           [:storage])
+    :controller (component/using
+                  (make-http-controller (:server-config system-config))
+                  [:app])))
 
 (defn start-test-system [system-config]
   (component/start (test-system system-config)))

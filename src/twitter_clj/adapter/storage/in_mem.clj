@@ -1,6 +1,7 @@
 (ns twitter-clj.adapter.storage.in-mem
-  (:require [twitter-clj.application.port.storage :as storage]
-            [com.stuartsierra.component :as component]))
+  (:require [com.stuartsierra.component :as component]
+            [twitter-clj.application.port.storage :as storage]))
+
 
 (declare shutdown)
 
@@ -9,11 +10,11 @@
 (defrecord InMemoryStorage [users tweets threads]
   component/Lifecycle
   (start [this]
-    (println "Starting in-memory database")
+    (println "Starting in-memory database.")
     this)
 
   (stop [this]
-    (println "Stopping in-memory database")
+    (println "Stopping in-memory database.")
     (shutdown this))
 
   storage/Storage
