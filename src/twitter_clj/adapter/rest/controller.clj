@@ -81,20 +81,20 @@
       (wrap-json-body {:keywords? true :bigdecimals? true})
       (wrap-defaults api-defaults)))
 
-(defrecord HttpServer [http-server app]
+(defrecord HttpServer [http-server app server-config]
   component/Lifecycle
   (start [this]
     (println "Starting HTTP server.")
-    (println this)
-    (assoc this :http-server (server/run-server (handler app) {:port 3000}))) ;; TODO: Pass configuration for port.
+    (let [port (:port server-config)]
+      (assoc this :http-server
+                  (server/run-server (handler app) {:port port})))) ;; TODO: Pass configuration for port.
 
   (stop [this]
     (println "Stopping HTTP server.")
-    (println this)
     (let [stop-fn (:http-server this)]
       (stop-fn)
       this)))
 
 (defn make-http-controller ;; Constructor.
-  []
-  (map->HttpServer {:http-server {}}))
+  [server-config]
+  (map->HttpServer {:server-config server-config}))

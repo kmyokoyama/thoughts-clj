@@ -1,32 +1,33 @@
 (ns twitter-clj.adapter.rest.rest-test
-  (:require [twitter-clj.application.app :as app]
-            [twitter-clj.test-utils :refer :all]
+  (:require [twitter-clj.test-utils :refer :all]
             [clojure.test :refer :all]
             [clj-http.client :as client]
-            [ring.server.standalone :as server]
             [com.stuartsierra.component :as component]
             [twitter-clj.adapter.rest.controller :refer [make-http-controller]]
             [twitter-clj.adapter.storage.in-mem :refer [make-in-mem-storage]]
             [twitter-clj.application.app :refer [make-app]]))
 
-(def ^:const url "http://localhost:3000/")
+(def ^:const port 3000)
+(def ^:const url (str "http://localhost:" port "/"))
+(def system-config {:server-config {:port port}})
 
 (defn test-system
-  []
+  [system-config]
   (component/system-map
     :storage (make-in-mem-storage)
-    :app (component/using (make-app) [:storage])
-    :controller (component/using (make-http-controller) [:app]))) ;; TODO: Create a test controller.
+    :app (component/using(make-app) [:storage])
+    :controller (component/using (make-http-controller (:server-config system-config)) [:app]))) ;; TODO: Create a test controller.
 
-(defn start-test-system [port]
-  (component/start (test-system)))
-  ;(reset! server
-  ;        (server/serve handler {:port port :open-browser? false :auto-reload? false})))
+(defn start-test-system [system-config]
+  (component/start (test-system system-config)))
 
 (defn stop-test-system [system]
   (component/stop system))
 
-(use-fixtures :each (fn [f] (let [system (start-test-system 3000)] (f) (stop-test-system system))))
+(use-fixtures :each (fn [f]
+                      (let [system (start-test-system system-config)]
+                        (f)
+                        (stop-test-system system))))
 
 (def resource (partial resource-path url))
 
