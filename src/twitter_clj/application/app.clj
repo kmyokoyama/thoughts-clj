@@ -1,4 +1,4 @@
-(ns twitter-clj.application.operations
+(ns twitter-clj.application.app
   (:require [twitter-clj.application.core :as core]
             [twitter-clj.adapter.storage.in-mem :as storage.in-mem]
             [twitter-clj.application.port.storage :as storage]))

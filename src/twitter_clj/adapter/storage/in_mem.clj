@@ -1,5 +1,6 @@
 (ns twitter-clj.adapter.storage.in-mem
-  (:require [twitter-clj.application.port.storage :as storage]))
+  (:require [twitter-clj.application.port.storage :as storage]
+            [com.stuartsierra.component :as component]))
 
 (def users (atom {})) ;; It could also be a ref.
 (def tweets (atom {})) ;; It could also be a ref.
@@ -7,7 +8,16 @@
 
 ;; Driven-side.
 
-(deftype InMemoryStorage []
+(defrecord InMemoryStorage []
+  component/Lifecycle
+  (start [component]
+    (println "Starting in-memory database")
+    component)
+
+  (stop [component]
+    (println "Stopping in-memory database")
+    component)
+
   storage/Storage
   (update-user!
     [_ {user-id :id :as user}]

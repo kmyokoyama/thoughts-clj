@@ -1,5 +1,5 @@
 (ns twitter-clj.adapter.rest.controller
-  (:require [twitter-clj.applications.operations :as app]
+  (:require [twitter-clj.applications.app :as app]
             [compojure.core :refer :all]
             [compojure.route :as route]
             [clojure.data.json :as json]
