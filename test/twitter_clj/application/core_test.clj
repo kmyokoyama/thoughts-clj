@@ -22,6 +22,8 @@
          valid-keys# (set/difference (set/intersection expected-keys# actual-keys#) exception-keys#)]
      (every? identity (vec (doall (map #(is (= (% ~expected) (% ~actual))) valid-keys#))))))
 
+;; Tweet-related tests.
+
 (deftest like-increase-by-one
   (testing "When like, then should increase likes by one."
     (let [tweet (->Tweet (random-uuid) (random-uuid) "This is my tweet" (now) 10 0 0 (random-uuid))
@@ -35,6 +37,8 @@
           unliked-tweet (unlike tweet)]
       (equal-except-for tweet unliked-tweet :likes)
       (is (= 9 (:likes (unlike tweet)))))))
+
+;; Retweet-related tests.
 
 (deftest retweet-with-comment-creates-new-tweet
   (testing "When retweets with comment, then creates a new tweet."

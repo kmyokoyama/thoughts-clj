@@ -15,14 +15,6 @@
   [user-id text]
   (->Tweet (UUID/randomUUID) user-id text (ZonedDateTime/now) 0 0 0 nil))
 
-(defn new-retweet
-  [user-id original-tweet-id]
-  (->Retweet (UUID/randomUUID) user-id original-tweet-id (ZonedDateTime/now)))
-
-(defn- new-retweet-with-comment
-  [user-id text original-tweet-id]
-  (->RetweetWithComment (new-tweet user-id text) original-tweet-id))
-
 (defn like
   [tweet]
   (update tweet :likes inc))
@@ -32,6 +24,16 @@
   (if (pos? likes)
     (update tweet :likes dec)
     tweet))
+
+;; Retweet-related functions.
+
+(defn new-retweet
+  [user-id original-tweet-id]
+  (->Retweet (UUID/randomUUID) user-id original-tweet-id (ZonedDateTime/now)))
+
+(defn- new-retweet-with-comment
+  [user-id text original-tweet-id]
+  (->RetweetWithComment (new-tweet user-id text) original-tweet-id))
 
 (defn retweet
   [user-id original-tweet]
