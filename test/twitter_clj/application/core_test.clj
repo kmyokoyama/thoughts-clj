@@ -5,8 +5,13 @@
   (:import (java.util UUID)
            (java.time ZonedDateTime)))
 
-(defn random-uuid [] (UUID/randomUUID))
-(defn now [] (ZonedDateTime/now))
+(defn- random-uuid [] (UUID/randomUUID))
+
+(defn- now [] (ZonedDateTime/now))
+
+(defn- fresh-sharing-stats?
+  [tweet]
+  (every? zero? ((juxt :likes :retweets :replies) tweet)))
 
 (defmacro equal-except-for
   [expected actual & exceptions]
@@ -31,10 +36,23 @@
       (equal-except-for tweet unliked-tweet :likes)
       (is (= 9 (:likes (unlike tweet)))))))
 
-(deftest retweet-creates-new-tweet-from-original
-  (testing "When retweets, then creates a tweet with same text and
-  increases rewteets counting from the original tweet"
+(deftest retweet-with-comment-creates-new-tweet
+  (testing "When retweets with comment, then creates a new tweet."
     (let [original-tweet (new-tweet (random-uuid) "This is my text")
-          [re-tweet, retweeted] (retweet (:user-id original-tweet) original-tweet)]
+          retweet-user-id (random-uuid)
+          comment "This is my comment"
+          [retweet, retweeted] (retweet-with-comment retweet-user-id comment original-tweet)]
       (is (= (inc (:retweets original-tweet)) (:retweets retweeted)))
-      (equal-except-for retweeted re-tweet :id :publish-date :likes :retweets))))
+      (is (= (:original-tweet-id retweet) (:id original-tweet)))
+      (is (= (get-in retweet [:tweet :user-id]) retweet-user-id))
+      (is (= (get-in retweet [:tweet :text]) comment))
+      (is (fresh-sharing-stats? (:tweet retweet))))))
+
+(deftest retweet-without-comment-links-original-tweet
+  (testing "When retweets without comment, then links original tweet."
+    (let [original-tweet (new-tweet (random-uuid) "This is my text")
+          retweet-user-id (random-uuid)
+          [retweet', retweeted] (retweet retweet-user-id original-tweet)]
+      (is (= (inc (:retweets original-tweet)) (:retweets retweeted)))
+      (is (= (:original-tweet-id retweet') (:id original-tweet)))
+      (is (= (:user-id retweet') retweet-user-id)))))

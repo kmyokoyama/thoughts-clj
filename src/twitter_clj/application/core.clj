@@ -1,14 +1,27 @@
 (ns twitter-clj.application.core
-  (:require [twitter-clj.application.port.storage :as storage]
-            [taoensso.timbre :as log])
+  (:require [twitter-clj.application.port.storage :as storage])
   (:import (java.util UUID)
            (java.time ZonedDateTime)))
 
 (defrecord User [id active name email nickname])
 (defrecord Tweet [id user-id text publish-date likes retweets replies thread-id])
+(defrecord RetweetWithComment [tweet original-tweet-id])
+(defrecord Retweet [id user-id original-tweet-id publish-date])
 (defrecord TwitterThread [id source-tweet-id tweet-replies])
 
 ;; Tweet-related functions.
+
+(defn new-tweet
+  [user-id text]
+  (->Tweet (UUID/randomUUID) user-id text (ZonedDateTime/now) 0 0 0 nil))
+
+(defn new-retweet
+  [user-id original-tweet-id]
+  (->Retweet (UUID/randomUUID) user-id original-tweet-id (ZonedDateTime/now)))
+
+(defn- new-retweet-with-comment
+  [user-id text original-tweet-id]
+  (->RetweetWithComment (new-tweet user-id text) original-tweet-id))
 
 (defn like
   [tweet]
@@ -20,14 +33,15 @@
     (update tweet :likes dec)
     tweet))
 
-(defn new-tweet
-  [user-id text]
-  (->Tweet (UUID/randomUUID) user-id text (ZonedDateTime/now) 0 0 0 nil))
-
 (defn retweet
-  [user-id tweet]
-  [(new-tweet user-id (:text tweet))
-   (update tweet :retweets inc)])
+  [user-id original-tweet]
+  [(new-retweet user-id (:id original-tweet))
+   (update original-tweet :retweets inc)])
+
+(defn retweet-with-comment
+  [user-id text original-tweet]
+  [(new-retweet-with-comment user-id text (:id original-tweet))
+   (update original-tweet :retweets inc)])
 
 (defn update-tweet!
   [tweet storage]
@@ -40,11 +54,11 @@
   [source-tweet-id]
   (->TwitterThread (UUID/randomUUID) source-tweet-id []))
 
-(defn add-reply-tweet-to-thread
+(defn- add-reply-tweet-to-thread
   [thread tweet-id]
   (update thread :tweet-replies conj tweet-id))
 
-(defn add-thread-to-source-tweet
+(defn- add-thread-to-source-tweet
   [tweet thread-id]
   (assoc tweet :thread-id thread-id))
 
@@ -78,17 +92,3 @@
   [user storage]
   (storage/update-user! storage user)
   user)
-
-;; Debug-mode functions. TODO: Are they necessary?
-
-(defn show-all-users!
-  [storage]
-  (log/debug (storage/fetch-users! storage)))
-
-(defn show-all-tweets!
-  [storage]
-  (log/debug (storage/fetch-tweets! storage)))
-
-(defn show-all-threads!
-  [storage]
-  (log/debug (storage/fetch-threads! storage)))
