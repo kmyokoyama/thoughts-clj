@@ -3,6 +3,8 @@
   (:import (java.util UUID)
            (java.time ZonedDateTime)))
 
+(declare new-thread)
+
 (defrecord User [id active name email nickname])
 (defrecord Tweet [id user-id text publish-date likes retweets replies thread-id])
 (defrecord RetweetWithComment [tweet original-tweet-id])
@@ -13,7 +15,11 @@
 
 (defn new-tweet
   [user-id text]
-  (->Tweet (UUID/randomUUID) user-id text (ZonedDateTime/now) 0 0 0 nil))
+  (let [tweet-id (UUID/randomUUID)
+        thread (new-thread tweet-id)
+        thread-id (:id thread)]
+    {:tweet (->Tweet tweet-id user-id text (ZonedDateTime/now) 0 0 0 thread-id)
+     :thread thread}))
 
 (defn like
   [tweet]
@@ -37,13 +43,13 @@
 
 (defn retweet
   [user-id original-tweet]
-  [(new-retweet user-id (:id original-tweet))
-   (update original-tweet :retweets inc)])
+  {:retweet (new-retweet user-id (:id original-tweet))
+   :retweeted (update original-tweet :retweets inc)})
 
 (defn retweet-with-comment
   [user-id text original-tweet]
-  [(new-retweet-with-comment user-id text (:id original-tweet))
-   (update original-tweet :retweets inc)])
+  {:retweet (new-retweet-with-comment user-id text (:id original-tweet))
+   :retweeted (update original-tweet :retweets inc)})
 
 (defn update-tweet!
   [tweet storage]
@@ -67,10 +73,10 @@
 (defn reply
   [reply-tweet source-tweet thread]
   (let [thread' (-> thread (add-reply-tweet-to-thread (:id reply-tweet)))
-        source-tweet' (-> source-tweet
-                          (add-thread-to-source-tweet (:id thread'))
-                          (update :replies inc))]
-    [reply-tweet source-tweet' thread']))
+        source-tweet' (-> source-tweet (update :replies inc))]
+    {:reply-tweet reply-tweet
+     :source-tweet source-tweet'
+     :thread thread'}))
 
 (defn fetch-thread!
   [storage source-tweet]
