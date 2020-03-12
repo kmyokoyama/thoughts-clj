@@ -49,7 +49,7 @@
 (defn add-tweet
   [req app]
   (let [{:keys [user-id text]} (:body req)
-        tweet (app/add-tweet app user-id text)]
+        {:keys [tweet]} (app/add-tweet app user-id text)]
     (respond-with tweet)))
 
 (defn get-tweets-by-user

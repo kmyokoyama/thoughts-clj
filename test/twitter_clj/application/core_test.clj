@@ -42,10 +42,11 @@
 
 (deftest retweet-with-comment-creates-new-tweet
   (testing "When retweets with comment, then creates a new tweet."
-    (let [original-tweet (new-random-tweet)
+    (let [original-tweet (:tweet (new-random-tweet))
           retweet-user-id (random/uuid)
           comment (random/string)
-          [retweet, retweeted] (retweet-with-comment retweet-user-id comment original-tweet)]
+          {:keys [retweet retweeted]} (retweet-with-comment retweet-user-id comment original-tweet)]
+      (println retweet)
       (is (= (inc (:retweets original-tweet)) (:retweets retweeted)))
       (is (= (:original-tweet-id retweet) (:id original-tweet)))
       (is (= (get-in retweet [:tweet :user-id]) retweet-user-id))
@@ -54,25 +55,21 @@
 
 (deftest retweet-without-comment-links-original-tweet
   (testing "When retweets without comment, then links original tweet."
-    (let [original-tweet (new-random-tweet)
+    (let [original-tweet (:tweet (new-random-tweet))
           retweet-user-id (random/uuid)
-          [retweet', retweeted] (retweet retweet-user-id original-tweet)]
+          {:keys [retweet retweeted]} (retweet-only retweet-user-id original-tweet)]
       (is (= (inc (:retweets original-tweet)) (:retweets retweeted)))
-      (is (= (:original-tweet-id retweet') (:id original-tweet)))
-      (is (= (:user-id retweet') retweet-user-id)))))
+      (is (= (:original-tweet-id retweet) (:id original-tweet)))
+      (is (= (:user-id retweet) retweet-user-id)))))
 
 ;; Thread-related tests.
 
 (deftest reply-links-tweets
   (testing "When replies, link new tweets to source tweet."
-    (let [source-tweet (new-random-tweet)
-          thread (new-thread (:id source-tweet))
-          source-tweet' (assoc source-tweet :thread-id (:id thread))
-          reply-tweets (repeatedly 5 (fn [] (new-random-tweet)))
+    (let [{:keys [tweet thread]} (new-random-tweet)
+          reply-tweets (repeatedly 5 (fn [] (:tweet (new-random-tweet))))
           reply-tweet-ids (map :id reply-tweets)
-          final-thread (reduce (fn [t r] (nth (reply r source-tweet' t) 2)) thread reply-tweets)
+          final-thread (reduce (fn [t r] (:thread (reply r tweet t))) thread reply-tweets)
           final-tweet-ids (:tweet-replies final-thread)]
       (is (= 5 (count (:tweet-replies final-thread))))
       (is (= (set reply-tweet-ids) (set final-tweet-ids))))))
-
-

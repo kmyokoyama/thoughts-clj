@@ -38,18 +38,21 @@
   (->Retweet (UUID/randomUUID) user-id original-tweet-id (ZonedDateTime/now)))
 
 (defn- new-retweet-with-comment
-  [user-id text original-tweet-id]
-  (->RetweetWithComment (new-tweet user-id text) original-tweet-id))
+  [tweet original-tweet-id]
+  (->RetweetWithComment tweet original-tweet-id))
 
-(defn retweet
+(defn retweet-only
   [user-id original-tweet]
   {:retweet (new-retweet user-id (:id original-tweet))
    :retweeted (update original-tweet :retweets inc)})
 
 (defn retweet-with-comment
   [user-id text original-tweet]
-  {:retweet (new-retweet-with-comment user-id text (:id original-tweet))
-   :retweeted (update original-tweet :retweets inc)})
+  (let [{:keys [tweet thread]} (new-tweet user-id text)
+        retweet (new-retweet-with-comment tweet (:id original-tweet))]
+    {:retweet retweet
+     :thread thread
+     :retweeted (update original-tweet :retweets inc)}))
 
 (defn update-tweet!
   [tweet storage]

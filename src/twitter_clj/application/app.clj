@@ -32,9 +32,10 @@
 
 (defn add-tweet
   [app user-id text]
-  (->
-    (core/new-tweet user-id text)
-    (core/update-tweet! (:storage app))))
+  (let [{:keys [tweet thread] :as tweet-thread} (core/new-tweet user-id text)]
+    (core/update-tweet! tweet (:storage app))
+    (core/update-thread! thread (:storage app))
+    tweet-thread))
 
 (defn get-tweets-by-user
   [app user-id]
