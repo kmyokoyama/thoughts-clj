@@ -13,27 +13,27 @@
   [req param]
   (param (:params req)))
 
-(defn ok-json
+(defn ok-response
   [body]
   {:status 200
    :headers {"Content-Type" "application/json"}
    :body body})
 
-(def success-response
+(def ^:const status-success
   {:status "success"})
 
-(def failure-response
+(def ^:const status-failure
   {:status "failure"})
 
 (defn add-response-info
   [info]
-  (assoc success-response :result info))
+  (assoc status-success :result info))
 
 (defn to-json
   [r]
   (json/write-str r :value-fn app/value-writer))
 
-(def respond-with (comp ok-json to-json add-response-info))
+(def respond-with (comp ok-response to-json add-response-info))
 
 (defn add-user
   [req app]
