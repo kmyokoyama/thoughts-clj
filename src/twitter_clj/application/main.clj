@@ -2,7 +2,7 @@
   (:require [com.stuartsierra.component :as component]
             [ring.middleware.defaults :refer :all]
             [taoensso.timbre :as log]
-            [twitter-clj.adapter.rest.handler :refer [make-http-controller]]
+            [twitter-clj.adapter.rest.component :refer [make-http-controller]]
             [twitter-clj.adapter.storage.in-mem :refer [make-in-mem-storage]]
             [twitter-clj.application.app :refer [make-app]])
   (:gen-class))
