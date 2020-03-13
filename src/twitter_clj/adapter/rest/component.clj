@@ -7,13 +7,13 @@
 (defrecord HttpServer [http-server app server-config]
   component/Lifecycle
   (start [this]
-    (log/info "Starting HTTP server.")
+    (log/info "Starting HTTP server")
     (let [port (:port server-config)]
       (assoc this :http-server
                   (server/run-server (handler app) {:port port}))))
 
   (stop [this]
-    (log/info "Stopping HTTP server.")
+    (log/info "Stopping HTTP server")
     (let [stop-fn (:http-server this)]
       (stop-fn)
       this)))
