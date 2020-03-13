@@ -37,6 +37,6 @@
   [req app]
   (let [tweet-id (get-parameter req :tweet-id)
         updated-tweet (app/like app tweet-id)]
-    (log/info "Received request of like of tweet" tweet-id "from user") ;; Add user-id.
+    (log/info "Received request of like of tweet" tweet-id "from user") ;; TODO: Add user-id.
     (respond-with {})))
     ;(respond-with updated-tweet)))
