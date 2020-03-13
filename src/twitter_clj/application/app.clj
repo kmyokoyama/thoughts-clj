@@ -47,20 +47,6 @@
         updated-tweet (core/like tweet)]
     updated-tweet))
 
-;; Not part of the App API.
-
-(defn is-better-str
-  [key]
-  (or
-    (= key :id)
-    (some #(.endsWith (str key) %) ["-id", "-date"])))
-
-(defn value-writer
-  [key value]
-  (if (is-better-str key)
-    (str value)
-    value))
-
 ;(like [this tweet-id])
 ;(unlike [this tweet-id])
 ;(retweet [this user-id tweet-id])

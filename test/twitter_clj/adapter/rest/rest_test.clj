@@ -3,7 +3,7 @@
             [clojure.test :refer :all]
             [clj-http.client :as client]
             [com.stuartsierra.component :as component]
-            [twitter-clj.adapter.rest.controller :refer [make-http-controller]]
+            [twitter-clj.adapter.rest.component :refer [make-http-controller]]
             [twitter-clj.adapter.storage.in-mem :refer [make-in-mem-storage]]
             [twitter-clj.application.app :refer [make-app]]))
 
