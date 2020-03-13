@@ -7,11 +7,11 @@
 (defrecord App [storage]
   component/Lifecycle
   (start [this]
-    (log/info "Starting app.")
+    (log/info "Starting app")
     this)
 
   (stop [this]
-    (log/info "Stopping app.")
+    (log/info "Stopping app")
     this))
 
 (defn make-app ;; Constructor.

@@ -21,7 +21,7 @@
 (defn on-exit
   [system]
   (fn []
-    (log/info "Stopping system...")
+    (log/info "Stopping system")
     (component/stop system)))
 
 (defn handle-sigint
@@ -31,7 +31,7 @@
 (defn -main
   [& _args]
   (let [port (Integer/parseInt (or (System/getenv "PORT") "3000"))]
-    (log/info "Starting system...")
+    (log/info "Starting system")
     (let [system (component/start (system {:server-config {:port port}}))]
       (log/info (str "Running server at http://127.0.01:" port "/"))
       (handle-sigint on-exit system))))

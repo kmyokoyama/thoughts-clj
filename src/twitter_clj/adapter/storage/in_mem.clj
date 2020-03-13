@@ -11,11 +11,11 @@
 (defrecord InMemoryStorage [users tweets threads]
   component/Lifecycle
   (start [this]
-    (log/info "Starting in-memory database.")
+    (log/info "Starting in-memory database")
     this)
 
   (stop [this]
-    (log/info "Stopping in-memory database.")
+    (log/info "Stopping in-memory database")
     (shutdown this))
 
   storage/Storage
