@@ -29,3 +29,7 @@
 
   ([user-id text]
    {:user-id user-id :text text}))
+
+(defn random-uuid
+  []
+  (random/uuid))

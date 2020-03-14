@@ -10,6 +10,7 @@
   (compojure.core/routes
     ;; User API.
     (POST "/user" req (add-user req app))
+    (GET "/user/:user-id" req (get-user-by-id req app))
 
     ;; Tweet API.
     (GET "/tweet" req (get-tweets-by-user req app))

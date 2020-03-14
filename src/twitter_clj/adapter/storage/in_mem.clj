@@ -1,10 +1,14 @@
 (ns twitter-clj.adapter.storage.in-mem
   (:require [com.stuartsierra.component :as component]
             [taoensso.timbre :as log]
-            [twitter-clj.application.port.storage :as storage]))
-
+            [twitter-clj.application.port.storage :as storage])
+  (:import [java.util UUID]))
 
 (declare shutdown)
+
+(defn- to-uuid
+  [str]
+  (UUID/fromString str))
 
 ;; Driven-side.
 
@@ -43,17 +47,9 @@
     [_ tweet-id]
     (get @tweets tweet-id {}))
 
-  (fetch-users!
-    [_]
-    @users)
-
-  (fetch-tweets!
-    [_]
-    @tweets)
-
-  (fetch-threads!
-    [_]
-    @threads))
+  (fetch-user-by-id!
+    [_ user-id]
+    (get @users (to-uuid user-id))))
 
 (defn make-in-mem-storage ;; Constructor.
   []

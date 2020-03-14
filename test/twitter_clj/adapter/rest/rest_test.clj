@@ -58,6 +58,26 @@
         (is (= 200 (:status response))) ;; HTTP 200 OK.
         (is (= 0 (count result)))))))
 
+(deftest get-existing-user-by-id
+  (testing "Get an existing user returns successfully"
+    (let [expected-user {:name "john" :email "john@gmail" :nickname "johnddoe"}
+          create-user-response (post-json (resource "user") expected-user)
+          user-id (get-in (body-as-json create-user-response) [:result :id])
+          get-user-response (client/get (resource (str "user/" user-id)))
+          body (body-as-json get-user-response)
+          actual-user (:result body)
+          attributes [:name :email :nickname]]
+      (is (= 200 (:status get-user-response)))
+      (is (= (select-keys expected-user attributes) (select-keys actual-user attributes))))))
+
+(deftest get-non-existing-user-by-id
+  (testing "Get a non existing user returns failure"
+    (let [get-user-response (client/get (resource (str "user/" (random-uuid))))
+          body (body-as-json get-user-response)
+          actual-user (:result body)]
+      (is (= 200 (:status get-user-response)))
+      (is (= {} actual-user)))))
+
 ;(deftest like-existing-tweet
 ;  (testing "Like an existing tweet"
 ;    (let [user (post-json (resource "user") (new-user))
