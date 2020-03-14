@@ -1,54 +1,20 @@
 (ns twitter-clj.adapter.rest.rest-test
-  (:require [twitter-clj.test-utils :refer :all]
-            [clojure.test :refer :all]
+  (:require [clojure.test :refer :all]
             [clj-http.client :as client]
-            [com.stuartsierra.component :as component]
-            [twitter-clj.adapter.rest.component :refer [make-http-controller]]
-            [twitter-clj.adapter.storage.in-mem :refer [make-in-mem-storage]]
-            [twitter-clj.application.app :refer [make-app]]))
-
-(def ^:const port 3000)
-(def ^:const url (str "http://localhost:" port "/"))
-(def system-config {:server-config {:port port}})
-
-(defn test-system
-  [system-config]
-  (component/system-map
-    :storage (make-in-mem-storage)
-    :app (component/using
-           (make-app)
-           [:storage])
-    :controller (component/using
-                  (make-http-controller (:server-config system-config))
-                  [:app])))
-
-(defn start-test-system [system-config]
-  (component/start (test-system system-config)))
-
-(defn stop-test-system [system]
-  (component/stop system))
+            [twitter-clj.adapter.rest.test_utils :refer :all]
+            [twitter-clj.adapter.rest.test_component :refer [start-test-system! stop-test-system!]]
+            [twitter-clj.adapter.rest.test_configuration :refer [system-config]]))
 
 (use-fixtures :each (fn [f]
-                      (let [system (start-test-system system-config)]
+                      (let [system (start-test-system! system-config)]
                         (f)
-                        (stop-test-system system))))
-
-(def resource (partial resource-path url))
+                        (stop-test-system! system))))
 
 (deftest add-single-user
   (testing "Add a single user"
     (let [response (post-json (resource "user") (new-user))]
-      (is (= "success" (:status (body-as-json response)))))))
-
-(deftest get-users-successfully
-  (testing "Get two users successfully"
-    ;; Given.
-    (post-json (resource "user") (new-user))
-    (post-json (resource "user") (new-user))
-    ;; Then.
-    (let [response (client/get (resource "users") {})]
       (is (= "success" (:status (body-as-json response))))
-      (is (= 2 (count (:result (body-as-json response))))))))
+      (is (= 201 (:status response)))))) ;; HTTP 201 Created.
 
 (deftest add-single-tweet
   (testing "Add a single tweet"
@@ -59,11 +25,12 @@
           body (body-as-json response)
           result (:result body)]
       (is (= "success" (:status body)))
+      (is (= 201 (:status response))) ;; HTTP 201 Created.
       (is (= user-id (:user-id result)))
       (is (= text (:text result)))
       (is (= 0 (:likes result) (:retweets result) (:replies result))))))
 
-(deftest get-tweets-successfully
+(deftest get-tweets-from-user
   (testing "Get two tweets from the same user"
     (let [user (post-json (resource "user") (new-user))
           user-id (get-in (body-as-json user) [:result :id])
@@ -71,10 +38,11 @@
           second-tweet (post-json (resource "tweet") (new-tweet user-id))
           first-tweet-id (get-in (body-as-json first-tweet) [:result :id])
           second-tweet-id (get-in (body-as-json second-tweet) [:result :id])
-          response (client/get (resource "tweets") {:query-params {:user-id user-id}})
+          response (client/get (resource "tweet") {:query-params {:user-id user-id}})
           body (body-as-json response)
           result (:result body)]
       (is (= "success" (:status body)))
+      (is (= 200 (:status response))) ;; HTTP 200 OK.
       (is (= 2 (count result)))
       (is (= #{first-tweet-id second-tweet-id} (into #{} (map :id result)))))))
 
@@ -83,10 +51,11 @@
     (let [user (post-json (resource "user") (new-user))
           user-id (get-in (body-as-json user) [:result :id])]
       ;; No tweet.
-      (let [response (client/get (resource "tweets") {:query-params {:user-id user-id}})
+      (let [response (client/get (resource "tweet") {:query-params {:user-id user-id}})
             body (body-as-json response)
             result (:result body)]
         (is (= "success" (:status body)))
+        (is (= 200 (:status response))) ;; HTTP 200 OK.
         (is (= 0 (count result)))))))
 
 ;(deftest like-existing-tweet

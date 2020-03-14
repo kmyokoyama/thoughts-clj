@@ -1,8 +1,8 @@
-(ns twitter-clj.test-utils
-  (:require [clojure.test :refer :all]
-            [clojure.data.json :as json]
+(ns twitter-clj.adapter.rest.test_utils
+  (:require [clojure.data.json :as json]
             [clojure.data.generators :as random]
-            [clj-http.client :as client]))
+            [clj-http.client :as client]
+            [twitter-clj.adapter.rest.test_configuration :refer [url]]))
 
 (defn post-json
   [url body]
@@ -16,6 +16,8 @@
   (if (string? body)
     (json/read-str body :key-fn keyword)
     body))
+
+(def resource (partial resource-path url))
 
 (defn new-user
   []

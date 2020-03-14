@@ -8,11 +8,15 @@
 (defn app-routes
   [app]
   (compojure.core/routes
+    ;; User API.
     (POST "/user" req (add-user req app))
-    (GET "/users" req (get-users req app))
+
+    ;; Tweet API.
+    (GET "/tweet" req (get-tweets-by-user req app))
     (POST "/tweet" req (add-tweet req app))
-    (GET "/tweets" req (get-tweets-by-user req app))
-    (PATCH "/tweet/like" req (like-tweet req app))
+    (POST "/tweet/:tweet-id" req (like-tweet req app)) ;; TODO: Turn into a dispatch function.
+
+    ;; Default.
     (route/not-found "Error, page not found!")))
 
 (defn handler

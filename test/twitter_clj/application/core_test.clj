@@ -46,7 +46,6 @@
           retweet-user-id (random/uuid)
           comment (random/string)
           {:keys [retweet retweeted]} (retweet-with-comment retweet-user-id comment original-tweet)]
-      (println retweet)
       (is (= (inc (:retweets original-tweet)) (:retweets retweeted)))
       (is (= (:original-tweet-id retweet) (:id original-tweet)))
       (is (= (get-in retweet [:tweet :user-id]) retweet-user-id))
