@@ -17,7 +17,7 @@
   (let [user-id (get-parameter req :user-id)
         user (app/get-user-by-id app user-id)]
     (log/info "Received request to get user with id" user-id)
-    (respond-with-ok (if user user {}))))
+    (respond-with-ok user)))
 
 (defn add-tweet
   [req app]
@@ -25,6 +25,13 @@
         {:keys [tweet]} (app/add-tweet app user-id text)]
     (log/info "Received request to add new tweet from user" user-id)
     (respond-with-created tweet)))
+
+(defn get-tweet-by-id
+  [req app]
+  (let [tweet-id (get-parameter req :tweet-id)
+        tweet (app/get-tweet-by-id app tweet-id)]
+    (log/info "Received request to get tweet with id" tweet-id)
+    (respond-with-ok tweet)))
 
 (defn get-tweets-by-user
   [req app]

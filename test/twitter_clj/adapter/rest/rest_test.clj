@@ -60,7 +60,7 @@
 
 (deftest get-existing-user-by-id
   (testing "Get an existing user returns successfully"
-    (let [expected-user {:name "john" :email "john@gmail" :nickname "johnddoe"}
+    (let [expected-user (new-user)
           create-user-response (post-json (resource "user") expected-user)
           user-id (get-in (body-as-json create-user-response) [:result :id])
           get-user-response (client/get (resource (str "user/" user-id)))
@@ -77,6 +77,28 @@
           actual-user (:result body)]
       (is (= 200 (:status get-user-response)))
       (is (= {} actual-user)))))
+
+(deftest get-existing-tweet-by-id
+  (testing "Get an existing tweet returns successfully"
+    (let [expected-tweet (new-tweet)
+          create-tweet-response (post-json (resource "tweet") expected-tweet)
+          tweet-id (get-in (body-as-json create-tweet-response) [:result :id])
+          get-tweet-response (client/get (resource (str "tweet/" tweet-id)))
+          zeroed-attributes [:likes :retweets :replies]
+          body (body-as-json get-tweet-response)
+          actual-tweet (:result body)]
+      (is (= 200 (:status get-tweet-response)))
+      (is (= (str (:user-id expected-tweet)) (:user-id actual-tweet)))
+      (is (= (:text expected-tweet) (:text actual-tweet)))
+      (is (every? zero? (vals (select-keys expected-tweet zeroed-attributes)))))))
+
+(deftest get-non-existing-tweet-by-id
+  (testing "Get a non existing tweet returns failure"
+    (let [get-tweet-response (client/get (resource (str "tweet/" (random-uuid))))
+          body (body-as-json get-tweet-response)
+          actual-tweet (:result body)]
+      (is (= 200 (:status get-tweet-response)))
+      (is (= {} actual-tweet)))))
 
 ;(deftest like-existing-tweet
 ;  (testing "Like an existing tweet"

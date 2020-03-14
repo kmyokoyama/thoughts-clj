@@ -37,6 +37,10 @@
     (core/update-thread! thread (:storage app))
     tweet-thread))
 
+(defn get-tweet-by-id
+  [app tweet-id]
+  (storage/fetch-tweet-by-id! (:storage app) tweet-id))
+
 (defn get-tweets-by-user
   [app user-id]
   (storage/fetch-tweets-by-user! (:storage app) user-id))
