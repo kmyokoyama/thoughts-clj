@@ -23,7 +23,7 @@
   [req app]
   (let [{:keys [user-id text]} (:body req)
         {:keys [tweet]} (app/add-tweet app user-id text)]
-    (log/info "Received request too add new tweet from user" user-id)
+    (log/info "Received request to add new tweet from user" user-id)
     (respond-with tweet)))
 
 (defn get-tweets-by-user
@@ -36,7 +36,8 @@
 (defn like-tweet
   [req app]
   (let [tweet-id (get-parameter req :tweet-id)
+        user-id (get-parameter req :user-id)
         updated-tweet (app/like app tweet-id)]
-    (log/info "Received request of like of tweet" tweet-id "from user") ;; TODO: Add user-id.
+    (log/info "Received request of like of tweet" tweet-id "from user" user-id)
     (respond-with {})))
     ;(respond-with updated-tweet)))
