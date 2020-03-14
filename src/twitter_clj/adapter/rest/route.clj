@@ -13,6 +13,7 @@
     (GET "/user/:user-id" req (get-user-by-id req app))
 
     ;; Tweet API.
+    (GET "/tweet/:tweet-id" req (get-tweet-by-id req app))
     (GET "/tweet" req (get-tweets-by-user req app))
     (POST "/tweet" req (add-tweet req app))
     (POST "/tweet/:tweet-id" req (like-tweet req app)) ;; TODO: Turn into a dispatch function.

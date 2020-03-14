@@ -19,17 +19,20 @@
 
 (def resource (partial resource-path url))
 
+(defn random-uuid
+  []
+  (random/uuid))
+
 (defn new-user
   []
   {:name (random/string) :email (random/string) :nickname (random/string)})
 
 (defn new-tweet
+  ([]
+   (new-tweet (random-uuid)))
+
   ([user-id]
    {:user-id user-id :text (random/string)})
 
   ([user-id text]
    {:user-id user-id :text text}))
-
-(defn random-uuid
-  []
-  (random/uuid))
