@@ -36,9 +36,18 @@
   (json/write-str r :value-fn value-writer))
 
 (defn ok-response
+  "Respond with 200 (HTTP OK)"
   [body]
   {:status 200
    :headers {"Content-Type" "application/json"}
    :body body})
 
-(def respond-with (comp ok-response to-json add-response-info))
+(defn created-response
+  "Respond with 201 (HTTP Created)"
+  [body]
+  {:status 201
+   :headers {"Content-Type" "application/json"}
+   :body body})
+
+(def respond-with-ok (comp ok-response to-json add-response-info))
+(def respond-with-created (comp created-response to-json add-response-info))

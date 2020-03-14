@@ -7,9 +7,11 @@
             [twitter-clj.adapter.storage.in-mem :refer [make-in-mem-storage]]
             [twitter-clj.application.app :refer [make-app]]))
 
+;; TODO: Move to util.
 (def ^:const port 3000)
 (def ^:const url (str "http://localhost:" port "/"))
 (def system-config {:server-config {:port port}})
+(def resource (partial resource-path url))
 
 (defn test-system
   [system-config]
@@ -33,22 +35,11 @@
                         (f)
                         (stop-test-system system))))
 
-(def resource (partial resource-path url))
-
 (deftest add-single-user
   (testing "Add a single user"
     (let [response (post-json (resource "user") (new-user))]
-      (is (= "success" (:status (body-as-json response)))))))
-
-(deftest get-users-successfully
-  (testing "Get two users successfully"
-    ;; Given.
-    (post-json (resource "user") (new-user))
-    (post-json (resource "user") (new-user))
-    ;; Then.
-    (let [response (client/get (resource "users") {})]
       (is (= "success" (:status (body-as-json response))))
-      (is (= 2 (count (:result (body-as-json response))))))))
+      (is (= 201 (:status response)))))) ;; HTTP 201 Created.
 
 (deftest add-single-tweet
   (testing "Add a single tweet"
@@ -59,11 +50,12 @@
           body (body-as-json response)
           result (:result body)]
       (is (= "success" (:status body)))
+      (is (= 201 (:status response))) ;; HTTP 201 Created.
       (is (= user-id (:user-id result)))
       (is (= text (:text result)))
       (is (= 0 (:likes result) (:retweets result) (:replies result))))))
 
-(deftest get-tweets-successfully
+(deftest get-tweets-from-user
   (testing "Get two tweets from the same user"
     (let [user (post-json (resource "user") (new-user))
           user-id (get-in (body-as-json user) [:result :id])
@@ -71,10 +63,11 @@
           second-tweet (post-json (resource "tweet") (new-tweet user-id))
           first-tweet-id (get-in (body-as-json first-tweet) [:result :id])
           second-tweet-id (get-in (body-as-json second-tweet) [:result :id])
-          response (client/get (resource "tweets") {:query-params {:user-id user-id}})
+          response (client/get (resource "tweet") {:query-params {:user-id user-id}})
           body (body-as-json response)
           result (:result body)]
       (is (= "success" (:status body)))
+      (is (= 200 (:status response))) ;; HTTP 200 OK.
       (is (= 2 (count result)))
       (is (= #{first-tweet-id second-tweet-id} (into #{} (map :id result)))))))
 
@@ -83,10 +76,11 @@
     (let [user (post-json (resource "user") (new-user))
           user-id (get-in (body-as-json user) [:result :id])]
       ;; No tweet.
-      (let [response (client/get (resource "tweets") {:query-params {:user-id user-id}})
+      (let [response (client/get (resource "tweet") {:query-params {:user-id user-id}})
             body (body-as-json response)
             result (:result body)]
         (is (= "success" (:status body)))
+        (is (= 200 (:status response))) ;; HTTP 200 OK.
         (is (= 0 (count result)))))))
 
 ;(deftest like-existing-tweet
