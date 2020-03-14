@@ -69,10 +69,6 @@
   [thread tweet-id]
   (update thread :tweet-replies conj tweet-id))
 
-(defn- add-thread-to-source-tweet
-  [tweet thread-id]
-  (assoc tweet :thread-id thread-id))
-
 (defn reply
   [reply-tweet source-tweet thread]
   (let [thread' (-> thread (add-reply-tweet-to-thread (:id reply-tweet)))

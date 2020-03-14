@@ -26,9 +26,9 @@
     (core/new-user name email nickname)
     (core/update-user! (:storage app))))
 
-(defn get-users
-  [app]
-  (vals (storage/fetch-users! (:storage app))))
+(defn get-user-by-id
+  [app user-id]
+  (storage/fetch-user-by-id! (:storage app) user-id))
 
 (defn add-tweet
   [app user-id text]

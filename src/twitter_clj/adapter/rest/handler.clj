@@ -9,8 +9,15 @@
   (let [{:keys [name email nickname]} (:body req)
         user (app/add-user app name email nickname)
         user-info (str name " @" nickname " [" email"]")]
-    (log/info "Received request to add user:" user-info)
+    (log/info "Received request to add user" user-info)
     (respond-with-created user)))
+
+(defn get-user-by-id
+  [req app]
+  (let [user-id (get-parameter req :user-id)
+        user (app/get-user-by-id app user-id)]
+    (log/info "Received request to get user with id" user-id)
+    (respond-with-ok (if user user {}))))
 
 (defn add-tweet
   [req app]
