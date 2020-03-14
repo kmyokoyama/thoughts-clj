@@ -1,39 +1,14 @@
 (ns twitter-clj.adapter.rest.rest-test
-  (:require [twitter-clj.test-utils :refer :all]
-            [clojure.test :refer :all]
+  (:require [clojure.test :refer :all]
             [clj-http.client :as client]
-            [com.stuartsierra.component :as component]
-            [twitter-clj.adapter.rest.component :refer [make-http-controller]]
-            [twitter-clj.adapter.storage.in-mem :refer [make-in-mem-storage]]
-            [twitter-clj.application.app :refer [make-app]]))
-
-;; TODO: Move to util.
-(def ^:const port 3000)
-(def ^:const url (str "http://localhost:" port "/"))
-(def system-config {:server-config {:port port}})
-(def resource (partial resource-path url))
-
-(defn test-system
-  [system-config]
-  (component/system-map
-    :storage (make-in-mem-storage)
-    :app (component/using
-           (make-app)
-           [:storage])
-    :controller (component/using
-                  (make-http-controller (:server-config system-config))
-                  [:app])))
-
-(defn start-test-system [system-config]
-  (component/start (test-system system-config)))
-
-(defn stop-test-system [system]
-  (component/stop system))
+            [twitter-clj.adapter.rest.test_utils :refer :all]
+            [twitter-clj.adapter.rest.test_component :refer [start-test-system! stop-test-system!]]
+            [twitter-clj.adapter.rest.test_configuration :refer [system-config]]))
 
 (use-fixtures :each (fn [f]
-                      (let [system (start-test-system system-config)]
+                      (let [system (start-test-system! system-config)]
                         (f)
-                        (stop-test-system system))))
+                        (stop-test-system! system))))
 
 (deftest add-single-user
   (testing "Add a single user"
