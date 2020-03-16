@@ -17,6 +17,10 @@
 
 ;; Public functions.
 
+(defn get-from-body
+  [req param]
+  (param (:body req)))
+
 (defn get-parameter
   [req param]
   (param (:params req)))
@@ -27,9 +31,13 @@
 (def ^:const status-failure
   {:status "failure"})
 
-(defn add-response-info
-  [info]
-  (assoc status-success :result info))
+(defn add-success-result
+  [result]
+  (assoc status-success :result result))
+
+(defn add-failure-result
+  [result]
+  (assoc status-failure :result result))
 
 (defn to-json
   [r]
@@ -49,5 +57,6 @@
    :headers {"Content-Type" "application/json"}
    :body body})
 
-(def respond-with-ok (comp ok-response to-json add-response-info))
-(def respond-with-created (comp created-response to-json add-response-info))
+(def ok-with-success (comp ok-response to-json add-success-result))
+(def ok-with-failure (comp ok-response to-json add-failure-result))
+(def created (comp created-response to-json add-success-result))

@@ -2,7 +2,8 @@
   (:require [com.stuartsierra.component :as component]
             [taoensso.timbre :as log]
             [twitter-clj.application.core :as core]
-            [twitter-clj.application.port.storage :as storage]))
+            [twitter-clj.application.port.storage :as storage]
+            [twitter-clj.application.util :refer [success error process]]))
 
 (defrecord App [storage]
   component/Lifecycle
@@ -47,9 +48,9 @@
 
 (defn like
   [app tweet-id]
-  (let [tweet (storage/fetch-tweet-by-id! (:storage app) tweet-id)
-        updated-tweet (core/like tweet)]
-    updated-tweet))
+  (if-let [tweet (storage/fetch-tweet-by-id! (:storage app) tweet-id)]
+    (success (core/like tweet))
+    (error nil)))
 
 ;(like [this tweet-id])
 ;(unlike [this tweet-id])

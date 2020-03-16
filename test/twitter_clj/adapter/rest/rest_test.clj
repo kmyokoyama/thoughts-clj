@@ -47,7 +47,7 @@
       (is (= #{first-tweet-id second-tweet-id} (into #{} (map :id result)))))))
 
 (deftest get-empty-tweets
-  (testing "Get tweets returns no tweet if user has not tweet yet"
+  (testing "Returns no tweet if user has not tweet yet"
     (let [user (post-json (resource "user") (new-user))
           user-id (get-in (body-as-json user) [:result :id])]
       ;; No tweet.
@@ -76,6 +76,7 @@
           body (body-as-json get-user-response)
           actual-user (:result body)]
       (is (= 200 (:status get-user-response)))
+      (is (= "failure" (:status body)))
       (is (= {} actual-user)))))
 
 (deftest get-existing-tweet-by-id
@@ -98,16 +99,29 @@
           body (body-as-json get-tweet-response)
           actual-tweet (:result body)]
       (is (= 200 (:status get-tweet-response)))
+      (is (= "failure" (:status body)))
       (is (= {} actual-tweet)))))
 
-;(deftest like-existing-tweet
-;  (testing "Like an existing tweet"
-;    (let [user (post-json (resource "user") (new-user))
-;          user-id (get-in (body-as-json user) [:result :id])
-;          tweet (post-json (resource "tweet") (new-tweet user-id))
-;          tweet-id (get-in (body-as-json tweet) [:result :id])
-;          updated-tweet (client/patch (resource "tweet/like") {:query-params {:tweet-id tweet-id}})
-;          body (body-as-json updated-tweet)
-;          result (:result body)]
-;      (is (= "success" (:status body)))
-;      (is (= 1 (:likes result))))))
+(deftest like-existing-tweet
+  (testing "Like an existing tweet"
+    (let [user (post-json (resource "user") (new-user))
+          user-id (get-in (body-as-json user) [:result :id])
+          tweet (post-json (resource "tweet") (new-tweet user-id))
+          tweet-id (get-in (body-as-json tweet) [:result :id])
+          like-tweet-response (post-json (resource (str "tweet/" tweet-id)) {:action "like"})
+          body (body-as-json like-tweet-response)
+          result (:result body)]
+      (is (= 200 (:status like-tweet-response)))
+      (is (= "success" (:status body)))
+      (is (= tweet-id (:id result)))
+      (is (= 1 (:likes result))))))
+
+(deftest like-non-existing-tweet
+  (testing "Like a non existing tweet returns failure"
+    (let [tweet-id (random-uuid)
+          like-tweet-response (post-json (resource (str "tweet/" tweet-id)) {:action "like"})
+          body (body-as-json like-tweet-response)
+          result (:result body)]
+      (is (= 200 (:status like-tweet-response)))
+      (is (= "failure" (:status body)))
+      (is (= (str tweet-id) (:id result))))))

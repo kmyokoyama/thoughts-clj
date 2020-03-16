@@ -1,5 +1,11 @@
 (ns twitter-clj.application.util)
 
-(defn set-status [status result] (merge {:status status} result))
-(defn success [] (partial set-status :ok))
-(defn error [] (partial set-status :error))
+(defrecord Operation [status result])
+
+(defn success [result] (->Operation :ok result))
+(defn error [error-ctx] (->Operation :error error-ctx))
+
+(defn process [op f e]
+  (case (:status op)
+    :ok (success (f (:result op)))
+    :error (error (e (:result op)))))
