@@ -16,7 +16,7 @@
     (GET "/tweet/:tweet-id" req (get-tweet-by-id req app))
     (GET "/tweet" req (get-tweets-by-user req app))
     (POST "/tweet" req (add-tweet req app))
-    (POST "/tweet/:tweet-id" req (like-tweet req app)) ;; TODO: Turn into a dispatch function.
+    (POST "/tweet/:tweet-id" req (tweet-action req app))
 
     ;; Default.
     (route/not-found "Error, page not found!")))
