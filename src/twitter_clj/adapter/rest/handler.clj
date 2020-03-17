@@ -21,7 +21,10 @@
   (let [user-id (get-parameter req :user-id)
         user (app/get-user-by-id app user-id)]
     (log/info "Received request to get user with id" user-id)
-    (ok-with-success user)))
+    (-> (process user
+                 ok-with-success
+                 (fn [_op] (ok-with-failure {:cause "User not found" :id user-id})))
+        (:result))))
 
 (defn add-tweet
   [req app]
@@ -35,7 +38,10 @@
   (let [tweet-id (get-parameter req :tweet-id)
         tweet (app/get-tweet-by-id app tweet-id)]
     (log/info "Received request to get tweet with id" tweet-id)
-    (ok-with-success tweet)))
+    (-> (process tweet
+                 ok-with-success
+                 (fn [_op] (ok-with-failure {:cause "Tweet not found" :id tweet-id})))
+        (:result))))
 
 (defn get-tweets-by-user
   [req app]
