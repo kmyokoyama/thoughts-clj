@@ -26,5 +26,6 @@
   (-> (app-routes app)
       (wrap-json-body {:keywords? true :bigdecimals? true})
       wrap-resource-not-found
+      wrap-duplicate-resource
       wrap-default-exception
       (wrap-defaults api-defaults)))
