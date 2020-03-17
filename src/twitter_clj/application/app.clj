@@ -56,6 +56,11 @@
         is-found (not (= {} tweet))]
     (if is-found (success (core/like tweet)) (error {}))))
 
-;(unlike [this tweet-id])
+(defn unlike
+  [app tweet-id]
+  (let [tweet (storage/fetch-tweet-by-id! (:storage app) tweet-id)
+        is-found (not (= {} tweet))]
+    (if is-found (success (core/unlike tweet)) (error {}))))
+
 ;(retweet [this user-id tweet-id])
 ;(reply [this reply-text source-tweet-id])

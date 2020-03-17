@@ -127,3 +127,42 @@
       (is (= 200 (:status like-tweet-response)))
       (is (= "failure" (:status body)))
       (is (= (str tweet-id) (:id result))))))
+
+(deftest unlike-existing-tweet-with-positive-likes
+  (testing "Unlike an existing tweet with positive likes"
+    (let [user (post-json (resource "user") (new-user))
+          user-id (get-in (body-as-json user) [:result :id])
+          tweet (post-json (resource "tweet") (new-tweet user-id))
+          tweet-id (get-in (body-as-json tweet) [:result :id])
+          _ (post-json (resource (str "tweet/" tweet-id)) {:action "like"})
+          unlike-tweet-response (post-json (resource (str "tweet/" tweet-id)) {:action "unlike"})
+          body (body-as-json unlike-tweet-response)
+          result (:result body)]
+      (is (= 200 (:status unlike-tweet-response)))
+      (is (= "success" (:status body)))
+      (is (= tweet-id (:id result)))
+      (is (= 0 (:likes result))))))
+
+(deftest unlike-existing-tweet-with-zero-likes
+  (testing "Unlike an existing tweet with positive likes"
+    (let [user (post-json (resource "user") (new-user))
+          user-id (get-in (body-as-json user) [:result :id])
+          tweet (post-json (resource "tweet") (new-tweet user-id))
+          tweet-id (get-in (body-as-json tweet) [:result :id])
+          unlike-tweet-response (post-json (resource (str "tweet/" tweet-id)) {:action "unlike"})
+          body (body-as-json unlike-tweet-response)
+          result (:result body)]
+      (is (= 200 (:status unlike-tweet-response)))
+      (is (= "success" (:status body)))
+      (is (= tweet-id (:id result)))
+      (is (= 0 (:likes result))))))
+
+(deftest unlike-non-existing-tweet
+  (testing "Unlike a non existing tweet returns failure"
+    (let [tweet-id (random-uuid)
+          like-tweet-response (post-json (resource (str "tweet/" tweet-id)) {:action "like"})
+          body (body-as-json like-tweet-response)
+          result (:result body)]
+      (is (= 200 (:status like-tweet-response)))
+      (is (= "failure" (:status body)))
+      (is (= (str tweet-id) (:id result))))))
