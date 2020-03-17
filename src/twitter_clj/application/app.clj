@@ -33,15 +33,22 @@
                                      :resource-type :tweet
                                      :resource-id tweet-id})))
 
+(defn- throw-duplicate-user!
+  [key]
+  (throw (ex-info "User already exists" {:type :duplicate-resource
+                                         :resource-type :user
+                                         :resource-key key})))
+
 ;; Public functions.
 
 ;; We can make it part of a protocol.
 
 (defn add-user
   [app name email username]
-  (->
-    (core/new-user name email username)
-    (core/update-user! (:storage app))))
+  (let [user (core/new-user name email username)]
+    (if (storage/new-user? (:storage app) email)
+      (core/update-user! user (:storage app))
+      (throw-duplicate-user! email))))
 
 (defn get-user-by-id
   [app user-id]

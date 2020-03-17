@@ -11,10 +11,10 @@
   "This will be moved to user management API in the future."
   [req app]
   (let [{:keys [name email username]} (:body req)
-        user (app/add-user app name email username)
         user-info (str name " @" username " [" email"]")]
     (log/info "Received request to add user" user-info)
-    (created user)))
+    (let [user (app/add-user app name email username)]
+      (created user))))
 
 (defn get-user-by-id
   [req app]
@@ -79,6 +79,20 @@
                                 (ok-with-failure {:cause "resource not found"
                                                   :resource-type resource-type
                                                   :resource-id resource-id}))
+          (throw e))))))
+
+(defn wrap-duplicate-resource
+  [handler]
+  (fn [request]
+    (try
+      (handler request)
+      (catch Exception e
+        (case (:type (ex-data e))
+          :duplicate-resource (let [{:keys [resource-type resource-key]} (ex-data e)]
+                                (log/warn (.getMessage e) resource-key)
+                                (ok-with-failure {:cause "resource already exists"
+                                                  :resource-type resource-type
+                                                  :resource-key resource-key}))
           (throw e))))))
 
 (defn wrap-default-exception

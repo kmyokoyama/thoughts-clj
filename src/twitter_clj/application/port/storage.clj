@@ -7,4 +7,5 @@
   (fetch-user-by-id! [this user-id])
   (fetch-tweets-by-user! [this user-id])
   (fetch-tweet-by-id! [this tweet-id])
-  (fetch-thread-by-id! [this thread-id]))
+  (fetch-thread-by-id! [this thread-id])
+  (new-user? [this email]))

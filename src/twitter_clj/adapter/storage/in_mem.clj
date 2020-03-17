@@ -49,7 +49,11 @@
 
   (fetch-user-by-id!
     [_ user-id]
-    (get @users (to-uuid user-id))))
+    (get @users (to-uuid user-id)))
+
+  (new-user?
+    [_ email]
+    (not-any? (fn [user] (= (:email user) email)) (vals @users))))
 
 (defn make-in-mem-storage ;; Constructor.
   []
