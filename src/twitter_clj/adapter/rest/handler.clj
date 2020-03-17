@@ -10,9 +10,9 @@
 (defn add-user
   "This will be moved to user management API in the future."
   [req app]
-  (let [{:keys [name email nickname]} (:body req)
-        user (app/add-user app name email nickname)
-        user-info (str name " @" nickname " [" email"]")]
+  (let [{:keys [name email username]} (:body req)
+        user (app/add-user app name email username)
+        user-info (str name " @" username " [" email"]")]
     (log/info "Received request to add user" user-info)
     (created user)))
 
@@ -21,10 +21,7 @@
   (let [user-id (get-parameter req :user-id)
         user (app/get-user-by-id app user-id)]
     (log/info "Received request to get user with id" user-id)
-    (-> (process user
-                 ok-with-success
-                 (fn [_op] (ok-with-failure {:cause "User not found" :id user-id})))
-        (:result))))
+    (ok-with-success user)))
 
 (defn add-tweet
   [req app]
@@ -38,10 +35,7 @@
   (let [tweet-id (get-parameter req :tweet-id)
         tweet (app/get-tweet-by-id app tweet-id)]
     (log/info "Received request to get tweet with id" tweet-id)
-    (-> (process tweet
-                 ok-with-success
-                 (fn [_op] (ok-with-failure {:cause "Tweet not found" :id tweet-id})))
-        (:result))))
+    (ok-with-success tweet)))
 
 (defn get-tweets-by-user
   [req app]
@@ -53,18 +47,15 @@
 (defn- like-tweet
   [tweet-id app]
   (log/info "Received request to like tweet" tweet-id)
-  (-> (process (app/like app tweet-id)
-               ok-with-success
-               (fn [_op] (ok-with-failure {:cause "Tweet not found" :id tweet-id})))
-      (:result)))
+  (try
+    (-> (app/like app tweet-id)
+        (ok-with-success))))
 
 (defn- unlike-tweet
   [tweet-id app]
   (log/info "Received request to unlike tweet" tweet-id)
-  (-> (process (app/unlike app tweet-id)
-               ok-with-success
-               (fn [_op] (ok-with-failure {:cause "Tweet not found" :id tweet-id})))
-      (:result)))
+  (-> (app/unlike app tweet-id)
+      (ok-with-success)))
 
 (defn tweet-action
   [req app]
@@ -73,3 +64,28 @@
     (case action
       :like (like-tweet tweet-id app)
       :unlike (unlike-tweet tweet-id app))))
+
+;; Exception-handling functions.
+
+(defn wrap-resource-not-found
+  [handler]
+  (fn [request]
+    (try
+      (handler request)
+      (catch Exception e
+        (case (:type (ex-data e))
+          :resource-not-found (let [{:keys [resource-type resource-id]} (ex-data e)]
+                                (log/warn (.getMessage e) resource-id)
+                                (ok-with-failure {:cause "resource not found"
+                                                  :resource-type resource-type
+                                                  :resource-id resource-id}))
+          (throw e))))))
+
+(defn wrap-default-exception
+  [handler]
+  (fn [request]
+    (try
+      (handler request)
+      (catch Exception e
+        (log/warn (.getMessage e))
+        (ok-with-failure {:cause "unknown error" :message (.getMessage e)})))))

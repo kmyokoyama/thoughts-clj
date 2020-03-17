@@ -19,19 +19,35 @@
   []
   (map->App {}))
 
+;; Private functions.
+
+(defn- throw-missing-user!
+  [user-id]
+  (throw (ex-info "User not found" {:type :resource-not-found
+                                    :resource-type :user
+                                    :resource-id user-id})))
+
+(defn- throw-missing-tweet!
+  [tweet-id]
+  (throw (ex-info "Tweet not found" {:type :resource-not-found
+                                     :resource-type :tweet
+                                     :resource-id tweet-id})))
+
+;; Public functions.
+
 ;; We can make it part of a protocol.
 
 (defn add-user
-  [app name email nickname]
+  [app name email username]
   (->
-    (core/new-user name email nickname)
+    (core/new-user name email username)
     (core/update-user! (:storage app))))
 
 (defn get-user-by-id
   [app user-id]
-  (let [user (storage/fetch-user-by-id! (:storage app) user-id)
-        is-found (not (= {} user))]
-    (if is-found (success user) (error {}))))
+  (if-let [user (storage/fetch-user-by-id! (:storage app) user-id)]
+    user
+    (throw-missing-user! user-id)))
 
 (defn add-tweet
   [app user-id text] ;; TODO: Handle the case in which there is no user with this user-id.
@@ -42,9 +58,9 @@
 
 (defn get-tweet-by-id
   [app tweet-id]
-  (let [tweet (storage/fetch-tweet-by-id! (:storage app) tweet-id)
-        is-found (not (= {} tweet))]
-    (if is-found (success tweet) (error {}))))
+  (if-let [tweet (storage/fetch-tweet-by-id! (:storage app) tweet-id)]
+    tweet
+    (throw-missing-tweet! tweet-id)))
 
 (defn get-tweets-by-user
   [app user-id] ;; TODO: Handle the case in which there is no user with this user-id.
@@ -52,15 +68,15 @@
 
 (defn like
   [app tweet-id]
-  (let [tweet (storage/fetch-tweet-by-id! (:storage app) tweet-id)
-        is-found (not (= {} tweet))]
-    (if is-found (success (core/like tweet)) (error {}))))
+  (if-let [tweet (storage/fetch-tweet-by-id! (:storage app) tweet-id)]
+    (core/like tweet)
+    (throw-missing-tweet! tweet-id)))
 
 (defn unlike
   [app tweet-id]
-  (let [tweet (storage/fetch-tweet-by-id! (:storage app) tweet-id)
-        is-found (not (= {} tweet))]
-    (if is-found (success (core/unlike tweet)) (error {}))))
+  (if-let [tweet (storage/fetch-tweet-by-id! (:storage app) tweet-id)]
+    (core/unlike tweet)
+    (throw-missing-tweet! tweet-id)))
 
 ;(retweet [this user-id tweet-id])
 ;(reply [this reply-text source-tweet-id])

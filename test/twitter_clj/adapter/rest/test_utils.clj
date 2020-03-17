@@ -25,7 +25,7 @@
 
 (defn new-user
   []
-  {:name (random/string) :email (random/string) :nickname (random/string)})
+  {:name (random/string) :email (random/string) :username (random/string)})
 
 (defn new-tweet
   ([]

@@ -58,7 +58,7 @@
         (is (= 200 (:status response))) ;; HTTP 200 OK.
         (is (= 0 (count result)))))))
 
-(deftest get-existing-user-by-id
+(deftest get-user-by-id
   (testing "Get an existing user returns successfully"
     (let [expected-user (new-user)
           create-user-response (post-json (resource "user") expected-user)
@@ -66,12 +66,12 @@
           get-user-response (client/get (resource (str "user/" user-id)))
           body (body-as-json get-user-response)
           actual-user (:result body)
-          attributes [:name :email :nickname]]
+          attributes [:name :email :username]]
       (is (= 200 (:status get-user-response)))
       (is (= (select-keys expected-user attributes) (select-keys actual-user attributes))))))
 
-(deftest get-non-existing-user-by-id
-  (testing "Get a non existing user returns failure"
+(deftest get-user-by-missing-id
+  (testing "Get a missing user returns failure"
     (let [user-id (random-uuid)
           get-user-response (client/get (resource (str "user/" user-id)))
           body (body-as-json get-user-response)
@@ -80,7 +80,7 @@
       (is (= "failure" (:status body)))
       (is (= (str user-id) (:id result))))))
 
-(deftest get-existing-tweet-by-id
+(deftest get-tweet-by-id
   (testing "Get an existing tweet returns successfully"
     (let [expected-tweet (new-tweet)
           create-tweet-response (post-json (resource "tweet") expected-tweet)
@@ -94,8 +94,8 @@
       (is (= (:text expected-tweet) (:text actual-tweet)))
       (is (every? zero? (vals (select-keys expected-tweet zeroed-attributes)))))))
 
-(deftest get-non-existing-tweet-by-id
-  (testing "Get a non existing tweet returns failure"
+(deftest get-tweet-by-missing-id
+  (testing "Get a missing tweet returns failure"
     (let [tweet-id (random-uuid)
           get-tweet-response (client/get (resource (str "tweet/" tweet-id)))
           body (body-as-json get-tweet-response)
@@ -104,7 +104,7 @@
       (is (= "failure" (:status body)))
       (is (= (str tweet-id) (:id result))))))
 
-(deftest like-existing-tweet
+(deftest like-tweet
   (testing "Like an existing tweet"
     (let [user (post-json (resource "user") (new-user))
           user-id (get-in (body-as-json user) [:result :id])
@@ -118,8 +118,8 @@
       (is (= tweet-id (:id result)))
       (is (= 1 (:likes result))))))
 
-(deftest like-non-existing-tweet
-  (testing "Like a non existing tweet returns failure"
+(deftest like-tweet-by-missing-id
+  (testing "Like a missing tweet returns failure"
     (let [tweet-id (random-uuid)
           like-tweet-response (post-json (resource (str "tweet/" tweet-id)) {:action "like"})
           body (body-as-json like-tweet-response)
@@ -128,7 +128,7 @@
       (is (= "failure" (:status body)))
       (is (= (str tweet-id) (:id result))))))
 
-(deftest unlike-existing-tweet-with-positive-likes
+(deftest unlike-tweet-with-positive-likes
   (testing "Unlike an existing tweet with positive likes"
     (let [user (post-json (resource "user") (new-user))
           user-id (get-in (body-as-json user) [:result :id])
@@ -143,7 +143,7 @@
       (is (= tweet-id (:id result)))
       (is (= 0 (:likes result))))))
 
-(deftest unlike-existing-tweet-with-zero-likes
+(deftest unlike-tweet-with-zero-likes
   (testing "Unlike an existing tweet with positive likes"
     (let [user (post-json (resource "user") (new-user))
           user-id (get-in (body-as-json user) [:result :id])
@@ -157,8 +157,8 @@
       (is (= tweet-id (:id result)))
       (is (= 0 (:likes result))))))
 
-(deftest unlike-non-existing-tweet
-  (testing "Unlike a non existing tweet returns failure"
+(deftest unlike-tweet-with-mising-id
+  (testing "Unlike a missing tweet returns failure"
     (let [tweet-id (random-uuid)
           like-tweet-response (post-json (resource (str "tweet/" tweet-id)) {:action "like"})
           body (body-as-json like-tweet-response)
