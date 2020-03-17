@@ -25,15 +25,18 @@
   storage/Storage
   (update-user!
     [_ {user-id :id :as user}]
-    (swap! users (fn [users] (assoc users user-id user))))
+    (swap! users (fn [users] (assoc users user-id user)))
+    user)
 
   (update-tweet!
     [_ {tweet-id :id :as tweet}]
-    (swap! tweets (fn [tweets] (assoc tweets tweet-id tweet))))
+    (swap! tweets (fn [tweets] (assoc tweets tweet-id tweet)))
+    tweet)
 
   (update-thread!
     [_ {thread-id :id :as thread}]
-    (swap! threads (fn [threads] (assoc threads thread-id thread))))
+    (swap! threads (fn [threads] (assoc threads thread-id thread)))
+    thread)
 
   (fetch-thread-by-id!
     [_ thread-id]
@@ -51,9 +54,9 @@
     [_ user-id]
     (get @users (to-uuid user-id)))
 
-  (new-user?
-    [_ email]
-    (not-any? (fn [user] (= (:email user) email)) (vals @users))))
+  (find-users!
+    [_ criteria]
+    (filter (fn [user] (= criteria (select-keys user (keys criteria)))) (vals @users))))
 
 (defn make-in-mem-storage ;; Constructor.
   []

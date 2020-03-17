@@ -8,4 +8,4 @@
   (fetch-tweets-by-user! [this user-id])
   (fetch-tweet-by-id! [this tweet-id])
   (fetch-thread-by-id! [this thread-id])
-  (new-user? [this email]))
+  (find-users! [this criteria]))
