@@ -54,11 +54,6 @@
      :thread thread
      :retweeted (update original-tweet :retweets inc)}))
 
-(defn update-tweet!
-  [tweet storage]
-  (storage/update-tweet! storage tweet)
-  tweet)
-
 ;; Thread-related functions.
 
 (defn new-thread
@@ -84,18 +79,8 @@
       (new-thread (:id source-tweet))
       (storage/fetch-thread-by-id! storage thread-id))))
 
-(defn update-thread!
-  [thread storage]
-  (storage/update-thread! storage thread)
-  thread)
-
 ;; User-related functions.
 
 (defn new-user
   [name email username]
   (->User (UUID/randomUUID) true name email username))
-
-(defn update-user!
-  [user storage]
-  (storage/update-user! storage user)
-  user)

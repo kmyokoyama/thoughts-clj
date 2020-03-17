@@ -64,7 +64,7 @@
   [app name email username]
   (let [user (core/new-user name email username)]
     (if (new-user? (:storage app) email)
-      (core/update-user! user (:storage app))
+      (storage/update-user! (:storage app) user)
       (throw-duplicate-user! email))))
 
 (defn get-user-by-id
@@ -77,8 +77,8 @@
   [app user-id text]
   (let [{:keys [tweet thread] :as tweet-thread} (core/new-tweet user-id text)]
     (if (user-exists? (:storage app) user-id)
-      (do (core/update-tweet! tweet (:storage app))
-          (core/update-thread! thread (:storage app))
+      (do (storage/update-tweet! (:storage app) tweet)
+          (storage/update-thread! (:storage app) thread)
           tweet-thread)
       (throw-missing-user! user-id))))
 
