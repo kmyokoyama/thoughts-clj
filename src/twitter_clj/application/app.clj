@@ -34,7 +34,7 @@
     (if is-found (success user) (error {}))))
 
 (defn add-tweet
-  [app user-id text]
+  [app user-id text] ;; TODO: Handle the case in which there is no user with this user-id.
   (let [{:keys [tweet thread] :as tweet-thread} (core/new-tweet user-id text)]
     (core/update-tweet! tweet (:storage app))
     (core/update-thread! thread (:storage app))
@@ -47,7 +47,7 @@
     (if is-found (success tweet) (error {}))))
 
 (defn get-tweets-by-user
-  [app user-id]
+  [app user-id] ;; TODO: Handle the case in which there is no user with this user-id.
   (storage/fetch-tweets-by-user! (:storage app) user-id))
 
 (defn like
