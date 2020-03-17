@@ -72,12 +72,13 @@
 
 (deftest get-non-existing-user-by-id
   (testing "Get a non existing user returns failure"
-    (let [get-user-response (client/get (resource (str "user/" (random-uuid))))
+    (let [user-id (random-uuid)
+          get-user-response (client/get (resource (str "user/" user-id)))
           body (body-as-json get-user-response)
-          actual-user (:result body)]
+          result (:result body)]
       (is (= 200 (:status get-user-response)))
       (is (= "failure" (:status body)))
-      (is (= {} actual-user)))))
+      (is (= (str user-id) (:id result))))))
 
 (deftest get-existing-tweet-by-id
   (testing "Get an existing tweet returns successfully"
@@ -95,12 +96,13 @@
 
 (deftest get-non-existing-tweet-by-id
   (testing "Get a non existing tweet returns failure"
-    (let [get-tweet-response (client/get (resource (str "tweet/" (random-uuid))))
+    (let [tweet-id (random-uuid)
+          get-tweet-response (client/get (resource (str "tweet/" tweet-id)))
           body (body-as-json get-tweet-response)
-          actual-tweet (:result body)]
+          result (:result body)]
       (is (= 200 (:status get-tweet-response)))
       (is (= "failure" (:status body)))
-      (is (= {} actual-tweet)))))
+      (is (= (str tweet-id) (:id result))))))
 
 (deftest like-existing-tweet
   (testing "Like an existing tweet"

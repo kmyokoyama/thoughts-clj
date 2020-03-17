@@ -45,7 +45,7 @@
 
   (fetch-tweet-by-id!
     [_ tweet-id]
-    (get @tweets (to-uuid tweet-id)))
+    (get @tweets (to-uuid tweet-id) {}))
 
   (fetch-user-by-id!
     [_ user-id]

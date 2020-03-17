@@ -29,10 +29,12 @@
 
 (defn get-user-by-id
   [app user-id]
-  (storage/fetch-user-by-id! (:storage app) user-id))
+  (let [user (storage/fetch-user-by-id! (:storage app) user-id)
+        is-found (not (= {} user))]
+    (if is-found (success user) (error {}))))
 
 (defn add-tweet
-  [app user-id text]
+  [app user-id text] ;; TODO: Handle the case in which there is no user with this user-id.
   (let [{:keys [tweet thread] :as tweet-thread} (core/new-tweet user-id text)]
     (core/update-tweet! tweet (:storage app))
     (core/update-thread! thread (:storage app))
@@ -40,19 +42,20 @@
 
 (defn get-tweet-by-id
   [app tweet-id]
-  (storage/fetch-tweet-by-id! (:storage app) tweet-id))
+  (let [tweet (storage/fetch-tweet-by-id! (:storage app) tweet-id)
+        is-found (not (= {} tweet))]
+    (if is-found (success tweet) (error {}))))
 
 (defn get-tweets-by-user
-  [app user-id]
+  [app user-id] ;; TODO: Handle the case in which there is no user with this user-id.
   (storage/fetch-tweets-by-user! (:storage app) user-id))
 
 (defn like
   [app tweet-id]
-  (if-let [tweet (storage/fetch-tweet-by-id! (:storage app) tweet-id)]
-    (success (core/like tweet))
-    (error nil)))
+  (let [tweet (storage/fetch-tweet-by-id! (:storage app) tweet-id)
+        is-found (not (= {} tweet))]
+    (if is-found (success (core/like tweet)) (error {}))))
 
-;(like [this tweet-id])
 ;(unlike [this tweet-id])
 ;(retweet [this user-id tweet-id])
 ;(reply [this reply-text source-tweet-id])
