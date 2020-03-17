@@ -52,8 +52,16 @@
 
 (defn- like-tweet
   [tweet-id app]
-  (log/info "Received request of like of tweet" tweet-id)
+  (log/info "Received request to like tweet" tweet-id)
   (-> (process (app/like app tweet-id)
+               ok-with-success
+               (fn [_op] (ok-with-failure {:cause "Tweet not found" :id tweet-id})))
+      (:result)))
+
+(defn- unlike-tweet
+  [tweet-id app]
+  (log/info "Received request to unlike tweet" tweet-id)
+  (-> (process (app/unlike app tweet-id)
                ok-with-success
                (fn [_op] (ok-with-failure {:cause "Tweet not found" :id tweet-id})))
       (:result)))
@@ -63,4 +71,5 @@
   (let [tweet-id (get-parameter req :tweet-id)
         action (keyword (get-from-body req :action))]
     (case action
-      :like (like-tweet tweet-id app))))
+      :like (like-tweet tweet-id app)
+      :unlike (unlike-tweet tweet-id app))))
