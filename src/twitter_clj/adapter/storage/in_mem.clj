@@ -51,9 +51,9 @@
     [_ user-id]
     (get @users (to-uuid user-id)))
 
-  (new-user?
-    [_ email]
-    (not-any? (fn [user] (= (:email user) email)) (vals @users))))
+  (find-users!
+    [_ criteria]
+    (filter (fn [user] (= criteria (select-keys user (keys criteria)))) (vals @users))))
 
 (defn make-in-mem-storage ;; Constructor.
   []
