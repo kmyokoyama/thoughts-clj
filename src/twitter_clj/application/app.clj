@@ -69,13 +69,13 @@
 (defn like
   [app tweet-id]
   (if-let [tweet (storage/fetch-tweet-by-id! (:storage app) tweet-id)]
-    (core/like tweet)
+    (storage/update-tweet! (:storage app) (core/like tweet))
     (throw-missing-tweet! tweet-id)))
 
 (defn unlike
   [app tweet-id]
   (if-let [tweet (storage/fetch-tweet-by-id! (:storage app) tweet-id)]
-    (core/unlike tweet)
+    (storage/update-tweet! (:storage app) (core/unlike tweet))
     (throw-missing-tweet! tweet-id)))
 
 ;(retweet [this user-id tweet-id])
