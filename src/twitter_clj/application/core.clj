@@ -5,7 +5,7 @@
 
 (declare new-thread)
 
-(defrecord User [id active name email nickname])
+(defrecord User [id active name email username])
 (defrecord Tweet [id user-id text publish-date likes retweets replies thread-id])
 (defrecord RetweetWithComment [tweet original-tweet-id])
 (defrecord Retweet [id user-id original-tweet-id publish-date])
@@ -92,8 +92,8 @@
 ;; User-related functions.
 
 (defn new-user
-  [name email nickname]
-  (->User (UUID/randomUUID) true name email nickname))
+  [name email username]
+  (->User (UUID/randomUUID) true name email username))
 
 (defn update-user!
   [user storage]

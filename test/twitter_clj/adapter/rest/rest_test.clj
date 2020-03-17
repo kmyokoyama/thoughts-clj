@@ -66,7 +66,7 @@
           get-user-response (client/get (resource (str "user/" user-id)))
           body (body-as-json get-user-response)
           actual-user (:result body)
-          attributes [:name :email :nickname]]
+          attributes [:name :email :username]]
       (is (= 200 (:status get-user-response)))
       (is (= (select-keys expected-user attributes) (select-keys actual-user attributes))))))
 

@@ -9,7 +9,7 @@
   [app]
   (compojure.core/routes
     ;; User API.
-    (POST "/user" req (add-user req app))
+    (POST "/user" req (add-user req app)) ;; TODO: Change it to PUT based on user's email.
     (GET "/user/:user-id" req (get-user-by-id req app))
 
     ;; Tweet API.
@@ -25,4 +25,6 @@
   [app]
   (-> (app-routes app)
       (wrap-json-body {:keywords? true :bigdecimals? true})
+      wrap-resource-not-found
+      wrap-default-exception
       (wrap-defaults api-defaults)))
