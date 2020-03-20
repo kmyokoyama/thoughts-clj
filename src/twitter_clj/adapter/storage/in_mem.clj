@@ -12,7 +12,7 @@
 
 ;; Driven-side.
 
-(defrecord InMemoryStorage [users tweets threads likes]
+(defrecord InMemoryStorage [users tweets replies likes]
   component/Lifecycle
   (start [this]
     (log/info "Starting in-memory database")
@@ -33,6 +33,15 @@
     (swap! tweets (fn [tweets] (assoc tweets tweet-id tweet)))
     tweet)
 
+  (update-replies!
+    [_ source-tweet-id reply]
+    (println source-tweet-id)
+    (println @replies)
+    (swap! replies (fn [replies] (update replies
+                                         (to-uuid source-tweet-id)
+                                         (fn [tweet-replies] (conj (vec tweet-replies) reply))))))
+
+
   (update-like!
     [_ like]
     (swap! likes (fn [likes] (assoc-in likes [(:tweet-id like) (:user-id like)] like)))
@@ -45,6 +54,10 @@
   (fetch-tweet-by-id!
     [_ tweet-id]
     (get @tweets (to-uuid tweet-id)))
+
+  (fetch-replies-by-tweet-id!
+    [_ tweet-id]
+    (get @replies (to-uuid tweet-id) []))
 
   (fetch-user-by-id!
     [_ user-id]
@@ -66,13 +79,13 @@
   []
   (map->InMemoryStorage {:users (atom {})
                          :tweets (atom {})
-                         :threads (atom {})
+                         :replies (atom {})
                          :likes (atom {})}))
 
 (defn shutdown
   [storage]
   (reset! (:users storage) {})
   (reset! (:tweets storage) {})
-  (reset! (:threads storage) {})
+  (reset! (:replies storage) {})
   (reset! (:likes storage) {})
   storage)
