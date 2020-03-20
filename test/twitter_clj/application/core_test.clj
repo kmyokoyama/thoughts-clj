@@ -26,14 +26,14 @@
 
 (deftest like-increase-by-one
   (testing "When like, then should increase likes by one."
-    (let [tweet (->Tweet (random/uuid) (random/uuid) "This is my tweet" (now) 10 0 0 (random/uuid))
+    (let [tweet (->Tweet (random/uuid) (random/uuid) "This is my tweet" (now) 10 0 0)
           liked-tweet (like tweet)]
       (equal-except-for tweet liked-tweet :likes)
       (is (= 11 (:likes liked-tweet))))))
 
 (deftest unlike-decrease-by-one
   (testing "When unlike, then should decrease likes by one."
-    (let [tweet (->Tweet (random/uuid) (random/uuid) "This is my tweet" (now) 10 0 0 (random/uuid))
+    (let [tweet (->Tweet (random/uuid) (random/uuid) "This is my tweet" (now) 10 0 0)
           unliked-tweet (unlike tweet)]
       (equal-except-for tweet unliked-tweet :likes)
       (is (= 9 (:likes (unlike tweet)))))))
