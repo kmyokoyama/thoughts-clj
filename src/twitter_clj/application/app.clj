@@ -2,8 +2,7 @@
   (:require [com.stuartsierra.component :as component]
             [taoensso.timbre :as log]
             [twitter-clj.application.core :as core]
-            [twitter-clj.application.port.storage :as storage]
-            [twitter-clj.application.util :refer [success error process]])
+            [twitter-clj.application.port.storage :as storage])
   (:import [java.util UUID]))
 
 (defrecord App [storage]

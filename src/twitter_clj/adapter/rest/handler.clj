@@ -1,7 +1,6 @@
 (ns twitter-clj.adapter.rest.handler
   (:require [taoensso.timbre :as log]
             [twitter-clj.application.app :as app]
-            [twitter-clj.application.util :refer [success error process]]
             [twitter-clj.adapter.rest.util :refer [get-parameter get-from-body
                                                    ok-with-success
                                                    ok-with-failure
