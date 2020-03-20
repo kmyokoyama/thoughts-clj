@@ -6,28 +6,29 @@
 (declare new-thread)
 
 (defrecord User [id active name email username])
-(defrecord Tweet [id user-id text publish-date likes retweets replies thread-id])
+(defrecord Tweet [id user-id text publish-date likes retweets replies])
 (defrecord RetweetWithComment [tweet original-tweet-id])
 (defrecord Retweet [id user-id original-tweet-id publish-date])
-(defrecord TwitterThread [id source-tweet-id tweet-replies])
+(defrecord TweetLike [id created-at user-id tweet-id])
 
 ;; Tweet-related functions.
 
 (defn new-tweet
   [user-id text]
-  (let [tweet-id (UUID/randomUUID)
-        thread (new-thread tweet-id)
-        thread-id (:id thread)]
-    {:tweet (->Tweet tweet-id user-id text (ZonedDateTime/now) 0 0 0 thread-id)
-     :thread thread}))
+  (let [tweet-id (UUID/randomUUID)]
+    (->Tweet tweet-id user-id text (ZonedDateTime/now) 0 0 0)))
+
+(defn new-like
+  [user-id tweet-id]
+  (->TweetLike (UUID/randomUUID) (ZonedDateTime/now) user-id tweet-id))
 
 (defn like
   [tweet]
   (update tweet :likes inc))
 
 (defn unlike
-  [{likes :likes :as tweet}]
-  (if (pos? likes)
+  [tweet]
+  (if (pos? (:likes tweet))
     (update tweet :likes dec)
     tweet))
 
@@ -54,30 +55,11 @@
      :thread thread
      :retweeted (update original-tweet :retweets inc)}))
 
-;; Thread-related functions.
-
-(defn new-thread
-  [source-tweet-id]
-  (->TwitterThread (UUID/randomUUID) source-tweet-id []))
-
-(defn- add-reply-tweet-to-thread
-  [thread tweet-id]
-  (update thread :tweet-replies conj tweet-id))
+;; Reply-related functions.
 
 (defn reply
-  [reply-tweet source-tweet thread]
-  (let [thread' (-> thread (add-reply-tweet-to-thread (:id reply-tweet)))
-        source-tweet' (-> source-tweet (update :replies inc))]
-    {:reply-tweet reply-tweet
-     :source-tweet source-tweet'
-     :thread thread'}))
-
-(defn fetch-thread!
-  [storage source-tweet]
-  (let [thread-id (:thread-id source-tweet)]
-    (if (nil? thread-id)
-      (new-thread (:id source-tweet))
-      (storage/fetch-thread-by-id! storage thread-id))))
+  [tweet]
+  (update tweet :replies inc))
 
 ;; User-related functions.
 

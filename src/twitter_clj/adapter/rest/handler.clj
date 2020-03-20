@@ -26,7 +26,7 @@
 (defn add-tweet
   [req app]
   (let [{:keys [user-id text]} (:body req)
-        {:keys [tweet]} (app/add-tweet app user-id text)]
+        tweet (app/add-tweet app user-id text)]
     (log/info "Received request to add new tweet from user" user-id)
     (created tweet)))
 
@@ -45,25 +45,26 @@
     (ok-with-success tweets)))
 
 (defn- like-tweet
-  [tweet-id app]
+  [app user-id tweet-id]
   (log/info "Received request to like tweet" tweet-id)
   (try
-    (-> (app/like app tweet-id)
+    (-> (app/like app user-id tweet-id)
         (ok-with-success))))
 
 (defn- unlike-tweet
-  [tweet-id app]
+  [app user-id tweet-id]
   (log/info "Received request to unlike tweet" tweet-id)
-  (-> (app/unlike app tweet-id)
+  (-> (app/unlike app user-id tweet-id)
       (ok-with-success)))
 
 (defn tweet-action
   [req app]
   (let [tweet-id (get-parameter req :tweet-id)
+        user-id (get-from-body req :user-id)
         action (keyword (get-from-body req :action))]
     (case action
-      :like (like-tweet tweet-id app)
-      :unlike (unlike-tweet tweet-id app))))
+      :like (like-tweet app user-id tweet-id)
+      :unlike (unlike-tweet app user-id tweet-id))))
 
 ;; Exception-handling functions.
 

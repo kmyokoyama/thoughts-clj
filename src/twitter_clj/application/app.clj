@@ -75,11 +75,9 @@
 
 (defn add-tweet
   [app user-id text]
-  (let [{:keys [tweet thread] :as tweet-thread} (core/new-tweet user-id text)]
+  (let [tweet (core/new-tweet user-id text)]
     (if (user-exists? (:storage app) user-id)
-      (do (storage/update-tweet! (:storage app) tweet)
-          (storage/update-thread! (:storage app) thread)
-          tweet-thread)
+      (storage/update-tweet! (:storage app) tweet)
       (throw-missing-user! user-id))))
 
 (defn get-tweet-by-id
@@ -95,15 +93,21 @@
     (throw-missing-user! user-id)))
 
 (defn like
-  [app tweet-id]
+  [app user-id tweet-id]
   (if-let [tweet (storage/fetch-tweet-by-id! (:storage app) tweet-id)]
-    (storage/update-tweet! (:storage app) (core/like tweet))
+    (if (not (storage/find-like! (:storage app) user-id tweet-id))
+      (do (storage/update-like! (:storage app) (core/new-like user-id tweet-id))
+          (storage/update-tweet! (:storage app) (core/like tweet)))
+      tweet)
     (throw-missing-tweet! tweet-id)))
 
 (defn unlike
-  [app tweet-id]
+  [app user-id tweet-id]
   (if-let [tweet (storage/fetch-tweet-by-id! (:storage app) tweet-id)]
-    (storage/update-tweet! (:storage app) (core/unlike tweet))
+    (if (storage/find-like! (:storage app) user-id tweet-id)
+      (do (storage/remove-like! (:storage app) user-id tweet-id)
+          (storage/update-tweet! (:storage app) (core/unlike tweet)))
+      tweet)
     (throw-missing-tweet! tweet-id)))
 
 ;(retweet [this user-id tweet-id])
