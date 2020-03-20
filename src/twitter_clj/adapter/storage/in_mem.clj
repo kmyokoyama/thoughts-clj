@@ -12,7 +12,7 @@
 
 ;; Driven-side.
 
-(defrecord InMemoryStorage [users tweets threads]
+(defrecord InMemoryStorage [users tweets threads likes]
   component/Lifecycle
   (start [this]
     (log/info "Starting in-memory database")
@@ -33,14 +33,10 @@
     (swap! tweets (fn [tweets] (assoc tweets tweet-id tweet)))
     tweet)
 
-  (update-thread!
-    [_ {thread-id :id :as thread}]
-    (swap! threads (fn [threads] (assoc threads thread-id thread)))
-    thread)
-
-  (fetch-thread-by-id!
-    [_ thread-id]
-    (get @threads thread-id))
+  (update-like!
+    [_ like]
+    (swap! likes (fn [likes] (assoc-in likes [(:tweet-id like) (:user-id like)] like)))
+    like)
 
   (fetch-tweets-by-user!
     [_ user-id]
@@ -54,19 +50,29 @@
     [_ user-id]
     (get @users (to-uuid user-id)))
 
+  (remove-like!
+    [_ user-id tweet-id]
+    (swap! likes (fn [likes] (update-in likes [tweet-id] dissoc user-id))))
+
   (find-users!
     [_ criteria]
-    (filter (fn [user] (= criteria (select-keys user (keys criteria)))) (vals @users))))
+    (filter (fn [user] (= criteria (select-keys user (keys criteria)))) (vals @users)))
+
+  (find-like!
+    [_ user-id tweet-id]
+    (get-in @likes [tweet-id user-id])))
 
 (defn make-in-mem-storage ;; Constructor.
   []
   (map->InMemoryStorage {:users (atom {})
                          :tweets (atom {})
-                         :threads (atom {})}))
+                         :threads (atom {})
+                         :likes (atom {})}))
 
 (defn shutdown
   [storage]
   (reset! (:users storage) {})
   (reset! (:tweets storage) {})
   (reset! (:threads storage) {})
+  (reset! (:likes storage) {})
   storage)
