@@ -16,7 +16,8 @@
     (GET "/tweet/:tweet-id" req (get-tweet-by-id req app))
     (GET "/tweet" req (get-tweets-by-user req app))
     (POST "/tweet" req (add-tweet req app))
-    (POST "/tweet/:tweet-id" req (tweet-action req app))
+    (POST "/tweet/:tweet-id/reply" req (add-reply req app))
+    (POST "/tweet/:tweet-id/react" req (tweet-react req app))
 
     ;; Default.
     (route/not-found "Error, page not found!")))

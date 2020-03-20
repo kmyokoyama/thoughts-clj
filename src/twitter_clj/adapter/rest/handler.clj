@@ -43,6 +43,14 @@
     (log/info "Received request to get tweets from user" user-id)
     (ok-with-success tweets)))
 
+(defn add-reply
+  [req app]
+  (let [source-tweet-id (get-parameter req :tweet-id)
+        {:keys [user-id text]} (:body req)
+        reply (app/add-reply app user-id text source-tweet-id)]
+    (log/info "Received request to add new reply from user" user-id "to tweet" source-tweet-id)
+    (created reply)))
+
 (defn- like-tweet
   [app user-id tweet-id]
   (log/info "Received request to like tweet" tweet-id)
@@ -56,7 +64,7 @@
   (-> (app/unlike app user-id tweet-id)
       (ok-with-success)))
 
-(defn tweet-action
+(defn tweet-react
   [req app]
   (let [tweet-id (get-parameter req :tweet-id)
         user-id (get-from-body req :user-id)

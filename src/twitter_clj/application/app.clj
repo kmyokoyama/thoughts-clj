@@ -82,13 +82,25 @@
 (defn get-tweet-by-id
   [app tweet-id]
   (if-let [tweet (storage/fetch-tweet-by-id! (:storage app) tweet-id)]
-    tweet
+    (let [replies (storage/fetch-replies-by-tweet-id! (:storage app) tweet-id)]
+      (assoc tweet :thread replies))
     (throw-missing-tweet! tweet-id)))
 
 (defn get-tweets-by-user
   [app user-id]
   (if (user-exists? (:storage app) user-id)
     (storage/fetch-tweets-by-user! (:storage app) user-id)
+    (throw-missing-user! user-id)))
+
+(defn add-reply
+  [app user-id text source-tweet-id]
+  (if (user-exists? (:storage app) user-id)
+    (if-let [source-tweet (storage/fetch-tweet-by-id! (:storage app) source-tweet-id)]
+      (let [reply (core/new-tweet user-id text)]
+        (storage/update-tweet! (:storage app) (core/reply source-tweet))
+        (storage/update-replies! (:storage app) source-tweet-id reply)
+        (storage/update-tweet! (:storage app) reply))
+      (throw-missing-user! source-tweet-id))
     (throw-missing-user! user-id)))
 
 (defn like
