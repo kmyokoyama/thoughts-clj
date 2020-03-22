@@ -7,8 +7,7 @@
 
 (defrecord User [id active name email username])
 (defrecord Tweet [id user-id text publish-date likes retweets replies])
-(defrecord RetweetWithComment [tweet original-tweet-id])
-(defrecord Retweet [id user-id original-tweet-id publish-date])
+(defrecord Retweet [id user-id has-comment comment publish-date tweet])
 (defrecord TweetLike [id created-at user-id tweet-id])
 
 ;; Tweet-related functions.
@@ -35,25 +34,16 @@
 ;; Retweet-related functions.
 
 (defn new-retweet
-  [user-id original-tweet-id]
-  (->Retweet (UUID/randomUUID) user-id original-tweet-id (ZonedDateTime/now)))
+  [user-id retweeted]
+  (->Retweet (UUID/randomUUID) user-id false nil (ZonedDateTime/now) retweeted))
 
-(defn- new-retweet-with-comment
-  [tweet original-tweet-id]
-  (->RetweetWithComment tweet original-tweet-id))
+(defn new-retweet-with-comment
+  [user-id retweeted comment]
+  (->Retweet (UUID/randomUUID) user-id true comment (ZonedDateTime/now) retweeted))
 
-(defn retweet-only
-  [user-id original-tweet]
-  {:retweet (new-retweet user-id (:id original-tweet))
-   :retweeted (update original-tweet :retweets inc)})
-
-(defn retweet-with-comment
-  [user-id text original-tweet]
-  (let [{:keys [tweet thread]} (new-tweet user-id text)
-        retweet (new-retweet-with-comment tweet (:id original-tweet))]
-    {:retweet retweet
-     :thread thread
-     :retweeted (update original-tweet :retweets inc)}))
+(defn retweet
+  [retweeted]
+  (update retweeted :retweets inc))
 
 ;; Reply-related functions.
 
