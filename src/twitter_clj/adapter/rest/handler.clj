@@ -74,6 +74,13 @@
     (log/info "Received request to get retweet with id" retweet-id)
     (ok-with-success retweet)))
 
+(defn get-retweets-by-tweet-id
+  [req app]
+  (let [source-tweet-id (get-parameter req :tweet-id)
+        retweets (app/get-retweets-by-tweet-id app source-tweet-id)]
+    (log/info "Received request to get retweets with source tweet id" source-tweet-id)
+    (ok-with-success retweets)))
+
 (defn- like-tweet
   [app user-id tweet-id]
   (log/info "Received request to like tweet" tweet-id)
