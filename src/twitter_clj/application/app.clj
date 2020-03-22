@@ -131,6 +131,12 @@
     retweet
     (throw-missing-tweet! retweet-id)))
 
+(defn get-retweets-by-tweet-id
+  [app source-tweet-id]
+  (if-let [retweets (storage/fetch-retweets-by-source-tweet-id! (:storage app) source-tweet-id)]
+    retweets
+    (throw-missing-tweet! source-tweet-id)))
+
 (defn like
   [app user-id tweet-id]
   (if-let [tweet (storage/fetch-tweet-by-id! (:storage app) tweet-id)]

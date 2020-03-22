@@ -15,6 +15,7 @@
     ;; Tweet API.
     (GET "/tweet/:tweet-id" req (get-tweet-by-id req app))
     (GET "/tweet" req (get-tweets-by-user req app))
+    (GET "/tweet/:tweet-id/retweet" req (get-retweets-by-tweet-id req app))
     (GET "/retweet/:retweet-id" req (get-retweet-by-id req app))
     (POST "/tweet" req (add-tweet req app))
     (POST "/tweet/:tweet-id/reply" req (add-reply req app))

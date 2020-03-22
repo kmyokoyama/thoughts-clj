@@ -63,6 +63,14 @@
       (-> (assoc retweet :tweet (get @tweets (:tweet-id retweet)))
           (dissoc retweet :tweet-id))))
 
+  (fetch-retweets-by-source-tweet-id!
+    [_ source-tweet-id]
+    (let [tweet (get @tweets (to-uuid source-tweet-id))]
+      (->> (vals @retweets)
+          (filter (fn [retweet] (= (:tweet-id retweet) (to-uuid source-tweet-id))))
+          (map (fn [retweet] (-> (assoc retweet :tweet tweet)
+                                 (dissoc retweet :tweet-id)))))))
+
   (fetch-replies-by-tweet-id!
     [_ tweet-id]
     (get @replies (to-uuid tweet-id) []))
