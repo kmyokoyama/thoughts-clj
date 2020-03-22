@@ -103,6 +103,34 @@
       (throw-missing-user! source-tweet-id))
     (throw-missing-user! user-id)))
 
+(defn retweet
+  [app user-id source-tweet-id]
+  (if (user-exists? (:storage app) user-id)
+    (if-let [source-tweet (storage/fetch-tweet-by-id! (:storage app) source-tweet-id)]
+      (let [updated-source-tweet (core/retweet source-tweet)
+            retweet (core/new-retweet user-id updated-source-tweet)]
+        (storage/update-tweet! (:storage app) updated-source-tweet)
+        (storage/update-retweets! (:storage app) retweet))
+      (throw-missing-user! source-tweet-id))
+    (throw-missing-user! user-id)))
+
+(defn retweet-with-comment
+  [app user-id comment source-tweet-id]
+  (if (user-exists? (:storage app) user-id)
+    (if-let [source-tweet (storage/fetch-tweet-by-id! (:storage app) source-tweet-id)]
+      (let [updated-source-tweet (core/retweet source-tweet)
+            retweet (core/new-retweet-with-comment user-id updated-source-tweet comment)]
+        (storage/update-tweet! (:storage app) updated-source-tweet)
+        (storage/update-retweets! (:storage app) retweet))
+      (throw-missing-user! source-tweet-id))
+    (throw-missing-user! user-id)))
+
+(defn get-retweet-by-id
+  [app retweet-id]
+  (if-let [retweet (storage/fetch-retweet-by-id! (:storage app) retweet-id)]
+    retweet
+    (throw-missing-tweet! retweet-id)))
+
 (defn like
   [app user-id tweet-id]
   (if-let [tweet (storage/fetch-tweet-by-id! (:storage app) tweet-id)]

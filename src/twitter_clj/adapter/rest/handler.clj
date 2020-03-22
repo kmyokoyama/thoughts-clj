@@ -51,6 +51,29 @@
     (log/info "Received request to add new reply from user" user-id "to tweet" source-tweet-id)
     (created reply)))
 
+(defn add-retweet
+  [req app]
+  (let [source-tweet-id (get-parameter req :tweet-id)
+        {:keys [user-id text]} (:body req)
+        retweet (app/retweet app user-id source-tweet-id)]
+    (log/info "Received request to add new retweet from user" user-id "to tweet" source-tweet-id)
+    (created retweet)))
+
+(defn add-retweet-with-comment
+  [req app]
+  (let [source-tweet-id (get-parameter req :tweet-id)
+        {:keys [user-id comment]} (:body req)
+        retweet (app/retweet-with-comment app user-id comment source-tweet-id)]
+    (log/info "Received request to add new retweet from user" user-id "to tweet" source-tweet-id)
+    (created retweet)))
+
+(defn get-retweet-by-id
+  [req app]
+  (let [retweet-id (get-parameter req :retweet-id)
+        retweet (app/get-retweet-by-id app retweet-id)]
+    (log/info "Received request to get retweet with id" retweet-id)
+    (ok-with-success retweet)))
+
 (defn- like-tweet
   [app user-id tweet-id]
   (log/info "Received request to like tweet" tweet-id)
@@ -109,5 +132,5 @@
     (try
       (handler request)
       (catch Exception e
-        (log/warn (.getMessage e))
+        (log/debug e)
         (ok-with-failure {:cause "unknown error" :message (.getMessage e)})))))
