@@ -41,7 +41,7 @@
 
   (update-retweets!
     [_ retweet]
-    (swap! retweets (fn [retweets] (assoc retweets (:id retweet) retweet)))
+    (swap! retweets (fn [retweets] (assoc retweets (:id retweet) (assoc retweet :tweet-id (get-in retweet [:tweet :id])))))
     retweet)
 
   (update-like!
@@ -59,7 +59,9 @@
 
   (fetch-retweet-by-id!
     [_ retweet-id]
-    (get @retweets (to-uuid retweet-id)))
+    (if-let [retweet (get @retweets (to-uuid retweet-id))]
+      (-> (assoc retweet :tweet (get @tweets (:tweet-id retweet)))
+          (dissoc retweet :tweet-id))))
 
   (fetch-replies-by-tweet-id!
     [_ tweet-id]

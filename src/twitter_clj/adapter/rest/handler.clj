@@ -132,5 +132,5 @@
     (try
       (handler request)
       (catch Exception e
-        (log/warn (.getMessage e))
+        (log/debug e)
         (ok-with-failure {:cause "unknown error" :message (.getMessage e)})))))
