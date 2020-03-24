@@ -3,17 +3,17 @@
             [ring.middleware.defaults :refer :all]
             [taoensso.timbre :as log]
             [twitter-clj.adapter.rest.component :refer [make-http-controller]]
-            [twitter-clj.adapter.storage.in-mem :refer [make-in-mem-storage]]
+            [twitter-clj.adapter.repository.in-mem :refer [make-in-mem-repository]]
             [twitter-clj.application.service :refer [make-service]])
   (:gen-class))
 
 (defn system
   [system-config]
   (component/system-map
-    :storage (make-in-mem-storage)
+    :repository (make-in-mem-repository)
     :service (component/using
                (make-service)
-               [:storage])
+               [:repository])
     :controller (component/using
                   (make-http-controller (:server-config system-config))
                   [:service])))

@@ -1,7 +1,7 @@
-(ns twitter-clj.adapter.storage.in-mem
+(ns twitter-clj.adapter.repository.in-mem
   (:require [com.stuartsierra.component :as component]
             [taoensso.timbre :as log]
-            [twitter-clj.application.port.storage :as storage])
+            [twitter-clj.application.port.repository :as repository])
   (:import [java.util UUID]))
 
 (declare shutdown)
@@ -12,7 +12,7 @@
 
 ;; Driven-side.
 
-(defrecord InMemoryStorage [users tweets replies retweets likes]
+(defrecord InMemoryrepository [users tweets replies retweets likes]
   component/Lifecycle
   (start [this]
     (log/info "Starting in-memory database")
@@ -22,7 +22,7 @@
     (log/info "Stopping in-memory database")
     (shutdown this))
 
-  storage/Storage
+  repository/Repository
   (update-user!
     [_ {user-id :id :as user}]
     (swap! users (fn [users] (assoc users user-id user)))
@@ -91,19 +91,19 @@
     [_ user-id tweet-id]
     (get-in @likes [tweet-id user-id])))
 
-(defn make-in-mem-storage ;; Constructor.
+(defn make-in-mem-repository ;; Constructor.
   []
-  (map->InMemoryStorage {:users (atom {})
-                         :tweets (atom {})
-                         :replies (atom {})
-                         :retweets (atom {})
-                         :likes (atom {})}))
+  (map->InMemoryrepository {:users (atom {})
+                            :tweets (atom {})
+                            :replies (atom {})
+                            :retweets (atom {})
+                            :likes (atom {})}))
 
 (defn shutdown
-  [storage]
-  (reset! (:users storage) {})
-  (reset! (:tweets storage) {})
-  (reset! (:replies storage) {})
-  (reset! (:retweets storage) {})
-  (reset! (:likes storage) {})
-  storage)
+  [repository]
+  (reset! (:users repository) {})
+  (reset! (:tweets repository) {})
+  (reset! (:replies repository) {})
+  (reset! (:retweets repository) {})
+  (reset! (:likes repository) {})
+  repository)

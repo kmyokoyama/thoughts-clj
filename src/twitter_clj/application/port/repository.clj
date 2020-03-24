@@ -1,6 +1,6 @@
-(ns twitter-clj.application.port.storage)
+(ns twitter-clj.application.port.repository)
 
-(defprotocol Storage
+(defprotocol Repository
   (update-user! [this user])
   (update-tweet! [this tweet])
   (update-replies! [this source-tweet-id reply])
