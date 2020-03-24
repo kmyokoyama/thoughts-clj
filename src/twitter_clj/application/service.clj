@@ -154,6 +154,3 @@
           (repository/update-tweet! (:repository app) (core/unlike tweet)))
       tweet)
     (throw-missing-tweet! tweet-id)))
-
-;(retweet [this user-id tweet-id])
-;(reply [this reply-text source-tweet-id])

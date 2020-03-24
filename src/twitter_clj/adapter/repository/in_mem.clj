@@ -34,19 +34,24 @@
     tweet)
 
   (update-replies!
-    [_ source-tweet-id reply]
+    [_ source-tweet-id {reply-id :id :as reply}]
     (swap! replies (fn [replies] (update replies
                                          (to-uuid source-tweet-id)
-                                         (fn [tweet-replies] (conj (vec tweet-replies) reply))))))
+                                         (fn [reply-ids] (conj (vec reply-ids) reply-id)))))
+    reply)
 
   (update-retweets!
-    [_ retweet]
-    (swap! retweets (fn [retweets] (assoc retweets (:id retweet) (assoc retweet :tweet-id (get-in retweet [:tweet :id])))))
+    [_ {retweet-id :id :as retweet}]
+    (swap! retweets (fn [retweets] (assoc retweets retweet-id
+                                                   (assoc retweet :tweet-id
+                                                                  (get-in retweet [:tweet :id])))))
     retweet)
 
   (update-like!
-    [_ like]
-    (swap! likes (fn [likes] (assoc-in likes [(:tweet-id like) (:user-id like)] like)))
+    [_ {like-id :id source-tweet-id :tweet-id :as like}]
+    (swap! likes (fn [likes] (update likes
+                                     (to-uuid source-tweet-id)
+                                     (fn [like-ids] (conj (vec like-ids) like-id)))))
     like)
 
   (fetch-tweets-by-user!
@@ -67,13 +72,14 @@
     [_ source-tweet-id]
     (let [tweet (get @tweets (to-uuid source-tweet-id))]
       (->> (vals @retweets)
-          (filter (fn [retweet] (= (:tweet-id retweet) (to-uuid source-tweet-id))))
-          (map (fn [retweet] (-> (assoc retweet :tweet tweet)
-                                 (dissoc retweet :tweet-id)))))))
+           (filter (fn [retweet] (= (:tweet-id retweet) (to-uuid source-tweet-id))))
+           (map (fn [retweet] (-> (assoc retweet :tweet tweet)
+                                  (dissoc retweet :tweet-id)))))))
 
   (fetch-replies-by-tweet-id!
     [_ tweet-id]
-    (get @replies (to-uuid tweet-id) []))
+    (->> (get @replies (to-uuid tweet-id) [])
+         (map (fn [reply-id] (get @tweets (to-uuid reply-id))))))
 
   (fetch-user-by-id!
     [_ user-id]
@@ -93,7 +99,7 @@
 
 (defn make-in-mem-storage ;; Constructor.
   []
-  (map->InMemoryStorage {:users       (atom {})
+  (map->InMemoryStorage {:users    (atom {})
                          :tweets   (atom {})
                          :replies  (atom {})
                          :retweets (atom {})
