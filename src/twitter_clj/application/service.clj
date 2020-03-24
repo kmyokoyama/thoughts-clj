@@ -8,7 +8,7 @@
 (defrecord Service [repository]
   component/Lifecycle
   (start [this]
-    (log/info "Starting servie")
+    (log/info "Starting service")
     this)
 
   (stop [this]

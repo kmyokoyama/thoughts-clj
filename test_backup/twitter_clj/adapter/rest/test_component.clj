@@ -1,7 +1,7 @@
 (ns twitter-clj.adapter.rest.test_component
   (:require [com.stuartsierra.component :as component]
             [twitter-clj.adapter.rest.component :refer [make-http-controller]]
-            [twitter-clj.adapter.repository.in-mem :refer [make-in-mem-repository]]
+            [twitter-clj.adapter.repository.in-mem :refer [make-in-mem-storage]]
             [twitter-clj.application.service :refer [make-service]]))
 
 (defn- test-system

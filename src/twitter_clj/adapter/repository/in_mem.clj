@@ -91,7 +91,7 @@
     [_ user-id tweet-id]
     (get-in @likes [tweet-id user-id])))
 
-(defn make-in-mem-repository ;; Constructor.
+(defn make-in-mem-storage ;; Constructor.
   []
   (map->InMemoryStorage {:users       (atom {})
                          :tweets   (atom {})
