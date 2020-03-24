@@ -60,19 +60,16 @@
       :by-id (get @tweets (to-uuid key))
       :by-user-id (filter #(= (:user-id %) key) (vals @tweets))))
 
-  (fetch-retweet-by-id!
-    [_ retweet-id]
-    (if-let [retweet (get @retweets (to-uuid retweet-id))]
-      (-> (assoc retweet :tweet (get @tweets (:tweet-id retweet)))
-          (dissoc retweet :tweet-id))))
-
-  (fetch-retweets-by-source-tweet-id!
-    [_ source-tweet-id]
-    (let [tweet (get @tweets (to-uuid source-tweet-id))]
-      (->> (vals @retweets)
-           (filter (fn [retweet] (= (:tweet-id retweet) (to-uuid source-tweet-id))))
-           (map (fn [retweet] (-> (assoc retweet :tweet tweet)
-                                  (dissoc retweet :tweet-id)))))))
+  (fetch-retweets!
+    [_ key criteria]
+    (case criteria
+      :by-id (if-let [retweet (get @retweets (to-uuid key))]
+               (-> (assoc retweet :tweet (get @tweets (:tweet-id retweet)))
+                   (dissoc retweet :tweet-id)))
+      :by-source-tweet-id (->> (vals @retweets)
+                               (filter (fn [retweet] (= (:tweet-id retweet) (to-uuid key))))
+                               (map (fn [retweet] (-> (assoc retweet :tweet (get @tweets (to-uuid key)))
+                                                      (dissoc retweet :tweet-id)))))))
 
   (fetch-replies!
     [_ key criteria]

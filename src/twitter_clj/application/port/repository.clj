@@ -9,9 +9,8 @@
 
   (fetch-tweets! [this key criteria])
   (fetch-users! [this key criteria])
-  (fetch-retweet-by-id! [this retweet-id])
-  (fetch-retweets-by-source-tweet-id! [this source-tweet-id])
   (fetch-replies! [this key criteria])
+  (fetch-retweets! [this key criteria])
 
   (remove-like! [this user-id tweet-id])
   (find-users! [this criteria])

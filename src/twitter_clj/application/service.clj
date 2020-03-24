@@ -127,13 +127,13 @@
 
 (defn get-retweet-by-id
   [app retweet-id]
-  (if-let [retweet (repository/fetch-retweet-by-id! (:repository app) retweet-id)]
+  (if-let [retweet (repository/fetch-retweets! (:repository app) retweet-id :by-id)]
     retweet
     (throw-missing-tweet! retweet-id)))
 
 (defn get-retweets-by-tweet-id
   [app source-tweet-id]
-  (if-let [retweets (repository/fetch-retweets-by-source-tweet-id! (:repository app) source-tweet-id)]
+  (if-let [retweets (repository/fetch-retweets! (:repository app) source-tweet-id :by-source-tweet-id)]
     retweets
     (throw-missing-tweet! source-tweet-id)))
 
