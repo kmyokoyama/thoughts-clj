@@ -1,5 +1,4 @@
 (ns twitter-clj.application.core
-  (:require [twitter-clj.application.port.storage :as storage])
   (:import (java.util UUID)
            (java.time ZonedDateTime)))
 

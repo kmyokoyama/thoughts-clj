@@ -1,11 +1,11 @@
-(ns twitter-clj.application.app
+(ns twitter-clj.application.service
   (:require [com.stuartsierra.component :as component]
             [taoensso.timbre :as log]
             [twitter-clj.application.core :as core]
             [twitter-clj.application.port.storage :as storage])
   (:import [java.util UUID]))
 
-(defrecord App [storage]
+(defrecord Service [storage]
   component/Lifecycle
   (start [this]
     (log/info "Starting app")
@@ -15,9 +15,9 @@
     (log/info "Stopping app")
     this))
 
-(defn make-app ;; Constructor.
+(defn make-service ;; Constructor.
   []
-  (map->App {}))
+  (map->Service {}))
 
 ;; Private functions.
 

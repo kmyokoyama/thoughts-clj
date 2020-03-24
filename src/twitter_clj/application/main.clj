@@ -4,19 +4,19 @@
             [taoensso.timbre :as log]
             [twitter-clj.adapter.rest.component :refer [make-http-controller]]
             [twitter-clj.adapter.storage.in-mem :refer [make-in-mem-storage]]
-            [twitter-clj.application.app :refer [make-app]])
+            [twitter-clj.application.service :refer [make-service]])
   (:gen-class))
 
 (defn system
   [system-config]
   (component/system-map
     :storage (make-in-mem-storage)
-    :app (component/using
-           (make-app)
-           [:storage])
+    :service (component/using
+               (make-service)
+               [:storage])
     :controller (component/using
                   (make-http-controller (:server-config system-config))
-                  [:app])))
+                  [:service])))
 
 (defn on-exit
   [system]

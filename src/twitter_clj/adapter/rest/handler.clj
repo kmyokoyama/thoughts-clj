@@ -1,6 +1,6 @@
 (ns twitter-clj.adapter.rest.handler
   (:require [taoensso.timbre :as log]
-            [twitter-clj.application.app :as app]
+            [twitter-clj.application.service :as service]
             [twitter-clj.adapter.rest.util :refer [get-parameter get-from-body
                                                    ok-with-success
                                                    ok-with-failure
@@ -8,100 +8,100 @@
 
 (defn add-user
   "This will be moved to user management API in the future."
-  [req app]
+  [req service]
   (let [{:keys [name email username]} (:body req)
         user-info (str name " @" username " [" email"]")]
     (log/info "Received request to add user" user-info)
-    (let [user (app/add-user app name email username)]
+    (let [user (service/add-user service name email username)]
       (created user))))
 
 (defn get-user-by-id
-  [req app]
+  [req service]
   (let [user-id (get-parameter req :user-id)
-        user (app/get-user-by-id app user-id)]
+        user (service/get-user-by-id service user-id)]
     (log/info "Received request to get user with id" user-id)
     (ok-with-success user)))
 
 (defn add-tweet
-  [req app]
+  [req service]
   (let [{:keys [user-id text]} (:body req)
-        tweet (app/add-tweet app user-id text)]
+        tweet (service/add-tweet service user-id text)]
     (log/info "Received request to add new tweet from user" user-id)
     (created tweet)))
 
 (defn get-tweet-by-id
-  [req app]
+  [req service]
   (let [tweet-id (get-parameter req :tweet-id)
-        tweet (app/get-tweet-by-id app tweet-id)]
+        tweet (service/get-tweet-by-id service tweet-id)]
     (log/info "Received request to get tweet with id" tweet-id)
     (ok-with-success tweet)))
 
 (defn get-tweets-by-user
-  [req app]
+  [req service]
   (let [user-id (get-parameter req :user-id)
-        tweets (app/get-tweets-by-user app user-id)]
+        tweets (service/get-tweets-by-user service user-id)]
     (log/info "Received request to get tweets from user" user-id)
     (ok-with-success tweets)))
 
 (defn add-reply
-  [req app]
+  [req service]
   (let [source-tweet-id (get-parameter req :tweet-id)
         {:keys [user-id text]} (:body req)
-        reply (app/add-reply app user-id text source-tweet-id)]
+        reply (service/add-reply service user-id text source-tweet-id)]
     (log/info "Received request to add new reply from user" user-id "to tweet" source-tweet-id)
     (created reply)))
 
 (defn add-retweet
-  [req app]
+  [req service]
   (let [source-tweet-id (get-parameter req :tweet-id)
         {:keys [user-id text]} (:body req)
-        retweet (app/retweet app user-id source-tweet-id)]
+        retweet (service/retweet service user-id source-tweet-id)]
     (log/info "Received request to add new retweet from user" user-id "to tweet" source-tweet-id)
     (created retweet)))
 
 (defn add-retweet-with-comment
-  [req app]
+  [req service]
   (let [source-tweet-id (get-parameter req :tweet-id)
         {:keys [user-id comment]} (:body req)
-        retweet (app/retweet-with-comment app user-id comment source-tweet-id)]
+        retweet (service/retweet-with-comment service user-id comment source-tweet-id)]
     (log/info "Received request to add new retweet from user" user-id "to tweet" source-tweet-id)
     (created retweet)))
 
 (defn get-retweet-by-id
-  [req app]
+  [req service]
   (let [retweet-id (get-parameter req :retweet-id)
-        retweet (app/get-retweet-by-id app retweet-id)]
+        retweet (service/get-retweet-by-id service retweet-id)]
     (log/info "Received request to get retweet with id" retweet-id)
     (ok-with-success retweet)))
 
 (defn get-retweets-by-tweet-id
-  [req app]
+  [req service]
   (let [source-tweet-id (get-parameter req :tweet-id)
-        retweets (app/get-retweets-by-tweet-id app source-tweet-id)]
+        retweets (service/get-retweets-by-tweet-id service source-tweet-id)]
     (log/info "Received request to get retweets with source tweet id" source-tweet-id)
     (ok-with-success retweets)))
 
 (defn- like-tweet
-  [app user-id tweet-id]
+  [service user-id tweet-id]
   (log/info "Received request to like tweet" tweet-id)
   (try
-    (-> (app/like app user-id tweet-id)
+    (-> (service/like service user-id tweet-id)
         (ok-with-success))))
 
 (defn- unlike-tweet
-  [app user-id tweet-id]
+  [service user-id tweet-id]
   (log/info "Received request to unlike tweet" tweet-id)
-  (-> (app/unlike app user-id tweet-id)
+  (-> (service/unlike service user-id tweet-id)
       (ok-with-success)))
 
 (defn tweet-react
-  [req app]
+  [req service]
   (let [tweet-id (get-parameter req :tweet-id)
         user-id (get-from-body req :user-id)
         action (keyword (get-from-body req :action))]
     (case action
-      :like (like-tweet app user-id tweet-id)
-      :unlike (unlike-tweet app user-id tweet-id))))
+      :like (like-tweet service user-id tweet-id)
+      :unlike (unlike-tweet service user-id tweet-id))))
 
 ;; Exception-handling functions.
 
