@@ -12,7 +12,7 @@
 
 ;; Driven-side.
 
-(defrecord InMemoryrepository [users tweets replies retweets likes]
+(defrecord InMemoryStorage [users tweets replies retweets likes]
   component/Lifecycle
   (start [this]
     (log/info "Starting in-memory database")
@@ -93,11 +93,11 @@
 
 (defn make-in-mem-repository ;; Constructor.
   []
-  (map->InMemoryrepository {:users (atom {})
-                            :tweets (atom {})
-                            :replies (atom {})
-                            :retweets (atom {})
-                            :likes (atom {})}))
+  (map->InMemoryStorage {:users       (atom {})
+                         :tweets   (atom {})
+                         :replies  (atom {})
+                         :retweets (atom {})
+                         :likes    (atom {})}))
 
 (defn shutdown
   [repository]
