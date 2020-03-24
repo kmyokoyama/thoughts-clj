@@ -34,12 +34,11 @@
 ;; Retweet-related functions.
 
 (defn new-retweet
-  [user-id retweeted]
-  (->Retweet (UUID/randomUUID) user-id false nil (ZonedDateTime/now) retweeted))
+  ([user-id retweeted]
+   (->Retweet (UUID/randomUUID) user-id false nil (ZonedDateTime/now) retweeted))
 
-(defn new-retweet-with-comment
-  [user-id retweeted comment]
-  (->Retweet (UUID/randomUUID) user-id true comment (ZonedDateTime/now) retweeted))
+  ([user-id retweeted comment]
+   (->Retweet (UUID/randomUUID) user-id true comment (ZonedDateTime/now) retweeted)))
 
 (defn retweet
   [retweeted]

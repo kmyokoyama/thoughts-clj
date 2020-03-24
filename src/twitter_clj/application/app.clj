@@ -119,7 +119,7 @@
   (if (user-exists? (:storage app) user-id)
     (if-let [source-tweet (storage/fetch-tweet-by-id! (:storage app) source-tweet-id)]
       (let [updated-source-tweet (core/retweet source-tweet)
-            retweet (core/new-retweet-with-comment user-id updated-source-tweet comment)]
+            retweet (core/new-retweet user-id updated-source-tweet comment)]
         (storage/update-tweet! (:storage app) updated-source-tweet)
         (storage/update-retweets! (:storage app) retweet))
       (throw-missing-user! source-tweet-id))

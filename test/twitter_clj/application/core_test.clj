@@ -1,74 +1,85 @@
 (ns twitter-clj.application.core-test
-  (:require [clojure.set :as set]
-            [clojure.test :refer :all]
+  (:require [clojure.test :refer :all]
             [clojure.data.generators :as random]
-            [twitter-clj.application.core :refer :all])
+            [twitter-clj.application.core :refer :all]
+            [midje.sweet :refer :all])
   (:import (java.time ZonedDateTime)))
 
-(defn- new-random-tweet [] (new-tweet (random/uuid) (random/string)))
+(defn- now [] (ZonedDateTime/now)) ()
 
-(defn- now [] (ZonedDateTime/now))
+(fact "`new-tweet` creates a fresh new tweet entity"
+      (let [user-id (random/uuid)
+            text (random/string)
+            tweet (new-tweet user-id text)]
+        (:user-id tweet) => user-id
+        (:likes tweet) => 0
+        (:retweets tweet) => 0
+        (:replies tweet) => 0
+        (:id tweet) => uuid?))
 
-(defn- fresh-sharing-stats?
-  [tweet]
-  (every? zero? ((juxt :likes :retweets :replies) tweet)))
+(fact "`new-like` creates a fresh new like entity"
+      (let [user-id (random/uuid)
+            tweet-id (random/uuid)
+            like (new-like user-id tweet-id)]
+        (:id like) => uuid?
+        (:user-id like) => user-id
+        (:tweet-id like) => tweet-id))
 
-(defmacro equal-except-for
-  [expected actual & exceptions]
-  `(let [keys-set# (comp set keys)
-         expected-keys# (keys-set# ~expected)
-         actual-keys# (keys-set# ~actual)
-         exception-keys# (set '~exceptions)
-         valid-keys# (set/difference (set/intersection expected-keys# actual-keys#) exception-keys#)]
-     (every? identity (vec (doall (map #(is (= (% ~expected) (% ~actual))) valid-keys#))))))
+(facts "About `new-retweet`"
+       (fact "It creates a fresh new retweet entity"
+             (let [user-id (random/uuid)
+                   retweeted (new-tweet (random/uuid) (random/string))
+                   retweet (new-retweet user-id retweeted)]
+               (:id retweet) => uuid?
+               (:user-id retweet) => user-id
+               (:has-comment retweet) => false
+               (:comment retweet) => nil
+               (:tweet retweet) => retweeted))
 
-;; Tweet-related tests.
+       (fact "It creates a fresh new retweet entity with a comment"
+             (let [user-id (random/uuid)
+                   retweeted (new-tweet (random/uuid) (random/string))
+                   comment (random/string)
+                   retweet (new-retweet user-id retweeted comment)]
+               (:id retweet) => uuid?
+               (:user-id retweet) => user-id
+               (:has-comment retweet) => true
+               (:comment retweet) => comment
+               (:tweet retweet) => retweeted)))
 
-(deftest like-increase-by-one
-  (testing "When like, then should increase likes by one."
-    (let [tweet (->Tweet (random/uuid) (random/uuid) "This is my tweet" (now) 10 0 0)
-          liked-tweet (like tweet)]
-      (equal-except-for tweet liked-tweet :likes)
-      (is (= 11 (:likes liked-tweet))))))
+(fact "`new-user` creates a fresh new user"
+      (let [name (random/string)
+            email (random/string)
+            username (random/string)
+            user (new-user name email username)]
+        (:id user) => uuid?
+        (:active user) => true
+        (:name user) => name
+        (:email user) => email
+        (:username user) => username))
 
-(deftest unlike-decrease-by-one
-  (testing "When unlike, then should decrease likes by one."
-    (let [tweet (->Tweet (random/uuid) (random/uuid) "This is my tweet" (now) 10 0 0)
-          unliked-tweet (unlike tweet)]
-      (equal-except-for tweet unliked-tweet :likes)
-      (is (= 9 (:likes (unlike tweet)))))))
+(fact "`like` increases likes counting by one"
+      (let [tweet (->Tweet (random/uuid) (random/uuid) "This is my tweet" (now) 10 0 0)
+            updated-tweet (like tweet)]
+        (:likes updated-tweet)) => 11)
 
-;; Retweet-related tests.
+(facts "About `unlike`"
+       (fact "It decreases likes counting by one"
+             (let [tweet (->Tweet (random/uuid) (random/uuid) "This is my tweet" (now) 10 0 0)
+                   updated-tweet (unlike tweet)]
+               (:likes updated-tweet)) => 9)
 
-(deftest retweet-with-comment-creates-new-tweet
-  (testing "When retweets with comment, then creates a new tweet."
-    (let [original-tweet (:tweet (new-random-tweet))
-          retweet-user-id (random/uuid)
-          comment (random/string)
-          {:keys [retweet retweeted]} (retweet-with-comment retweet-user-id comment original-tweet)]
-      (is (= (inc (:retweets original-tweet)) (:retweets retweeted)))
-      (is (= (:original-tweet-id retweet) (:id original-tweet)))
-      (is (= (get-in retweet [:tweet :user-id]) retweet-user-id))
-      (is (= (get-in retweet [:tweet :text]) comment))
-      (is (fresh-sharing-stats? (:tweet retweet))))))
+       (fact "It does not decrease zero likes counting"
+             (let [tweet (->Tweet (random/uuid) (random/uuid) "This is my tweet" (now) 0 0 0)
+                   updated-tweet (unlike tweet)]
+               (:likes updated-tweet)) => 0))
 
-(deftest retweet-without-comment-links-original-tweet
-  (testing "When retweets without comment, then links original tweet."
-    (let [original-tweet (:tweet (new-random-tweet))
-          retweet-user-id (random/uuid)
-          {:keys [retweet retweeted]} (retweet-only retweet-user-id original-tweet)]
-      (is (= (inc (:retweets original-tweet)) (:retweets retweeted)))
-      (is (= (:original-tweet-id retweet) (:id original-tweet)))
-      (is (= (:user-id retweet) retweet-user-id)))))
+(fact "`retweet` increases retweets counting by one"
+      (let [tweet (->Tweet (random/uuid) (random/uuid) "This is my tweet" (now) 0 10 0)
+            updated-tweet (retweet tweet)]
+        (:retweets updated-tweet)) => 11)
 
-;; Thread-related tests.
-
-(deftest reply-links-tweets
-  (testing "When replies, link new tweets to source tweet."
-    (let [{:keys [tweet thread]} (new-random-tweet)
-          reply-tweets (repeatedly 5 (fn [] (:tweet (new-random-tweet))))
-          reply-tweet-ids (map :id reply-tweets)
-          final-thread (reduce (fn [t r] (:thread (reply r tweet t))) thread reply-tweets)
-          final-tweet-ids (:tweet-replies final-thread)]
-      (is (= 5 (count (:tweet-replies final-thread))))
-      (is (= (set reply-tweet-ids) (set final-tweet-ids))))))
+(fact "`reply` increases replies counting by one"
+      (let [tweet (->Tweet (random/uuid) (random/uuid) "This is my tweet" (now) 0 0 10)
+            updated-tweet (reply tweet)]
+        (:replies updated-tweet)) => 11)
