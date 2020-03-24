@@ -68,7 +68,7 @@
 
 (defn get-user-by-id
   [app user-id]
-  (if-let [user (repository/fetch-user-by-id! (:repository app) user-id)]
+  (if-let [user (repository/fetch-users! (:repository app) user-id :by-id)]
     user
     (throw-missing-user! user-id)))
 
@@ -81,21 +81,21 @@
 
 (defn get-tweet-by-id
   [app tweet-id]
-  (if-let [tweet (repository/fetch-tweet-by-id! (:repository app) tweet-id)]
-    (let [replies (repository/fetch-replies-by-tweet-id! (:repository app) tweet-id)]
+  (if-let [tweet (repository/fetch-tweets! (:repository app) tweet-id :by-id)]
+    (let [replies (repository/fetch-replies! (:repository app) tweet-id :by-source-tweet-id)]
       (assoc tweet :thread replies))
     (throw-missing-tweet! tweet-id)))
 
 (defn get-tweets-by-user
   [app user-id]
   (if (user-exists? (:repository app) user-id)
-    (repository/fetch-tweets-by-user! (:repository app) user-id)
+    (repository/fetch-tweets! (:repository app) user-id :by-user-id)
     (throw-missing-user! user-id)))
 
 (defn add-reply
   [app user-id text source-tweet-id]
   (if (user-exists? (:repository app) user-id)
-    (if-let [source-tweet (repository/fetch-tweet-by-id! (:repository app) source-tweet-id)]
+    (if-let [source-tweet (repository/fetch-tweets! (:repository app) source-tweet-id :by-id)]
       (let [reply (core/new-tweet user-id text)]
         (repository/update-tweet! (:repository app) (core/reply source-tweet))
         (repository/update-replies! (:repository app) source-tweet-id reply)
@@ -106,7 +106,7 @@
 (defn retweet
   [app user-id source-tweet-id]
   (if (user-exists? (:repository app) user-id)
-    (if-let [source-tweet (repository/fetch-tweet-by-id! (:repository app) source-tweet-id)]
+    (if-let [source-tweet (repository/fetch-tweets! (:repository app) source-tweet-id :by-id)]
       (let [updated-source-tweet (core/retweet source-tweet)
             retweet (core/new-retweet user-id updated-source-tweet)]
         (repository/update-tweet! (:repository app) updated-source-tweet)
@@ -117,7 +117,7 @@
 (defn retweet-with-comment
   [app user-id comment source-tweet-id]
   (if (user-exists? (:repository app) user-id)
-    (if-let [source-tweet (repository/fetch-tweet-by-id! (:repository app) source-tweet-id)]
+    (if-let [source-tweet (repository/fetch-tweets! (:repository app) source-tweet-id :by-id)]
       (let [updated-source-tweet (core/retweet source-tweet)
             retweet (core/new-retweet user-id updated-source-tweet comment)]
         (repository/update-tweet! (:repository app) updated-source-tweet)
@@ -139,7 +139,7 @@
 
 (defn like
   [app user-id tweet-id]
-  (if-let [tweet (repository/fetch-tweet-by-id! (:repository app) tweet-id)]
+  (if-let [tweet (repository/fetch-tweets! (:repository app) tweet-id :by-id)]
     (if (not (repository/find-like! (:repository app) user-id tweet-id))
       (do (repository/update-like! (:repository app) (core/new-like user-id tweet-id))
           (repository/update-tweet! (:repository app) (core/like tweet)))
@@ -148,7 +148,7 @@
 
 (defn unlike
   [app user-id tweet-id]
-  (if-let [tweet (repository/fetch-tweet-by-id! (:repository app) tweet-id)]
+  (if-let [tweet (repository/fetch-tweets! (:repository app) tweet-id :by-id)]
     (if (repository/find-like! (:repository app) user-id tweet-id)
       (do (repository/remove-like! (:repository app) user-id tweet-id)
           (repository/update-tweet! (:repository app) (core/unlike tweet)))

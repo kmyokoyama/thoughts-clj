@@ -54,13 +54,11 @@
                                      (fn [like-ids] (conj (vec like-ids) like-id)))))
     like)
 
-  (fetch-tweets-by-user!
-    [_ user-id]
-    (filter #(= (:user-id %) user-id) (vals @tweets)))
-
-  (fetch-tweet-by-id!
-    [_ tweet-id]
-    (get @tweets (to-uuid tweet-id)))
+  (fetch-tweets!
+    [_ key criteria]
+    (case criteria
+      :by-id (get @tweets (to-uuid key))
+      :by-user-id (filter #(= (:user-id %) key) (vals @tweets))))
 
   (fetch-retweet-by-id!
     [_ retweet-id]
@@ -76,14 +74,16 @@
            (map (fn [retweet] (-> (assoc retweet :tweet tweet)
                                   (dissoc retweet :tweet-id)))))))
 
-  (fetch-replies-by-tweet-id!
-    [_ tweet-id]
-    (->> (get @replies (to-uuid tweet-id) [])
-         (map (fn [reply-id] (get @tweets (to-uuid reply-id))))))
+  (fetch-replies!
+    [_ key criteria]
+    (case criteria
+      :by-source-tweet-id (->> (get @replies (to-uuid key) [])
+                               (map (fn [reply-id] (get @tweets (to-uuid reply-id)))))))
 
-  (fetch-user-by-id!
-    [_ user-id]
-    (get @users (to-uuid user-id)))
+  (fetch-users!
+    [_ key criteria]-
+    (case criteria
+      :by-id (get @users (to-uuid key))))
 
   (remove-like!
     [_ user-id tweet-id]
