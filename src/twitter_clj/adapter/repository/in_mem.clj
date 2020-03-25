@@ -90,9 +90,16 @@
     [_ criteria]
     (filter (fn [user] (= criteria (select-keys user (keys criteria)))) (vals @users)))
 
-  (find-like!
-    [_ user-id tweet-id]
-    (get-in @likes [tweet-id user-id])))
+  (fetch-likes!
+    [_ key criteria]
+    (case criteria
+      :by-user-tweet-ids (let [[user-id source-tweet-id] key]
+                           (->> (get @likes (to-uuid source-tweet-id) [])
+                                (map (fn [like-id] (get @likes (to-uuid like-id))))
+                                (filter (fn [like] (= (:user-id like) user-id)))
+                                first))
+      :by-source-tweet-id (->> (get @likes (to-uuid key) [])
+                               (map (fn [like-id] (get @likes (to-uuid like-id))))))))
 
 (defn make-in-mem-storage ;; Constructor.
   []
