@@ -13,5 +13,4 @@
   (fetch-replies! [this key criteria])
   (fetch-retweets! [this key criteria])
 
-  (remove-like! [this user-id tweet-id])
-  (find-users! [this criteria]))
+  (remove-like! [this key criteria]))

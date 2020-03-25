@@ -33,6 +33,13 @@
     (swap! tweets (fn [tweets] (assoc tweets tweet-id tweet)))
     tweet)
 
+  (update-like!
+    [_ {like-id :id source-tweet-id :tweet-id :as like}]
+    (swap! likes (fn [likes] (update likes
+                                     (to-uuid source-tweet-id)
+                                     (fn [like-ids] (conj (vec like-ids) like-id)))))
+    like)
+
   (update-replies!
     [_ source-tweet-id {reply-id :id :as reply}]
     (swap! replies (fn [replies] (update replies
@@ -47,18 +54,34 @@
                                                                   (get-in retweet [:tweet :id])))))
     retweet)
 
-  (update-like!
-    [_ {like-id :id source-tweet-id :tweet-id :as like}]
-    (swap! likes (fn [likes] (update likes
-                                     (to-uuid source-tweet-id)
-                                     (fn [like-ids] (conj (vec like-ids) like-id)))))
-    like)
+  (fetch-users!
+    [_ key criteria]-
+    (case criteria
+      :by-id (get @users (to-uuid key))
+      :by-fields (filter (fn [user] (= key (select-keys user (keys key)))) (vals @users))))
 
   (fetch-tweets!
     [_ key criteria]
     (case criteria
       :by-id (get @tweets (to-uuid key))
       :by-user-id (filter #(= (:user-id %) key) (vals @tweets))))
+
+  (fetch-likes!
+    [_ key criteria]
+    (case criteria
+      :by-user-tweet-ids (let [[user-id source-tweet-id] key]
+                           (->> (get @likes (to-uuid source-tweet-id) [])
+                                (map (fn [like-id] (get @likes (to-uuid like-id))))
+                                (filter (fn [like] (= (:user-id like) user-id)))
+                                first))
+      :by-source-tweet-id (->> (get @likes (to-uuid key) [])
+                               (map (fn [like-id] (get @likes (to-uuid like-id)))))))
+
+  (fetch-replies!
+    [_ key criteria]
+    (case criteria
+      :by-source-tweet-id (->> (get @replies (to-uuid key) [])
+                               (map (fn [reply-id] (get @tweets (to-uuid reply-id)))))))
 
   (fetch-retweets!
     [_ key criteria]
@@ -71,35 +94,11 @@
                                (map (fn [retweet] (-> (assoc retweet :tweet (get @tweets (to-uuid key)))
                                                       (dissoc retweet :tweet-id)))))))
 
-  (fetch-replies!
-    [_ key criteria]
-    (case criteria
-      :by-source-tweet-id (->> (get @replies (to-uuid key) [])
-                               (map (fn [reply-id] (get @tweets (to-uuid reply-id)))))))
-
-  (fetch-users!
-    [_ key criteria]-
-    (case criteria
-      :by-id (get @users (to-uuid key))))
-
   (remove-like!
-    [_ user-id tweet-id]
-    (swap! likes (fn [likes] (update-in likes [tweet-id] dissoc user-id))))
-
-  (find-users!
-    [_ criteria]
-    (filter (fn [user] (= criteria (select-keys user (keys criteria)))) (vals @users)))
-
-  (fetch-likes!
     [_ key criteria]
     (case criteria
-      :by-user-tweet-ids (let [[user-id source-tweet-id] key]
-                           (->> (get @likes (to-uuid source-tweet-id) [])
-                                (map (fn [like-id] (get @likes (to-uuid like-id))))
-                                (filter (fn [like] (= (:user-id like) user-id)))
-                                first))
-      :by-source-tweet-id (->> (get @likes (to-uuid key) [])
-                               (map (fn [like-id] (get @likes (to-uuid like-id))))))))
+      :by-user-tweet-ids (let [[user-id tweet-id] key]
+                           (swap! likes (fn [likes] (update-in likes [tweet-id] dissoc user-id)))))))
 
 (defn make-in-mem-storage ;; Constructor.
   []

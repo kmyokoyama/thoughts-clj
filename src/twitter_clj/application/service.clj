@@ -43,17 +43,13 @@
   [str]
   (UUID/fromString str))
 
-(defn- find-any-user?
-  [repository criteria]
-  (not (empty? (repository/find-users! repository criteria))))
-
 (defn- user-exists?
   [repository id]
-  (find-any-user? repository {:id (to-uuid id)}))
+  (not (empty? (repository/fetch-users! repository id :by-id))))
 
 (defn- new-user?
   [repository email]
-  (not (find-any-user? repository {:email email})))
+  (not (repository/fetch-users! repository {:email email} :by-fields)))
 
 ;; Public functions.
 
@@ -150,7 +146,7 @@
   [app user-id tweet-id]
   (if-let [tweet (repository/fetch-tweets! (:repository app) tweet-id :by-id)]
     (if (repository/fetch-likes! (:repository app) [user-id tweet-id] :by-user-tweet-ids)
-      (do (repository/remove-like! (:repository app) user-id tweet-id)
+      (do (repository/remove-like! (:repository app) [user-id tweet-id] :by-user-tweet-ids)
           (repository/update-tweet! (:repository app) (core/unlike tweet)))
       tweet)
     (throw-missing-tweet! tweet-id)))
