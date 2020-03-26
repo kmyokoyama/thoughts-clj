@@ -8,7 +8,7 @@
 
 ;; Driven-side.
 
-(defrecord InMemoryStorage [users tweets join-tweet-replies retweets likes join-tweet-likes]
+(defrecord InMemoryStorage [users tweets likes retweets join-tweet-likes join-tweet-replies join-tweet-retweets]
   component/Lifecycle
   (start [this]
     (log/info "Starting in-memory database")
@@ -46,9 +46,10 @@
 
   (update-retweets!
     [_ {retweet-id :id :as retweet}]
-    (swap! retweets (fn [retweets] (assoc retweets retweet-id
-                                                   (assoc retweet :tweet-id
-                                                                  (get-in retweet [:tweet :id])))))
+    (swap! retweets (fn [retweets] (assoc retweets retweet-id retweet)))
+    (swap! join-tweet-retweets (fn [join-tweet-retweets] (update join-tweet-retweets
+                                                                 (get-in retweet [:tweet :id])
+                                                                 (fn [retweet-ids] (conj (vec retweet-ids) retweet-id)))))
     retweet)
 
   (fetch-users!
@@ -84,12 +85,9 @@
     [_ key criteria]
     (case criteria
       :by-id (if-let [retweet (get @retweets key)]
-               (-> (assoc retweet :tweet (get @tweets (:tweet-id retweet)))
-                   (dissoc retweet :tweet-id)))
-      :by-source-tweet-id (->> (vals @retweets)
-                               (filter (fn [retweet] (= (:tweet-id retweet) key)))
-                               (map (fn [retweet] (-> (assoc retweet :tweet (get @tweets key))
-                                                      (dissoc retweet :tweet-id)))))))
+               (assoc retweet :tweet (get @tweets (get-in retweet [:tweet :id]))))
+      :by-source-tweet-id (-> (get @join-tweet-retweets key)
+                              (map (fn [retweet] (assoc retweet :tweet (get @tweets key)))))))
 
   (remove-like!
     [_ key criteria]
@@ -113,7 +111,8 @@
                          :retweets (atom {})
                          :likes    (atom {})
                          :join-tweet-likes (atom {})
-                         :join-tweet-replies  (atom {})}))
+                         :join-tweet-replies  (atom {})
+                         :join-tweet-retweets  (atom {})}))
 
 (defn shutdown
   [repository]
@@ -123,4 +122,5 @@
   (reset! (:likes repository) {})
   (reset! (:join-tweet-likes repository) {})
   (reset! (:join-tweet-replies repository) {})
+  (reset! (:join-tweet-retweets repository) {})
   repository)
