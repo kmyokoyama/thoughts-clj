@@ -13,12 +13,12 @@
 
 (defn new-tweet
   [user-id text]
-  (let [tweet-id (UUID/randomUUID)]
+  (let [tweet-id (str (UUID/randomUUID))]
     (->Tweet tweet-id user-id text (ZonedDateTime/now) 0 0 0)))
 
 (defn new-like
   [user-id tweet-id]
-  (->TweetLike (UUID/randomUUID) (ZonedDateTime/now) user-id tweet-id))
+  (->TweetLike (str (UUID/randomUUID)) (ZonedDateTime/now) user-id tweet-id))
 
 (defn like
   [tweet]
@@ -34,10 +34,10 @@
 
 (defn new-retweet
   ([user-id retweeted]
-   (->Retweet (UUID/randomUUID) user-id false nil (ZonedDateTime/now) retweeted))
+   (->Retweet (str (UUID/randomUUID)) user-id false nil (ZonedDateTime/now) retweeted))
 
   ([user-id retweeted comment]
-   (->Retweet (UUID/randomUUID) user-id true comment (ZonedDateTime/now) retweeted)))
+   (->Retweet (str (UUID/randomUUID)) user-id true comment (ZonedDateTime/now) retweeted)))
 
 (defn retweet
   [retweeted]
@@ -53,4 +53,4 @@
 
 (defn new-user
   [name email username]
-  (->User (UUID/randomUUID) true name email username))
+  (->User (str (UUID/randomUUID)) true name email username))

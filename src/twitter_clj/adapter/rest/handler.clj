@@ -98,8 +98,8 @@
   [req service]
   (let [tweet-id (get-parameter req :tweet-id)
         user-id (get-from-body req :user-id)
-        action (keyword (get-from-body req :action))]
-    (case action
+        reaction (keyword (get-from-body req :reaction))]
+    (case reaction
       :like (like-tweet service user-id tweet-id)
       :unlike (unlike-tweet service user-id tweet-id))))
 

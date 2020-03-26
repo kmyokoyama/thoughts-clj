@@ -39,17 +39,13 @@
                                          :resource-type :user
                                          :resource-key key})))
 
-(defn- to-uuid
-  [str]
-  (UUID/fromString str))
-
 (defn- user-exists?
   [repository id]
   (not (empty? (repository/fetch-users! repository id :by-id))))
 
 (defn- new-user?
   [repository email]
-  (not (repository/fetch-users! repository {:email email} :by-fields)))
+  (empty? (repository/fetch-users! repository {:email email} :by-fields)))
 
 ;; Public functions.
 
@@ -138,8 +134,7 @@
   (if-let [tweet (repository/fetch-tweets! (:repository app) tweet-id :by-id)]
     (if (not (repository/fetch-likes! (:repository app) [user-id tweet-id] :by-user-tweet-ids))
       (do (repository/update-like! (:repository app) (core/new-like user-id tweet-id))
-          (repository/update-tweet! (:repository app) (core/like tweet)))
-      tweet)
+          (repository/update-tweet! (:repository app) (core/like tweet))))
     (throw-missing-tweet! tweet-id)))
 
 (defn unlike
@@ -147,6 +142,5 @@
   (if-let [tweet (repository/fetch-tweets! (:repository app) tweet-id :by-id)]
     (if (repository/fetch-likes! (:repository app) [user-id tweet-id] :by-user-tweet-ids)
       (do (repository/remove-like! (:repository app) [user-id tweet-id] :by-user-tweet-ids)
-          (repository/update-tweet! (:repository app) (core/unlike tweet)))
-      tweet)
+          (repository/update-tweet! (:repository app) (core/unlike tweet))))
     (throw-missing-tweet! tweet-id)))
