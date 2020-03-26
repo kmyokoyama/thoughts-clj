@@ -8,7 +8,7 @@
 
 ;; Driven-side.
 
-(defrecord InMemoryStorage [users tweets replies retweets likes]
+(defrecord InMemoryStorage [users tweets replies retweets likes join-tweet-likes]
   component/Lifecycle
   (start [this]
     (log/info "Starting in-memory database")
@@ -31,9 +31,10 @@
 
   (update-like!
     [_ {like-id :id source-tweet-id :tweet-id :as like}]
-    (swap! likes (fn [likes] (update likes
-                                     source-tweet-id
-                                     (fn [like-ids] (conj (vec like-ids) like-id)))))
+    (swap! likes (fn [likes] (assoc likes like-id like)))
+    (swap! join-tweet-likes (fn [join-tweet-likes] (update join-tweet-likes
+                                                           source-tweet-id
+                                                           (fn [like-ids] (conj (vec like-ids) like-id)))))
     like)
 
   (update-replies!
@@ -64,15 +65,13 @@
 
   (fetch-likes!
     [_ key criteria]
-    (println (let [[user-id source-tweet-id] key] (println user-id " " source-tweet-id)))
-    (println @likes)
     (case criteria
       :by-user-tweet-ids (let [[user-id source-tweet-id] key]
-                           (->> (get @likes source-tweet-id [])
+                           (->> (get @join-tweet-likes source-tweet-id [])
                                 (map (fn [like-id] (get @likes like-id)))
                                 (filter (fn [like] (= (:user-id like) user-id)))
                                 (first)))
-      :by-source-tweet-id (->> (get @likes key [])
+      :by-source-tweet-id (->> (get @join-tweet-likes key [])
                                (map (fn [like-id] (get @likes like-id))))))
 
   (fetch-replies!
@@ -95,8 +94,17 @@
   (remove-like!
     [_ key criteria]
     (case criteria
-      :by-user-tweet-ids (let [[user-id tweet-id] key]
-                           (swap! likes (fn [likes] (update-in likes [tweet-id] dissoc user-id)))))))
+      :by-user-tweet-ids (let [[user-id source-tweet-id] key
+                               like-id (->> (get @join-tweet-likes source-tweet-id [])
+                                            (map (fn [like-id] (get @likes like-id)))
+                                            (filter (fn [like] (= (:user-id like) user-id)))
+                                            (first)
+                                            (:id))]
+                           (swap! join-tweet-likes (fn [join-tweet-likes]
+                                                     (update join-tweet-likes
+                                                             source-tweet-id
+                                                             (fn [like-ids] (remove #(= % like-id) like-ids)))))
+                           (swap! likes (fn [likes] (dissoc likes like-id)))))))
 
 (defn make-in-mem-storage ;; Constructor.
   []
@@ -104,7 +112,8 @@
                          :tweets   (atom {})
                          :replies  (atom {})
                          :retweets (atom {})
-                         :likes    (atom {})}))
+                         :likes    (atom {})
+                         :join-tweet-likes (atom {})}))
 
 (defn shutdown
   [repository]
@@ -113,4 +122,5 @@
   (reset! (:replies repository) {})
   (reset! (:retweets repository) {})
   (reset! (:likes repository) {})
+  (reset! (:join-tweet-likes repository) {})
   repository)

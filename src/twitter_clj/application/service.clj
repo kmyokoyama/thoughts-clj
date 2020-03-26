@@ -134,7 +134,8 @@
   (if-let [tweet (repository/fetch-tweets! (:repository app) tweet-id :by-id)]
     (if (not (repository/fetch-likes! (:repository app) [user-id tweet-id] :by-user-tweet-ids))
       (do (repository/update-like! (:repository app) (core/new-like user-id tweet-id))
-          (repository/update-tweet! (:repository app) (core/like tweet))))
+          (repository/update-tweet! (:repository app) (core/like tweet)))
+      tweet)
     (throw-missing-tweet! tweet-id)))
 
 (defn unlike
@@ -142,5 +143,6 @@
   (if-let [tweet (repository/fetch-tweets! (:repository app) tweet-id :by-id)]
     (if (repository/fetch-likes! (:repository app) [user-id tweet-id] :by-user-tweet-ids)
       (do (repository/remove-like! (:repository app) [user-id tweet-id] :by-user-tweet-ids)
-          (repository/update-tweet! (:repository app) (core/unlike tweet))))
+          (repository/update-tweet! (:repository app) (core/unlike tweet)))
+      tweet)
     (throw-missing-tweet! tweet-id)))
