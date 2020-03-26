@@ -8,7 +8,7 @@
 
 ;; Driven-side.
 
-(defrecord InMemoryStorage [users tweets replies retweets likes join-tweet-likes]
+(defrecord InMemoryStorage [users tweets join-tweet-replies retweets likes join-tweet-likes]
   component/Lifecycle
   (start [this]
     (log/info "Starting in-memory database")
@@ -39,9 +39,9 @@
 
   (update-replies!
     [_ source-tweet-id {reply-id :id :as reply}]
-    (swap! replies (fn [replies] (update replies
-                                         source-tweet-id
-                                         (fn [reply-ids] (conj (vec reply-ids) reply-id)))))
+    (swap! join-tweet-replies (fn [join-tweet-replies] (update join-tweet-replies
+                                                               source-tweet-id
+                                                               (fn [reply-ids] (conj (vec reply-ids) reply-id)))))
     reply)
 
   (update-retweets!
@@ -77,7 +77,7 @@
   (fetch-replies!
     [_ key criteria]
     (case criteria
-      :by-source-tweet-id (->> (get @replies key [])
+      :by-source-tweet-id (->> (get @join-tweet-replies key [])
                                (map (fn [reply-id] (get @tweets reply-id))))))
 
   (fetch-retweets!
@@ -110,17 +110,17 @@
   []
   (map->InMemoryStorage {:users    (atom {})
                          :tweets   (atom {})
-                         :replies  (atom {})
                          :retweets (atom {})
                          :likes    (atom {})
-                         :join-tweet-likes (atom {})}))
+                         :join-tweet-likes (atom {})
+                         :join-tweet-replies  (atom {})}))
 
 (defn shutdown
   [repository]
   (reset! (:users repository) {})
   (reset! (:tweets repository) {})
-  (reset! (:replies repository) {})
   (reset! (:retweets repository) {})
   (reset! (:likes repository) {})
   (reset! (:join-tweet-likes repository) {})
+  (reset! (:join-tweet-replies repository) {})
   repository)
