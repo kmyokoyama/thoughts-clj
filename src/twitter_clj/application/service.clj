@@ -2,8 +2,7 @@
   (:require [com.stuartsierra.component :as component]
             [taoensso.timbre :as log]
             [twitter-clj.application.core :as core]
-            [twitter-clj.application.port.repository :as repository])
-  (:import [java.util UUID]))
+            [twitter-clj.application.port.repository :as repository]))
 
 (defrecord Service [repository]
   component/Lifecycle
@@ -132,7 +131,7 @@
 (defn like
   [app user-id tweet-id]
   (if-let [tweet (repository/fetch-tweets! (:repository app) tweet-id :by-id)]
-    (if (not (repository/fetch-likes! (:repository app) [user-id tweet-id] :by-user-tweet-ids))
+    (if (not (repository/fetch-likes! (:repository app) [tweet-id user-id] [:by-source-tweet-id :by-user-id]))
       (do (repository/update-like! (:repository app) (core/new-like user-id tweet-id))
           (repository/update-tweet! (:repository app) (core/like tweet)))
       tweet)
@@ -141,8 +140,8 @@
 (defn unlike
   [app user-id tweet-id]
   (if-let [tweet (repository/fetch-tweets! (:repository app) tweet-id :by-id)]
-    (if (repository/fetch-likes! (:repository app) [user-id tweet-id] :by-user-tweet-ids)
-      (do (repository/remove-like! (:repository app) [user-id tweet-id] :by-user-tweet-ids)
+    (if (repository/fetch-likes! (:repository app) [tweet-id user-id] [:by-source-tweet-id :by-user-id])
+      (do (repository/remove-like! (:repository app) [tweet-id user-id] [:by-source-tweet-id :by-user-id])
           (repository/update-tweet! (:repository app) (core/unlike tweet)))
       tweet)
     (throw-missing-tweet! tweet-id)))

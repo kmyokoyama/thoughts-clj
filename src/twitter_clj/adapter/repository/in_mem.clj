@@ -1,8 +1,7 @@
 (ns twitter-clj.adapter.repository.in-mem
   (:require [com.stuartsierra.component :as component]
             [taoensso.timbre :as log]
-            [twitter-clj.application.port.repository :as repository])
-  (:import [java.util UUID]))
+            [twitter-clj.application.port.repository :as repository]))
 
 (declare shutdown)
 
@@ -62,16 +61,16 @@
     [_ key criteria]
     (case criteria
       :by-id (get @tweets key)
-      :by-user-id (filter #(= (:user-id %) key (vals @tweets)))))
+      :by-user-id (filter #(= (:user-id %) key) (vals @tweets))))
 
   (fetch-likes!
     [_ key criteria]
     (case criteria
-      :by-user-tweet-ids (let [[user-id source-tweet-id] key]
-                           (->> (get @join-tweet-likes source-tweet-id [])
-                                (map (fn [like-id] (get @likes like-id)))
-                                (filter (fn [like] (= (:user-id like) user-id)))
-                                (first)))
+      [:by-source-tweet-id :by-user-id] (let [[source-tweet-id user-id] key]
+                                          (->> (get @join-tweet-likes source-tweet-id [])
+                                               (map (fn [like-id] (get @likes like-id)))
+                                               (filter (fn [like] (= (:user-id like) user-id)))
+                                               (first)))
       :by-source-tweet-id (->> (get @join-tweet-likes key [])
                                (map (fn [like-id] (get @likes like-id))))))
 
@@ -86,23 +85,24 @@
     (case criteria
       :by-id (if-let [retweet (get @retweets key)]
                (assoc retweet :tweet (get @tweets (get-in retweet [:tweet :id]))))
-      :by-source-tweet-id (-> (get @join-tweet-retweets key)
-                              (map (fn [retweet] (assoc retweet :tweet (get @tweets key)))))))
+      :by-source-tweet-id (->> (get @join-tweet-retweets key [])
+                               (map (fn [retweet-id] (get @retweets retweet-id)))
+                               (map (fn [retweet] (assoc retweet :tweet (get @tweets key)))))))
 
   (remove-like!
     [_ key criteria]
     (case criteria
-      :by-user-tweet-ids (let [[user-id source-tweet-id] key
-                               like-id (->> (get @join-tweet-likes source-tweet-id [])
-                                            (map (fn [like-id] (get @likes like-id)))
-                                            (filter (fn [like] (= (:user-id like) user-id)))
-                                            (first)
-                                            (:id))]
-                           (swap! join-tweet-likes (fn [join-tweet-likes]
-                                                     (update join-tweet-likes
-                                                             source-tweet-id
-                                                             (fn [like-ids] (remove #(= % like-id) like-ids)))))
-                           (swap! likes (fn [likes] (dissoc likes like-id)))))))
+      [:by-source-tweet-id :by-user-id] (let [[source-tweet-id user-id] key
+                                              like-id (->> (get @join-tweet-likes source-tweet-id [])
+                                                           (map (fn [like-id] (get @likes like-id)))
+                                                           (filter (fn [like] (= (:user-id like) user-id)))
+                                                           (first)
+                                                           (:id))]
+                                          (swap! join-tweet-likes (fn [join-tweet-likes]
+                                                                    (update join-tweet-likes
+                                                                            source-tweet-id
+                                                                            (fn [like-ids] (remove #(= % like-id) like-ids)))))
+                                          (swap! likes (fn [likes] (dissoc likes like-id)))))))
 
 (defn make-in-mem-storage ;; Constructor.
   []
