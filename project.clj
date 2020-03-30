@@ -6,7 +6,8 @@
   :profiles {:dev {:dependencies [[org.clojure/data.generators "0.1.2"]
                                   [cheshire "5.10.0"]
                                   [clj-http "3.10.0"]
-                                  [midje "1.9.9"]]
+                                  [midje "1.9.9"]
+                                  [faker "0.2.2"]]
                    :plugins [[lein-midje "3.2.1"]]}}
   :dependencies [[compojure "1.6.1"]
                  [com.taoensso/timbre "4.10.0"]
