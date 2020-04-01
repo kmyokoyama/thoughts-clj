@@ -99,6 +99,7 @@
   (let [tweet-id (get-parameter req :tweet-id)
         user-id (get-from-body req :user-id)
         reaction (keyword (get-from-body req :reaction))]
+    (println reaction)
     (case reaction
       :like (like-tweet service user-id tweet-id)
       :unlike (unlike-tweet service user-id tweet-id))))
