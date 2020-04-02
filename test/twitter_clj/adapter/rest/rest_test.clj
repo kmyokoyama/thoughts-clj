@@ -145,7 +145,22 @@
           user-id (get-in (body-as-json user) [:result :id])
           tweet (post-json (resource "tweet") (random-tweet user-id))
           tweet-id (get-in (body-as-json tweet) [:result :id])
-          like-tweet-response (post-json (resource (str "tweet/" tweet-id "/react")) {:reaction "like"})
+          like-tweet-response (post-json (resource (str "tweet/" tweet-id "/react")) {:reaction "like" :user-id user-id})
+          body (body-as-json like-tweet-response)
+          result (:result body)]
+      (is (= 200 (:status like-tweet-response)))
+      (is (= "success" (:status body)))
+      (is (= tweet-id (:id result)))
+      (is (= 1 (:likes result))))))
+
+(deftest like-tweet-twice
+  (testing "Like an existing tweet twice does not have any effect"
+    (let [user (post-json (resource "user") (random-user))
+          user-id (get-in (body-as-json user) [:result :id])
+          tweet (post-json (resource "tweet") (random-tweet user-id))
+          tweet-id (get-in (body-as-json tweet) [:result :id])
+          _ (post-json (resource (str "tweet/" tweet-id "/react")) {:reaction "like" :user-id user-id})
+          like-tweet-response (post-json (resource (str "tweet/" tweet-id "/react")) {:reaction "like" :user-id user-id})
           body (body-as-json like-tweet-response)
           result (:result body)]
       (is (= 200 (:status like-tweet-response)))
@@ -156,7 +171,7 @@
 (deftest like-tweet-by-missing-id
   (testing "Like a missing tweet returns failure"
     (let [tweet-id (random-uuid)
-          like-tweet-response (post-json (resource (str "tweet/" tweet-id "/react")) {:reaction "like"})
+          like-tweet-response (post-json (resource (str "tweet/" tweet-id "/react")) {:reaction "like" :user-id (random-uuid)})
           body (body-as-json like-tweet-response)
           result (:result body)]
       (is (= 200 (:status like-tweet-response)))
@@ -171,8 +186,8 @@
           user-id (get-in (body-as-json user) [:result :id])
           tweet (post-json (resource "tweet") (random-tweet user-id))
           tweet-id (get-in (body-as-json tweet) [:result :id])
-          _ (post-json (resource (str "tweet/" tweet-id "/react")) {:reaction "like"})
-          unlike-tweet-response (post-json (resource (str "tweet/" tweet-id "/react")) {:reaction "unlike"})
+          _ (post-json (resource (str "tweet/" tweet-id "/react")) {:reaction "like" :user-id user-id})
+          unlike-tweet-response (post-json (resource (str "tweet/" tweet-id "/react")) {:reaction "unlike" :user-id user-id})
           body (body-as-json unlike-tweet-response)
           result (:result body)]
       (is (= 200 (:status unlike-tweet-response)))
@@ -186,7 +201,7 @@
           user-id (get-in (body-as-json user) [:result :id])
           tweet (post-json (resource "tweet") (random-tweet user-id))
           tweet-id (get-in (body-as-json tweet) [:result :id])
-          unlike-tweet-response (post-json (resource (str "tweet/" tweet-id "/react")) {:reaction "unlike"})
+          unlike-tweet-response (post-json (resource (str "tweet/" tweet-id "/react")) {:reaction "unlike" :user-id user-id})
           body (body-as-json unlike-tweet-response)
           result (:result body)]
       (is (= 200 (:status unlike-tweet-response)))
@@ -194,10 +209,27 @@
       (is (= tweet-id (:id result)))
       (is (= 0 (:likes result))))))
 
+(deftest unlike-tweet-with-another-user
+  (testing "Unlike an existing tweet with another user does not have any effect"
+    (let [user (post-json (resource "user") (random-user))
+          user-id (get-in (body-as-json user) [:result :id])
+          other-user (post-json (resource "user") (random-user))
+          other-user-id (get-in (body-as-json other-user) [:result :id])
+          tweet (post-json (resource "tweet") (random-tweet user-id))
+          tweet-id (get-in (body-as-json tweet) [:result :id])
+          _ (post-json (resource (str "tweet/" tweet-id "/react")) {:reaction "like" :user-id user-id})
+          unlike-tweet-response (post-json (resource (str "tweet/" tweet-id "/react")) {:reaction "unlike" :user-id other-user-id})
+          body (body-as-json unlike-tweet-response)
+          result (:result body)]
+      (is (= 200 (:status unlike-tweet-response)))
+      (is (= "success" (:status body)))
+      (is (= tweet-id (:id result)))
+      (is (= 1 (:likes result))))))
+
 (deftest unlike-tweet-with-missing-id
   (testing "Unlike a missing tweet returns failure"
     (let [tweet-id (random-uuid)
-          like-tweet-response (post-json (resource (str "tweet/" tweet-id "/react")) {:reaction "like"})
+          like-tweet-response (post-json (resource (str "tweet/" tweet-id "/react")) {:reaction "like" :user-id (random-uuid)})
           body (body-as-json like-tweet-response)
           result (:result body)]
       (is (= 200 (:status like-tweet-response)))
