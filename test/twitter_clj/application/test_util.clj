@@ -10,6 +10,26 @@
   (:import [java.util UUID]
            [java.time ZonedDateTime]))
 
+;; REST API.
+
+(defn post-json
+  [url body]
+  (client/post url {:form-params body :content-type :json}))
+
+(defn resource-path
+  [url path]
+  (str url "/" path))
+
+(defn body-as-json [{:keys [body]}]
+  (if (string? body)
+    (json/read-str body :key-fn keyword)
+    body))
+
+(defn parse-response
+  [response]
+  (let [body (body-as-json response)]
+    [response body (:result body)]))
+
 ;; Random data generators.
 
 (defn random-fullname
@@ -32,22 +52,9 @@
   []
   (UUID/randomUUID))
 
-(defn- random-tweet
-  []
-  (core/new-tweet (random-uuid) (random-text)))
+(defn now [] (ZonedDateTime/now))
 
-(defn post-json
-  [url body]
-  (client/post url {:form-params body :content-type :json}))
-
-(defn resource-path
-  [url path]
-  (str url "/" path))
-
-(defn body-as-json [{:keys [body]}]
-  (if (string? body)
-    (json/read-str body :key-fn keyword)
-    body))
+;; Random full entities.
 
 (defn random-user
   []
@@ -62,8 +69,6 @@
 
   ([user-id text]
    {:user-id user-id :text text}))
-
-(defn now [] (ZonedDateTime/now))
 
 ;; Checkers.
 
