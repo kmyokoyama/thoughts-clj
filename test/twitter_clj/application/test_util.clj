@@ -6,7 +6,7 @@
             [clojure.string :refer [join]]
             [clj-http.client :as client]
             [clojure.data.json :as json]
-            [twitter-clj.application.core :as core])
+            [twitter-clj.adapter.rest.config :refer [path-prefix]])
   (:import [java.util UUID]
            [java.time ZonedDateTime]))
 
@@ -18,7 +18,7 @@
 
 (defn resource-path
   [url path]
-  (str url "/" path))
+  (join "/" (list url (path-prefix path))))
 
 (defn body-as-json [{:keys [body]}]
   (if (string? body)
