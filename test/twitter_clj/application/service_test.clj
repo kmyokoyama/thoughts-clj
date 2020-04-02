@@ -69,6 +69,7 @@
                    service {:repository stub}]
                (add-tweet service user-id text) => (throws IExceptionInfo))))
 
+;; TODO: Finish it.
 ;(facts "About `get-tweet-by-id`"
 ;       (fact "It returns a fresh new tweet"
 ;             (let [user-id (random-uuid)
