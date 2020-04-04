@@ -73,8 +73,7 @@
 (defn get-tweet-by-id
   [service tweet-id]
   (if-let [tweet (repository/fetch-tweets! (:repository service) tweet-id :by-id)]
-    (let [replies (repository/fetch-replies! (:repository service) tweet-id :by-source-tweet-id)]
-      (assoc tweet :thread replies))
+    tweet
     (throw-missing-tweet! tweet-id)))
 
 (defn get-tweets-by-user
