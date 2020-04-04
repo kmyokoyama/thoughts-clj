@@ -2,8 +2,10 @@
   (:require [com.stuartsierra.component :as component]
             [ring.middleware.defaults :refer :all]
             [taoensso.timbre :as log]
+            [outpace.config :refer [defconfig]]
             [twitter-clj.adapter.rest.component :refer [make-http-controller]]
             [twitter-clj.adapter.repository.in-mem :refer [make-in-mem-storage]]
+            [twitter-clj.application.config :refer [system-config]]
             [twitter-clj.application.service :refer [make-service]])
   (:gen-class))
 
@@ -15,7 +17,7 @@
                (make-service)
                [:repository])
     :controller (component/using
-                  (make-http-controller (:server-config system-config))
+                  (make-http-controller (:http system-config))
                   [:service])))
 
 (defn on-exit
@@ -30,8 +32,7 @@
 
 (defn -main
   [& _args]
-  (let [port (Integer/parseInt (or (System/getenv "PORT") "3000"))]
-    (log/info "Starting system")
-    (let [system (component/start (system {:server-config {:port port}}))]
-      (log/info (str "Running server at http://127.0.01:" port "/"))
-      (handle-sigint on-exit system))))
+  (log/info "Starting system")
+  (let [system (component/start (system system-config))]
+    (log/info (str "Running server at http://127.0.0.1:" (get-in system-config [:http :port]) "/"))
+    (handle-sigint on-exit system)))
