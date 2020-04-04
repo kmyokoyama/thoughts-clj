@@ -104,7 +104,7 @@
   (if (user-exists? (:repository service) user-id)
     (if-let [source-tweet (repository/fetch-tweets! (:repository service) source-tweet-id :by-id)]
       (do (repository/update-tweet! (:repository service) (core/retweet source-tweet))
-          (repository/update-retweets! (:repository service) (core/new-retweet user-id (:id source-tweet))))
+          (repository/update-retweets! (:repository service) (core/new-retweet user-id source-tweet-id)))
       (throw-missing-user! source-tweet-id))
     (throw-missing-user! user-id)))
 
@@ -113,7 +113,7 @@
   (if (user-exists? (:repository service) user-id)
     (if-let [source-tweet (repository/fetch-tweets! (:repository service) source-tweet-id :by-id)]
         (do (repository/update-tweet! (:repository service) (core/retweet source-tweet))
-            (repository/update-retweets! (:repository service) (core/new-retweet user-id (:id source-tweet) comment)))
+            (repository/update-retweets! (:repository service) (core/new-retweet user-id source-tweet-id comment)))
       (throw-missing-user! source-tweet-id))
     (throw-missing-user! user-id)))
 
