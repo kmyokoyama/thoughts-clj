@@ -12,6 +12,8 @@
 
 ;; REST API.
 
+;; TODO: Implement get-json.
+
 (defn post-json
   [url body]
   (client/post url {:form-params body :content-type :json}))

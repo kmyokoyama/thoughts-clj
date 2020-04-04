@@ -94,6 +94,12 @@
       (throw-missing-user! source-tweet-id))
     (throw-missing-user! user-id)))
 
+(defn get-replies-by-tweet-id
+  [service source-tweet-id]
+  (if-let [_tweet (repository/fetch-tweets! (:repository service) source-tweet-id :by-id)]
+    (repository/fetch-replies! (:repository service) source-tweet-id :by-source-tweet-id)
+    (throw-missing-tweet! source-tweet-id)))
+
 (defn retweet
   [service user-id source-tweet-id]
   (if (user-exists? (:repository service) user-id)
