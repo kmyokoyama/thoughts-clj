@@ -29,7 +29,7 @@
     tweet)
 
   (update-like!
-    [_ {like-id :id source-tweet-id :tweet-id :as like}]
+    [_ {like-id :id source-tweet-id :source-tweet-id :as like}]
     (swap! likes (fn [likes] (assoc likes like-id like)))
     (swap! join-tweet-likes (fn [join-tweet-likes] (update join-tweet-likes
                                                            source-tweet-id
