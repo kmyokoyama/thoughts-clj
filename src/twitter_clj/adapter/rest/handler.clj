@@ -73,7 +73,7 @@
   (let [retweet-id (get-parameter req :retweet-id)
         retweet (service/get-retweet-by-id service retweet-id)]
     (log/info "Received request to get retweet with id" retweet-id)
-    (ok-with-success (hateoas/add-links :retweet req (get-in [:tweet :id] retweet) retweet))))
+    (ok-with-success (hateoas/add-links :retweet req  (:source-tweet-id retweet) retweet))))
 
 (defn get-retweets-by-tweet-id
   [req service]
