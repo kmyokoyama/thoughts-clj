@@ -81,6 +81,13 @@
     (log/info "Received request to get retweets with source tweet id" source-tweet-id)
     (ok-with-success retweets)))
 
+(defn get-replies-by-tweet-id
+  [req service]
+  (let [source-tweet-id (get-parameter req :tweet-id)
+        replies (service/get-replies-by-tweet-id service source-tweet-id)]
+    (log/info "Received request to get replies with source tweet id" source-tweet-id)
+    (ok-with-success replies)))
+
 (defn- like-tweet
   [service user-id tweet-id]
   (log/info "Received request to like tweet" tweet-id)

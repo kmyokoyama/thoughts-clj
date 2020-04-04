@@ -207,3 +207,50 @@
       (is (= "resource not found" (:cause result)))
       (is (= "tweet" (:resource-type result)))
       (is (= (str tweet-id) (:resource-id result))))))
+
+(deftest get-empty-retweets
+  (testing "Get retweets from tweet not retweeted yet returns an empty list"
+    (let [user (post-json (resource "user") (random-user))
+          user-id (get-in (body-as-json user) [:result :id])
+          tweet (post-json (resource "tweet") (random-tweet user-id))
+          tweet-id (get-in (body-as-json tweet) [:result :id])
+          [response body result] (parse-response (client/get (resource (str "tweet/" tweet-id "/retweets"))))]
+      (is (= 200 (:status response)))
+      (is (= "success" (:status body)))
+      (is (empty? result)))))
+
+(deftest get-non-empty-retweets
+  (testing "Get retweets from a tweet already retweeted returns all replies"
+    (let [user (post-json (resource "user") (random-user))
+          user-id (get-in (body-as-json user) [:result :id])
+          tweet (post-json (resource "tweet") (random-tweet user-id))
+          tweet-id (get-in (body-as-json tweet) [:result :id])]
+      (dotimes [_ 5] (post-json (resource (str "tweet/" tweet-id "/retweet")) {:user-id user-id}))
+      (dotimes [_ 5] (post-json (resource (str "tweet/" tweet-id "/retweet-comment")) {:user-id user-id  :comment (random-text)}))
+      (let [[response body result] (parse-response (client/get (resource (str "tweet/" tweet-id "/retweets"))))]
+        (is (= 200 (:status response)))
+        (is (= "success" (:status body)))
+        (is (= 10 (count result)))))))
+
+(deftest get-empty-replies
+  (testing "Get replies from tweet not replied yet returns an empty list"
+    (let [user (post-json (resource "user") (random-user))
+          user-id (get-in (body-as-json user) [:result :id])
+          tweet (post-json (resource "tweet") (random-tweet user-id))
+          tweet-id (get-in (body-as-json tweet) [:result :id])
+          [response body result] (parse-response (client/get (resource (str "tweet/" tweet-id "/replies"))))]
+      (is (= 200 (:status response)))
+      (is (= "success" (:status body)))
+      (is (empty? result)))))
+
+(deftest get-non-empty-replies
+  (testing "Get retweets from a tweet already retweeted returns all replies"
+    (let [user (post-json (resource "user") (random-user))
+          user-id (get-in (body-as-json user) [:result :id])
+          tweet (post-json (resource "tweet") (random-tweet user-id))
+          tweet-id (get-in (body-as-json tweet) [:result :id])]
+      (dotimes [_ 5] (post-json (resource (str "tweet/" tweet-id "/reply")) {:user-id user-id :text (random-text)}))
+      (let [[response body result] (parse-response (client/get (resource (str "tweet/" tweet-id "/replies"))))]
+        (is (= 200 (:status response)))
+        (is (= "success" (:status body)))
+        (is (= 5 (count result)))))))
