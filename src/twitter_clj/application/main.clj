@@ -33,7 +33,6 @@
 (defn -main
   [& _args]
   (log/info "Starting system")
-  (let [config system-config
-        system (component/start (system config))]
-    (log/info (str "Running server at http://127.0.0.1:" (get-in config [:http :port]) "/"))
+  (let [system (component/start (system system-config))]
+    (log/info (str "Running server at http://127.0.0.1:" (get-in system-config [:http :port]) "/"))
     (handle-sigint on-exit system)))
