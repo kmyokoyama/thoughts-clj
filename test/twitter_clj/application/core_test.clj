@@ -20,29 +20,29 @@
             like (new-like user-id tweet-id)]
         (:id like) => uuid-format?
         (:user-id like) => user-id
-        (:tweet-id like) => tweet-id))
+        (:source-tweet-id like) => tweet-id))
 
 (facts "About `new-retweet`"
        (fact "It creates a fresh new retweet entity"
              (let [user-id (random-uuid)
-                   retweeted (new-tweet (random-uuid) (random-text))
-                   retweet (new-retweet user-id retweeted)]
+                   source-tweet-id (random-uuid)
+                   retweet (new-retweet user-id source-tweet-id)]
                (:id retweet) => uuid-format?
                (:user-id retweet) => user-id
                (:has-comment retweet) => false
                (:comment retweet) => nil
-               (:tweet retweet) => retweeted))
+               (:source-tweet-id retweet) => source-tweet-id))
 
        (fact "It creates a fresh new retweet entity with a comment"
              (let [user-id (random-uuid)
-                   retweeted (new-tweet (random-uuid) (random-text))
+                   source-tweet-id (random-uuid)
                    comment (random-text)
-                   retweet (new-retweet user-id retweeted comment)]
+                   retweet (new-retweet user-id source-tweet-id comment)]
                (:id retweet) => uuid-format?
                (:user-id retweet) => user-id
                (:has-comment retweet) => true
                (:comment retweet) => comment
-               (:tweet retweet) => retweeted)))
+               (:source-tweet-id retweet) => source-tweet-id)))
 
 (fact "`new-user` creates a fresh new user"
       (let [name (random-fullname)

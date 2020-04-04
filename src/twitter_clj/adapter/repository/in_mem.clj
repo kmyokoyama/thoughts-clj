@@ -29,7 +29,7 @@
     tweet)
 
   (update-like!
-    [_ {like-id :id source-tweet-id :tweet-id :as like}]
+    [_ {like-id :id source-tweet-id :source-tweet-id :as like}]
     (swap! likes (fn [likes] (assoc likes like-id like)))
     (swap! join-tweet-likes (fn [join-tweet-likes] (update join-tweet-likes
                                                            source-tweet-id
@@ -47,7 +47,7 @@
     [_ {retweet-id :id :as retweet}]
     (swap! retweets (fn [retweets] (assoc retweets retweet-id retweet)))
     (swap! join-tweet-retweets (fn [join-tweet-retweets] (update join-tweet-retweets
-                                                                 (get-in retweet [:tweet :id])
+                                                                 (:source-tweet-id retweet)
                                                                  (fn [retweet-ids] (conj (vec retweet-ids) retweet-id)))))
     retweet)
 
@@ -83,11 +83,9 @@
   (fetch-retweets!
     [_ key criteria]
     (case criteria
-      :by-id (if-let [retweet (get @retweets key)]
-               (assoc retweet :tweet (get @tweets (get-in retweet [:tweet :id]))))
+      :by-id (get @retweets key)
       :by-source-tweet-id (->> (get @join-tweet-retweets key [])
-                               (map (fn [retweet-id] (get @retweets retweet-id)))
-                               (map (fn [retweet] (assoc retweet :tweet (get @tweets key)))))))
+                               (map (fn [retweet-id] (get @retweets retweet-id))))))
 
   (remove-like!
     [_ key criteria]

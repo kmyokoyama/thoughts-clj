@@ -6,8 +6,8 @@
 
 (defrecord User [id active name email username])
 (defrecord Tweet [id user-id text publish-date likes retweets replies])
-(defrecord Retweet [id user-id has-comment comment publish-date tweet])
-(defrecord TweetLike [id created-at user-id tweet-id])
+(defrecord Retweet [id user-id has-comment comment publish-date source-tweet-id])
+(defrecord TweetLike [id created-at user-id source-tweet-id])
 
 ;; Tweet-related functions.
 
@@ -33,11 +33,11 @@
 ;; Retweet-related functions.
 
 (defn new-retweet
-  ([user-id retweeted]
-   (->Retweet (str (UUID/randomUUID)) user-id false nil (ZonedDateTime/now) retweeted))
+  ([user-id source-tweet-id]
+   (->Retweet (str (UUID/randomUUID)) user-id false nil (ZonedDateTime/now) source-tweet-id))
 
-  ([user-id retweeted comment]
-   (->Retweet (str (UUID/randomUUID)) user-id true comment (ZonedDateTime/now) retweeted)))
+  ([user-id source-tweet-id comment]
+   (->Retweet (str (UUID/randomUUID)) user-id true comment (ZonedDateTime/now) source-tweet-id)))
 
 (defn retweet
   [retweeted]
