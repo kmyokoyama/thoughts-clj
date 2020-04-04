@@ -28,21 +28,21 @@
   (let [{:keys [user-id text]} (:body req)
         tweet (service/add-tweet service user-id text)]
     (log/info "Received request to add new tweet from user" user-id)
-    (created tweet)))
+    (created (hateoas/add-links :tweet req tweet))))
 
 (defn get-tweet-by-id
   [req service]
   (let [tweet-id (get-parameter req :tweet-id)
         tweet (service/get-tweet-by-id service tweet-id)]
     (log/info "Received request to get tweet with id" tweet-id)
-    (ok-with-success (hateoas/add-links req tweet))))
+    (ok-with-success (hateoas/add-links :tweet req tweet))))
 
 (defn get-tweets-by-user
   [req service]
   (let [user-id (get-parameter req :user-id)
         tweets (service/get-tweets-by-user service user-id)]
     (log/info "Received request to get tweets from user" user-id)
-    (ok-with-success tweets)))
+    (ok-with-success (map (partial hateoas/add-links :tweet req) tweets))))
 
 (defn add-reply
   [req service]
@@ -50,7 +50,7 @@
         {:keys [user-id text]} (:body req)
         reply (service/add-reply service user-id text source-tweet-id)]
     (log/info "Received request to add new reply from user" user-id "to tweet" source-tweet-id)
-    (created reply)))
+    (created (hateoas/add-links :reply req source-tweet-id reply))))
 
 (defn add-retweet
   [req service]
@@ -87,20 +87,22 @@
   (let [source-tweet-id (get-parameter req :tweet-id)
         replies (service/get-replies-by-tweet-id service source-tweet-id)]
     (log/info "Received request to get replies with source tweet id" source-tweet-id)
-    (ok-with-success replies)))
+    (ok-with-success (map (partial hateoas/add-links :reply req source-tweet-id) replies))))
 
 (defn- like-tweet
-  [service user-id tweet-id]
+  [req service user-id tweet-id]
   (log/info "Received request to like tweet" tweet-id)
   (try
-    (-> (service/like service user-id tweet-id)
+    (->> (service/like service user-id tweet-id)
+        (hateoas/add-links :tweet req)
         (ok-with-success))))
 
 (defn- unlike-tweet
-  [service user-id tweet-id]
+  [req service user-id tweet-id]
   (log/info "Received request to unlike tweet" tweet-id)
-  (-> (service/unlike service user-id tweet-id)
-      (ok-with-success)))
+  (->> (service/unlike service user-id tweet-id)
+       (hateoas/add-links :tweet req)
+       (ok-with-success)))
 
 (defn tweet-react
   [req service]
@@ -114,8 +116,8 @@
       (nil? user-id) (ok-with-failure {:cause "missing parameter"
                                        :parameter "user-id"})
       :default (case reaction
-                 :like (like-tweet service user-id tweet-id)
-                 :unlike (unlike-tweet service user-id tweet-id)
+                 :like (like-tweet req service user-id tweet-id)
+                 :unlike (unlike-tweet req service user-id tweet-id)
                  (ok-with-failure {:cause "missing parameter"
                                    :parameter "reaction"})))))
 
