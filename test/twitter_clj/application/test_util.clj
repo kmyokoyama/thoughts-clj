@@ -79,11 +79,3 @@
   (try (UUID/fromString str)
        true
        (catch IllegalArgumentException e false)))
-
-;; Logging.
-
-(defn highlight
-  [& args]
-  (println "=============================================")
-  (apply println args)
-  (println "============================================="))
