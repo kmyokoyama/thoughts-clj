@@ -3,15 +3,14 @@
             [midje.sweet :refer :all]
             [com.stuartsierra.component :as component]
             [clj-http.client :as client]
+            [twitter-clj.application.config :refer [system-config]]
             [twitter-clj.application.test-util :refer :all]
             [twitter-clj.adapter.repository.in-mem :refer [make-in-mem-storage]]
             [twitter-clj.application.service :refer [make-service]]
             [twitter-clj.adapter.rest.component :refer [make-http-controller]]))
 
-(def ^:const port 3000)
+(def ^:const port (get-in system-config [:http :port]))
 (def ^:const url (str "http://localhost:" port))
-
-(def system-config {:server-config {:port port}})
 
 (def resource (partial resource-path url))
 
@@ -23,7 +22,7 @@
                (make-service)
                [:repository])
     :controller (component/using
-                  (make-http-controller (:server-config system-config))
+                  (make-http-controller (:http system-config))
                   [:service])))
 
 (defn start-test-system!
