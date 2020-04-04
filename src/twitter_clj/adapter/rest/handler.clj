@@ -1,6 +1,7 @@
 (ns twitter-clj.adapter.rest.handler
   (:require [taoensso.timbre :as log]
             [twitter-clj.application.service :as service]
+            [twitter-clj.adapter.rest.hateoas :as hateoas]
             [twitter-clj.adapter.rest.util :refer [get-parameter get-from-body
                                                    ok-with-success
                                                    ok-with-failure
@@ -34,7 +35,7 @@
   (let [tweet-id (get-parameter req :tweet-id)
         tweet (service/get-tweet-by-id service tweet-id)]
     (log/info "Received request to get tweet with id" tweet-id)
-    (ok-with-success tweet)))
+    (ok-with-success (hateoas/add-links req tweet))))
 
 (defn get-tweets-by-user
   [req service]

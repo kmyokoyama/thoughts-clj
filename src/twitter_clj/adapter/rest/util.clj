@@ -60,3 +60,10 @@
 (def ok-with-success (comp ok-response to-json add-success-result))
 (def ok-with-failure (comp ok-response to-json add-failure-result))
 (def created (comp created-response to-json add-success-result))
+
+(defn join-path
+  [& path-parts]
+  (-> (clojure.string/join "/" path-parts)
+      (clojure.string/replace #"://" "!")
+      (clojure.string/replace #"/[/]+" "/")
+      (clojure.string/replace #"!" "://")))
