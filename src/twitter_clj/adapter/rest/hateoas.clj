@@ -15,10 +15,19 @@
          (replace replacements-str)
          (apply join-path))))
 
+(defn make-links-map
+  [host response links]
+  (assoc response :_links
+                  (zipmap (keys links)
+                          (map (fn [val] (let [path-key (val 0)
+                                               path-variables (val 1)]
+                                           {:href (join-path host (replace-path (path-key routes-map) path-variables))}))
+                               (vals links)))))
+
 (defn add-links
   [req tweet]
   (let [{:keys [id user-id]} tweet]
-    (merge tweet {:_links {:self {:href (join-path (get-host req) (replace-path (:get-tweet-by-id routes-map) {:tweet-id id}))}
-                             :user {:href (join-path (get-host req) (replace-path (:get-user-by-id routes-map) {:user-id user-id}))}
-                             :replies {:href (join-path (get-host req) (replace-path (:get-replies-by-tweet-id routes-map) {:tweet-id id}))}
-                             :retweets {:href (join-path (get-host req) (replace-path (:get-retweets-by-tweet-id routes-map) {:tweet-id id}))}}})))
+    (make-links-map (get-host req) tweet {:self  [:get-tweet-by-id {:tweet-id id}]
+                                          :user     [:get-user-by-id {:user-id user-id}]
+                                          :replies  [:get-replies-by-tweet-id {:tweet-id id}]
+                                          :retweets [:get-retweets-by-tweet-id {:tweet-id id}]})))
