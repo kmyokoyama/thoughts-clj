@@ -55,10 +55,10 @@
 (defn add-retweet
   [req service]
   (let [source-tweet-id (get-parameter req :tweet-id)
-        {:keys [user-id text]} (:body req)
+        user-id (get-in req [:body :user-id])
         retweet (service/retweet service user-id source-tweet-id)]
     (log/info "Received request to add new retweet from user" user-id "to tweet" source-tweet-id)
-    (created retweet)))
+    (created (hateoas/add-links :retweet req source-tweet-id retweet))))
 
 (defn add-retweet-with-comment
   [req service]
@@ -66,21 +66,21 @@
         {:keys [user-id comment]} (:body req)
         retweet (service/retweet-with-comment service user-id comment source-tweet-id)]
     (log/info "Received request to add new retweet from user" user-id "to tweet" source-tweet-id)
-    (created retweet)))
+    (created (hateoas/add-links :retweet req source-tweet-id retweet))))
 
 (defn get-retweet-by-id
   [req service]
   (let [retweet-id (get-parameter req :retweet-id)
         retweet (service/get-retweet-by-id service retweet-id)]
     (log/info "Received request to get retweet with id" retweet-id)
-    (ok-with-success retweet)))
+    (ok-with-success (hateoas/add-links :retweet req (get-in [:tweet :id] retweet) retweet))))
 
 (defn get-retweets-by-tweet-id
   [req service]
   (let [source-tweet-id (get-parameter req :tweet-id)
         retweets (service/get-retweets-by-tweet-id service source-tweet-id)]
     (log/info "Received request to get retweets with source tweet id" source-tweet-id)
-    (ok-with-success retweets)))
+    (ok-with-success (map (partial hateoas/add-links :retweet req source-tweet-id) retweets))))
 
 (defn get-replies-by-tweet-id
   [req service]

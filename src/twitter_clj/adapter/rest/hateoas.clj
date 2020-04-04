@@ -42,3 +42,10 @@
                                           :replies  [:get-replies-by-tweet-id {:tweet-id id}]
                                           :retweets [:get-retweets-by-tweet-id {:tweet-id id}]
                                           :source-tweet [:get-tweet-by-id {:tweet-id source-tweet-id}]})))
+
+(defmethod add-links :retweet
+  [_ req source-tweet-id retweet]
+  (let [{:keys [id user-id]} retweet]
+    (make-links-map (get-host req) retweet {:self  [:get-retweet-by-id {:retweet-id id}]
+                                            :user     [:get-user-by-id {:user-id user-id}]
+                                            :source-tweet [:get-tweet-by-id {:tweet-id source-tweet-id}]})))
