@@ -60,7 +60,10 @@
 
 (defn add-user
   [service name email username]
-  (let [user (core/new-user name email username)]
+  (let [lower-name (clojure.string/lower-case name)
+        lower-email (clojure.string/lower-case email)
+        lower-username (clojure.string/lower-case username)
+        user (core/new-user lower-name lower-email lower-username)]
     (if (new-user? (:repository service) email)
       (if (empty? (repository/fetch-users! (:repository service) {:username username} :by-fields))
         (repository/update-user! (:repository service) user)

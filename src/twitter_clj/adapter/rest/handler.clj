@@ -10,13 +10,10 @@
 (defn add-user
   "This will be moved to user management API in the future."
   [req service]
-  (let [body (:body req)
-        name (clojure.string/lower-case (:name body))
-        email (clojure.string/lower-case (:email body))
-        username (clojure.string/lower-case (:username body))
-        user-info (str "'" name "'" " @" username " [" email "]")]
-    (log/info "Add user" user-info)
-    (let [user (service/add-user service name email username)]
+  (let [{:keys [name email username]} (:body req)]
+    (let [user (service/add-user service name email username)
+          user-info (str "'" (:name user) "'" " @" (:username user) " [" (:email user) "]")]
+      (log/info "Add user" user-info)
       (created user))))
 
 (defn get-user-by-id

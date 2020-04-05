@@ -13,12 +13,13 @@
                   email (random-email)
                   username (random-username)
                   stub (reify Repository
-                         (update-user! [_ user] user))
+                         (update-user! [_ user] user)
+                         (fetch-users! [_ _ _] []))
                   service {:repository stub}
                   user (add-user service fullname email username)]
-              (:name user) => fullname
-              (:email user) => email
-              (:username user) => username)
+              (:name user) => (clojure.string/lower-case fullname)
+              (:email user) => (clojure.string/lower-case email)
+              (:username user) => (clojure.string/lower-case username))
             (against-background
                 (new-user? anything anything) => true))
 

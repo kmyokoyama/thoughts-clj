@@ -43,6 +43,32 @@
       (is (= "success" (:status (body-as-json response))))
       (is (= 201 (:status response)))))) ;; HTTP 201 Created.
 
+(deftest add-duplicate-user-email
+  (testing "Add a single user with duplicate user email returns a failure"
+    (let [first-user (random-user)
+          first-user-email (:email first-user)]
+      (post-json (resource "user") first-user)
+      (let [second-user {:name (random-fullname) :email first-user-email :username (random-username)}
+            [response body result] (parse-response (post-json (resource "user") second-user))]
+        (is (= "failure" (:status body)))
+        (is (= 200 (:status response)))
+        (is (= "user" (:resource-type result)))
+        (is (= "email" (:resource-attribute result)))
+        (is (= (clojure.string/lower-case first-user-email) (:resource-attribute-value result)))))))
+
+(deftest add-duplicate-username
+  (testing "Add a single user with duplicate username returns a failure"
+    (let [first-user (random-user)
+          first-username (:username first-user)]
+      (post-json (resource "user") first-user)
+      (let [second-user {:name (random-fullname) :email (random-email) :username first-username}
+            [response body result] (parse-response (post-json (resource "user") second-user))]
+        (is (= "failure" (:status body)))
+        (is (= 200 (:status response)))
+        (is (= "user" (:resource-type result)))
+        (is (= "username" (:resource-attribute result)))
+        (is (= (clojure.string/lower-case first-username) (:resource-attribute-value result)))))))
+
 (deftest add-single-tweet
   (testing "Add a single tweet"
     (let [user (post-json (resource "user") (random-user))
@@ -87,7 +113,9 @@
           [response _body result] (parse-response (client/get (resource (str "user/" user-id))))
           attributes [:name :email :username]]
       (is (= 200 (:status response)))
-      (is (= (select-keys expected-user attributes) (select-keys result attributes))))))
+      (is (= (let [expected (select-keys expected-user attributes)]
+               (zipmap (keys expected) (map clojure.string/lower-case (vals expected))))
+             (select-keys result attributes))))))
 
 (deftest get-user-by-missing-id
   (testing "Get a missing user returns failure"
