@@ -250,7 +250,7 @@
 					"response": []
 				},
 				{
-					"name": "Get tweet by user",
+					"name": "Get tweets by user",
 					"event": [
 						{
 							"listen": "test",
@@ -515,8 +515,7 @@
 									"    pm.expect(result[\"user-id\"]).to.equal(pm.environment.get(\"created_user_id\"));",
 									"    pm.expect(result[\"has-comment\"]).to.be.false;",
 									"    pm.expect(result[\"comment\"]).to.be.null;",
-									"    pm.expect(result[\"tweet\"][\"id\"]).to.equal(pm.environment.get(\"created_tweet_id\"));",
-									"    pm.expect(result[\"tweet\"][\"retweets\"]).to.be.at.least(1);",
+									"    pm.expect(result[\"source-tweet-id\"]).to.equal(pm.environment.get(\"created_tweet_id\"));",
 									"})"
 								],
 								"type": "text/javascript"
@@ -575,8 +574,7 @@
 									"    pm.expect(result[\"user-id\"]).to.equal(pm.environment.get(\"created_user_id\"));",
 									"    pm.expect(result[\"has-comment\"]).to.be.true;",
 									"    pm.expect(result[\"comment\"]).to.be.a(\"string\");",
-									"    pm.expect(result[\"tweet\"][\"id\"]).to.equal(pm.environment.get(\"created_tweet_id\"));",
-									"    pm.expect(result[\"tweet\"][\"retweets\"]).to.be.at.least(1);",
+									"    pm.expect(result[\"source-tweet-id\"]).to.equal(pm.environment.get(\"created_tweet_id\"));",
 									"})"
 								],
 								"type": "text/javascript"
@@ -631,7 +629,6 @@
 									"pm.test(\"Test response body\", function () {",
 									"    pm.expect(body[\"status\"]).to.equal(\"success\");",
 									"    pm.expect(result[\"id\"]).to.equal(pm.environment.get(\"created_retweet_id\"));",
-									"    pm.expect(result[\"tweet\"][\"retweets\"]).to.be.at.least(1);",
 									"})"
 								],
 								"type": "text/javascript"
@@ -670,7 +667,7 @@
 					"response": []
 				},
 				{
-					"name": "Get retweet by tweet ID",
+					"name": "Get retweets by tweet ID",
 					"event": [
 						{
 							"listen": "test",
@@ -679,8 +676,6 @@
 								"exec": [
 									"var body = pm.response.json();",
 									"var result = body[\"result\"];",
-									"",
-									"pm.environment.set(\"created_retweet_id\", body[\"result\"][\"id\"]);",
 									"",
 									"pm.test(\"Test response metadata\", function () {",
 									"    pm.expect(pm.response.code).to.equal(200);",
@@ -692,7 +687,7 @@
 									"    pm.expect(result).to.be.an(\"array\");",
 									"    ",
 									"    var tweet_ids = result.map(function(r) {",
-									"        return r[\"tweet\"][\"id\"];",
+									"        return r[\"source-tweet-id\"];",
 									"    });",
 									"    ",
 									"    var tweet_id = pm.environment.get(\"created_tweet_id\");",
@@ -720,7 +715,7 @@
 							}
 						},
 						"url": {
-							"raw": "{{scheme}}://{{url}}:{{port}}/{{path_prefix}}/tweet/{{created_tweet_id}}/retweet",
+							"raw": "{{scheme}}://{{url}}:{{port}}/{{path_prefix}}/tweet/{{created_tweet_id}}/retweets",
 							"protocol": "{{scheme}}",
 							"host": [
 								"{{url}}"
@@ -730,7 +725,65 @@
 								"{{path_prefix}}",
 								"tweet",
 								"{{created_tweet_id}}",
-								"retweet"
+								"retweets"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get replies by tweet ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "e75b7b3d-bd1e-47c3-8f6f-7d0850f1146b",
+								"exec": [
+									"var body = pm.response.json();",
+									"var result = body[\"result\"];",
+									"",
+									"pm.environment.set(\"created_retweet_id\", body[\"result\"][\"id\"]);",
+									"",
+									"pm.test(\"Test response metadata\", function () {",
+									"    pm.expect(pm.response.code).to.equal(200);",
+									"    pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test(\"Test response body\", function () {",
+									"    pm.expect(body[\"status\"]).to.equal(\"success\");",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{scheme}}://{{url}}:{{port}}/{{path_prefix}}/tweet/{{created_tweet_id}}/replies",
+							"protocol": "{{scheme}}",
+							"host": [
+								"{{url}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"{{path_prefix}}",
+								"tweet",
+								"{{created_tweet_id}}",
+								"replies"
 							]
 						}
 					},
