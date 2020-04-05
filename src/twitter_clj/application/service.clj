@@ -32,11 +32,19 @@
                                                                 :resource-type :tweet
                                                                 :resource-id tweet-id})))
 
-(defn- throw-duplicate-user!
-  [key]
-  (throw (ex-info (str "User " key " already exists") {:type :duplicate-resource
-                                                       :resource-type :user
-                                                       :resource-key key})))
+(defn- throw-duplicate-user-email!
+  [email]
+  (throw (ex-info (str "User with email '" email "' already exists") {:type :duplicate-resource
+                                                                      :resource-type :user
+                                                                      :resource-attribute :email
+                                                                      :resource-attribute-value email})))
+
+(defn- throw-duplicate-username!
+  [username]
+  (throw (ex-info (str "User with username '" username "' already exists") {:type :duplicate-resource
+                                                                            :resource-type :user
+                                                                            :resource-attribute :username
+                                                                            :resource-attribute-value  username})))
 
 (defn user-exists?
   [repository id]
@@ -53,10 +61,11 @@
 (defn add-user
   [service name email username]
   (let [user (core/new-user name email username)]
-    (if (and (new-user? (:repository service) email)
-             (empty? (repository/fetch-users! (:repository service) {:username username} :by-fields)))
-      (repository/update-user! (:repository service) user)
-      (throw-duplicate-user! email))))
+    (if (new-user? (:repository service) email)
+      (if (empty? (repository/fetch-users! (:repository service) {:username username} :by-fields))
+        (repository/update-user! (:repository service) user)
+        (throw-duplicate-username! username))
+      (throw-duplicate-user-email! email))))
 
 (defn get-user-by-id
   [service user-id]

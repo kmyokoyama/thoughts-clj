@@ -147,11 +147,12 @@
       (handler request)
       (catch Exception e
         (case (:type (ex-data e))
-          :duplicate-resource (let [{:keys [resource-type resource-key]} (ex-data e)]
+          :duplicate-resource (let [{:keys [resource-type resource-attribute resource-attribute-value]} (ex-data e)]
                                 (log/warn "[Failure]" (.getMessage e))
                                 (ok-with-failure {:cause "resource already exists"
                                                   :resource-type resource-type
-                                                  :resource-key resource-key}))
+                                                  :resource-attribute resource-attribute
+                                                  :resource-attribute-value resource-attribute-value}))
           (throw e))))))
 
 (defn wrap-default-exception
