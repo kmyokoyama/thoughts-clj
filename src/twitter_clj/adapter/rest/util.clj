@@ -67,3 +67,19 @@
       (clojure.string/replace #"://" "!")
       (clojure.string/replace #"/[/]+" "/")
       (clojure.string/replace #"!" "://")))
+
+(defn f-id
+  [id]
+  (str "[ID: " id "]"))
+
+(defn f
+  ([entity]
+   (if-let [id (:id entity)]
+     (f-id id)
+     (str "[" entity "]")))
+
+  ([entity attr]
+   (if-let [attr-val (attr entity)]
+     (let [formatted-attr (-> attr (name) (clojure.string/replace #"-" ""))]
+       (str "[" formatted-attr ": " attr-val "]"))
+     entity)))

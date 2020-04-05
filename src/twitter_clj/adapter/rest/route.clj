@@ -32,7 +32,8 @@
   [service]
   (-> (app-routes service)
       (wrap-json-body {:keywords? true :bigdecimals? true})
-      wrap-resource-not-found
-      wrap-duplicate-resource
+      ;wrap-resource-not-found
+      ;wrap-duplicate-resource
+      wrap-invalid-action
       wrap-default-exception
       (wrap-defaults api-defaults)))

@@ -22,29 +22,51 @@
 
 (defn- throw-missing-user!
   [user-id]
-  (throw (ex-info (str "User with ID " user-id " not found") {:type :resource-not-found
-                                                              :resource-type :user
-                                                              :resource-id user-id})))
+  (throw (ex-info (str "User [" user-id "] not found")
+                  {:type    :resource-not-found
+                   :subject :user
+                   :cause   (str "user with ID " user-id " not found")
+                   :context {:id user-id}})))
 
 (defn- throw-missing-tweet!
   [tweet-id]
-  (throw (ex-info (str "Tweet with ID " tweet-id " not found") {:type :resource-not-found
-                                                                :resource-type :tweet
-                                                                :resource-id tweet-id})))
+  (throw (ex-info (str "Tweet [ID: " tweet-id "] not found")
+                  {:type    :resource-not-found
+                   :subject :tweet
+                   :cause   (str "tweet with ID " tweet-id " not found")
+                   :context {:id tweet-id}})))
 
 (defn- throw-duplicate-user-email!
   [email]
-  (throw (ex-info (str "User with email '" email "' already exists") {:type :duplicate-resource
-                                                                      :resource-type :user
-                                                                      :resource-attribute :email
-                                                                      :resource-attribute-value email})))
+  (throw (ex-info (str "User [email: " email "] already exists")
+                  {:type    :duplicate-resource
+                   :subject :user
+                   :cause   (str "user with email '" email "' already exists")
+                   :context {:attribute :email :value email}})))
 
 (defn- throw-duplicate-username!
   [username]
-  (throw (ex-info (str "User with username '" username "' already exists") {:type :duplicate-resource
-                                                                            :resource-type :user
-                                                                            :resource-attribute :username
-                                                                            :resource-attribute-value  username})))
+  (throw (ex-info (str "User [username: " username "] already exists")
+                  {:type    :duplicate-resource
+                   :subject :user
+                   :cause   (str "User with username '" username "' already exists")
+                   :context {:attribute :username :value username}})))
+
+(defn- throw-invalid-like!
+  [tweet-id user-id]
+  (throw (ex-info (str "Tweet [ID: " tweet-id "] already liked by user with ID" user-id)
+                  {:type    :invalid-action
+                   :subject :like
+                   :cause   "you cannot like the same tweet more than once"
+                   :context {:tweet-id tweet-id :user-id user-id}})))
+
+(defn- throw-invalid-unlike!
+  [tweet-id user-id]
+  (throw (ex-info (str "Tweet [ID: " tweet-id "] has not been liked by user with ID yet " user-id)
+                  {:type    :invalid-action
+                   :subject :unlike
+                   :cause   "you cannot unlike a tweet before like it"
+                   :context {:tweet-id tweet-id :user-id user-id}})))
 
 (defn user-exists?
   [repository id]
@@ -125,8 +147,8 @@
   [service user-id comment source-tweet-id]
   (if (user-exists? (:repository service) user-id)
     (if-let [source-tweet (repository/fetch-tweets! (:repository service) source-tweet-id :by-id)]
-        (do (repository/update-tweet! (:repository service) (core/retweet source-tweet))
-            (repository/update-retweets! (:repository service) (core/new-retweet user-id source-tweet-id comment)))
+      (do (repository/update-tweet! (:repository service) (core/retweet source-tweet))
+          (repository/update-retweets! (:repository service) (core/new-retweet user-id source-tweet-id comment)))
       (throw-missing-user! source-tweet-id))
     (throw-missing-user! user-id)))
 
@@ -148,7 +170,7 @@
     (if (not (repository/fetch-likes! (:repository service) [tweet-id user-id] [:by-source-tweet-id :by-user-id]))
       (do (repository/update-like! (:repository service) (core/new-like user-id tweet-id))
           (repository/update-tweet! (:repository service) (core/like tweet)))
-      tweet)
+      (throw-invalid-like! tweet-id user-id))
     (throw-missing-tweet! tweet-id)))
 
 (defn unlike
@@ -157,5 +179,5 @@
     (if (repository/fetch-likes! (:repository service) [tweet-id user-id] [:by-source-tweet-id :by-user-id])
       (do (repository/remove-like! (:repository service) [tweet-id user-id] [:by-source-tweet-id :by-user-id])
           (repository/update-tweet! (:repository service) (core/unlike tweet)))
-      tweet)
+      (throw-invalid-unlike! tweet-id user-id))
     (throw-missing-tweet! tweet-id)))
