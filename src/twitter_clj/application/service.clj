@@ -53,7 +53,8 @@
 (defn add-user
   [service name email username]
   (let [user (core/new-user name email username)]
-    (if (new-user? (:repository service) email)
+    (if (and (new-user? (:repository service) email)
+             (empty? (repository/fetch-users! (:repository service) {:username username} :by-fields)))
       (repository/update-user! (:repository service) user)
       (throw-duplicate-user! email))))
 
