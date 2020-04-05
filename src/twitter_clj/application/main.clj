@@ -5,7 +5,7 @@
             [outpace.config :refer [defconfig]]
             [twitter-clj.adapter.rest.component :refer [make-http-controller]]
             [twitter-clj.adapter.repository.in-mem :refer [make-in-mem-storage]]
-            [twitter-clj.application.config :refer [system-config]]
+            [twitter-clj.application.config :refer [system-config init-system!]]
             [twitter-clj.application.service :refer [make-service]])
   (:gen-class))
 
@@ -32,6 +32,7 @@
 
 (defn -main
   [& _args]
+  (init-system!)
   (log/info "Starting system")
   (let [system (component/start (system system-config))]
     (log/info (str "Running server at http://127.0.0.1:" (get-in system-config [:http :port]) "/"))
