@@ -22,21 +22,21 @@
 
 (defn- throw-missing-user!
   [user-id]
-  (throw (ex-info "User not found" {:type :resource-not-found
-                                    :resource-type :user
-                                    :resource-id user-id})))
+  (throw (ex-info (str "User with ID " user-id " not found") {:type :resource-not-found
+                                                              :resource-type :user
+                                                              :resource-id user-id})))
 
 (defn- throw-missing-tweet!
   [tweet-id]
-  (throw (ex-info "Tweet not found" {:type :resource-not-found
-                                     :resource-type :tweet
-                                     :resource-id tweet-id})))
+  (throw (ex-info (str "Tweet with ID " tweet-id " not found") {:type :resource-not-found
+                                                                :resource-type :tweet
+                                                                :resource-id tweet-id})))
 
 (defn- throw-duplicate-user!
   [key]
-  (throw (ex-info "User already exists" {:type :duplicate-resource
-                                         :resource-type :user
-                                         :resource-key key})))
+  (throw (ex-info (str "User " key " already exists") {:type :duplicate-resource
+                                                       :resource-type :user
+                                                       :resource-key key})))
 
 (defn user-exists?
   [repository id]
