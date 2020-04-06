@@ -10,7 +10,7 @@
   [service]
   (compojure.core/routes
     ;; User API.
-    (PUT (path-prefix "/user") req (add-user req service))
+    (POST (path-prefix "/user") req (add-user req service))
     (GET (path-prefix "/user/:user-id") req (get-user-by-id req service))
 
     ;; Tweet API.

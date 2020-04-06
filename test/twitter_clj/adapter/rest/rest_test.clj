@@ -52,9 +52,9 @@
             [response body result] (parse-response (post-json (resource "user") second-user))]
         (is (= "failure" (:status body)))
         (is (= 200 (:status response)))
-        (is (= "user" (:resource-type result)))
-        (is (= "email" (:resource-attribute result)))
-        (is (= (clojure.string/lower-case first-user-email) (:resource-attribute-value result)))))))
+        (is (= "user" (:subject result)))
+        (is (= "email" (get-in result [:context :attribute])))
+        (is (= (clojure.string/lower-case first-user-email) (get-in result [:context :email])))))))
 
 (deftest add-duplicate-username
   (testing "Add a single user with duplicate username returns a failure"
@@ -65,9 +65,9 @@
             [response body result] (parse-response (post-json (resource "user") second-user))]
         (is (= "failure" (:status body)))
         (is (= 200 (:status response)))
-        (is (= "user" (:resource-type result)))
-        (is (= "username" (:resource-attribute result)))
-        (is (= (clojure.string/lower-case first-username) (:resource-attribute-value result)))))))
+        (is (= "user" (:subject result)))
+        (is (= "username" (get-in result [:context :attribute])))
+        (is (= (clojure.string/lower-case first-username) (get-in result [:context :username])))))))
 
 (deftest add-single-tweet
   (testing "Add a single tweet"
@@ -123,9 +123,9 @@
           [response body result] (parse-response (client/get (resource (str "user/" user-id))))]
       (is (= 200 (:status response)))
       (is (= "failure" (:status body)))
-      (is (= "resource not found" (:cause result)))
-      (is (= "user" (:resource-type result)))
-      (is (= (str user-id) (:resource-id result))))))
+      (is (= "resource not found" (:type result)))
+      (is (= "user" (:subject result)))
+      (is (= (str user-id) (get-in result [:context :user-id]))))))
 
 (deftest get-tweet-by-id
   (testing "Get an existing tweet returns successfully"
@@ -147,9 +147,9 @@
           [response body result] (parse-response (client/get (resource (str "tweet/" tweet-id))))]
       (is (= 200 (:status response)))
       (is (= "failure" (:status body)))
-      (is (= "resource not found" (:cause result)))
-      (is (= "tweet" (:resource-type result)))
-      (is (= (str tweet-id) (:resource-id result))))))
+      (is (= "resource not found" (:type result)))
+      (is (= "tweet" (:subject result)))
+      (is (= (str tweet-id) (get-in result [:context :tweet-id]))))))
 
 (deftest like-tweet
   (testing "Like an existing tweet"
@@ -172,9 +172,11 @@
           _ (post-json (resource (str "tweet/" tweet-id "/react")) {:reaction "like" :user-id user-id})
           [response body result] (parse-response (post-json (resource (str "tweet/" tweet-id "/react")) {:reaction "like" :user-id user-id}))]
       (is (= 200 (:status response)))
-      (is (= "success" (:status body)))
-      (is (= tweet-id (:id result)))
-      (is (= 1 (:likes result))))))
+      (is (= "failure" (:status body)))
+      (is (= "invalid action" (:type result)))
+      (is (= "like" (:subject result)))
+      (is (= (str tweet-id) (get-in result [:context :tweet-id])))
+      (is (= (str user-id) (get-in result [:context :user-id]))))))
 
 (deftest like-tweet-by-missing-id
   (testing "Like a missing tweet returns failure"
@@ -182,9 +184,9 @@
           [response body result] (parse-response (post-json (resource (str "tweet/" tweet-id "/react")) {:reaction "like" :user-id (random-uuid)}))]
       (is (= 200 (:status response)))
       (is (= "failure" (:status body)))
-      (is (= "resource not found" (:cause result)))
-      (is (= "tweet" (:resource-type result)))
-      (is (= (str tweet-id) (:resource-id result))))))
+      (is (= "resource not found" (:type result)))
+      (is (= "tweet" (:subject result)))
+      (is (= (str tweet-id) (get-in result [:context :tweet-id]))))))
 
 (deftest unlike-tweet-with-positive-likes
   (testing "Unlike an existing tweet with positive likes"
@@ -207,9 +209,12 @@
           tweet-id (get-in (body-as-json tweet) [:result :id])
           [response body result] (parse-response (post-json (resource (str "tweet/" tweet-id "/react")) {:reaction "unlike" :user-id user-id}))]
       (is (= 200 (:status response)))
-      (is (= "success" (:status body)))
-      (is (= tweet-id (:id result)))
-      (is (= 0 (:likes result))))))
+      (is (= "failure" (:status body)))
+      (is (= "invalid action" (:type result)))
+      (is (= "unlike" (:subject result)))
+      (is (= (str tweet-id) (get-in result [:context :tweet-id])))
+      (is (= (str user-id) (get-in result [:context :user-id]))))))
+
 
 (deftest unlike-tweet-with-another-user
   (testing "Unlike an existing tweet with another user does not have any effect"
@@ -222,9 +227,11 @@
           _ (post-json (resource (str "tweet/" tweet-id "/react")) {:reaction "like" :user-id user-id})
           [response body result] (parse-response (post-json (resource (str "tweet/" tweet-id "/react")) {:reaction "unlike" :user-id other-user-id}))]
       (is (= 200 (:status response)))
-      (is (= "success" (:status body)))
-      (is (= tweet-id (:id result)))
-      (is (= 1 (:likes result))))))
+      (is (= "failure" (:status body)))
+      (is (= "invalid action" (:type result)))
+      (is (= "unlike" (:subject result)))
+      (is (= (str tweet-id) (get-in result [:context :tweet-id])))
+      (is (= (str other-user-id) (get-in result [:context :user-id]))))))
 
 (deftest unlike-tweet-with-missing-id
   (testing "Unlike a missing tweet returns failure"
@@ -232,9 +239,9 @@
           [response body result] (parse-response (post-json (resource (str "tweet/" tweet-id "/react")) {:reaction "like" :user-id (random-uuid)}))]
       (is (= 200 (:status response)))
       (is (= "failure" (:status body)))
-      (is (= "resource not found" (:cause result)))
-      (is (= "tweet" (:resource-type result)))
-      (is (= (str tweet-id) (:resource-id result))))))
+      (is (= "resource not found" (:type result)))
+      (is (= "tweet" (:subject result)))
+      (is (= (str tweet-id) (get-in result [:context :tweet-id]))))))
 
 (deftest get-empty-retweets
   (testing "Get retweets from tweet not retweeted yet returns an empty list"

@@ -26,7 +26,7 @@
                   {:type    :resource-not-found
                    :subject :user
                    :cause   (str "user with ID " user-id " not found")
-                   :context {:id user-id}})))
+                   :context {:user-id user-id}})))
 
 (defn- throw-missing-tweet!
   [tweet-id]
@@ -34,7 +34,7 @@
                   {:type    :resource-not-found
                    :subject :tweet
                    :cause   (str "tweet with ID " tweet-id " not found")
-                   :context {:id tweet-id}})))
+                   :context {:tweet-id tweet-id}})))
 
 (defn- throw-duplicate-user-email!
   [email]
@@ -42,7 +42,7 @@
                   {:type    :duplicate-resource
                    :subject :user
                    :cause   (str "user with email '" email "' already exists")
-                   :context {:attribute :email :value email}})))
+                   :context {:attribute :email :email email}})))
 
 (defn- throw-duplicate-username!
   [username]
@@ -50,7 +50,7 @@
                   {:type    :duplicate-resource
                    :subject :user
                    :cause   (str "User with username '" username "' already exists")
-                   :context {:attribute :username :value username}})))
+                   :context {:attribute :username :username username}})))
 
 (defn- throw-invalid-like!
   [tweet-id user-id]
