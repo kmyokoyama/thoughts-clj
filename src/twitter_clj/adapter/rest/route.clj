@@ -10,7 +10,7 @@
   [service]
   (compojure.core/routes
     ;; User API.
-    (POST (path-prefix "/user") req (add-user req service)) ;; TODO: Change it to PUT based on user's email.
+    (PUT (path-prefix "/user") req (add-user req service))
     (GET (path-prefix "/user/:user-id") req (get-user-by-id req service))
 
     ;; Tweet API.
@@ -32,8 +32,6 @@
   [service]
   (-> (app-routes service)
       (wrap-json-body {:keywords? true :bigdecimals? true})
-      ;wrap-resource-not-found
-      ;wrap-duplicate-resource
-      wrap-invalid-action
+      wrap-service-exception
       wrap-default-exception
       (wrap-defaults api-defaults)))

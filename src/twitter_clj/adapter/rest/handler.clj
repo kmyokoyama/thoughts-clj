@@ -130,7 +130,7 @@
   [failure-info]
   (update failure-info :type (fn [type] (clojure.string/replace (name type) #"-" " "))))
 
-(defn wrap-invalid-action
+(defn wrap-service-exception
   [handler]
   (fn [request]
     (try
