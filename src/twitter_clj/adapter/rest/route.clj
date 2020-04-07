@@ -4,10 +4,12 @@
             [ring.middleware.defaults :refer [wrap-defaults api-defaults]]
             [ring.middleware.json :refer [wrap-json-body]]
             [twitter-clj.adapter.rest.config :refer [path-prefix]]
-            [twitter-clj.adapter.rest.handler :refer :all]))
+            [twitter-clj.adapter.rest.handler :refer :all]
+            [twitter-clj.application.util :refer [highlight]]))
 
 (defn app-routes
   [service]
+  (highlight (path-prefix "/tweet/:tweet-id"))
   (compojure.core/routes
     ;; User API.
     (POST (path-prefix "/user") req (add-user req service))

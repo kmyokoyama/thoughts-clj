@@ -61,11 +61,21 @@
 (def ok-with-failure (comp ok-response to-json add-failure-result))
 (def created (comp created-response to-json add-success-result))
 
+(defn add-leading-slash
+  [path]
+  (if (clojure.string/starts-with? path "/")
+    path
+    (str "/" path)))
+
+(defn remove-duplicate-slashes
+  [path]
+  (clojure.string/replace path #"/[/]+" "/"))
+
 (defn join-path
   [& path-parts]
   (-> (clojure.string/join "/" path-parts)
       (clojure.string/replace #"://" "!")
-      (clojure.string/replace #"/[/]+" "/")
+      (remove-duplicate-slashes)
       (clojure.string/replace #"!" "://")))
 
 (defn f-id

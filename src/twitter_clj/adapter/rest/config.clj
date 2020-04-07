@@ -1,17 +1,16 @@
 (ns twitter-clj.adapter.rest.config
-  (:require [clojure.string :as string]
-            [twitter-clj.application.config :refer [system-config]]
-            [twitter-clj.adapter.rest.util :refer [join-path]]))
+  (:require [twitter-clj.application.config :refer [system-config]]
+            [twitter-clj.adapter.rest.util :refer [add-leading-slash join-path]]))
 
 (def rest-config (get-in system-config [:http :api]))
 
 (defn -path-prefix
   [config path]
-  (->> (list (:version config)
-             (:path-prefix config)
+  (->> (list (:path-prefix config)
+             (:version config)
              path)
       (apply join-path)
-      (str "/")))
+      (add-leading-slash)))
 
 (def path-prefix (partial -path-prefix rest-config))
 

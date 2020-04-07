@@ -167,7 +167,7 @@
 (defn like
   [service user-id tweet-id]
   (if-let [tweet (repository/fetch-tweets! (:repository service) tweet-id :by-id)]
-    (if (not (repository/fetch-likes! (:repository service) [tweet-id user-id] [:by-source-tweet-id :by-user-id]))
+    (if-not (repository/fetch-likes! (:repository service) [tweet-id user-id] [:by-source-tweet-id :by-user-id])
       (do (repository/update-like! (:repository service) (core/new-like user-id tweet-id))
           (repository/update-tweet! (:repository service) (core/like tweet)))
       (throw-invalid-like! tweet-id user-id))
