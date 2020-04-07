@@ -1,14 +1,27 @@
 (ns twitter-clj.adapter.rest.handler
-  (:require [taoensso.timbre :as log]
+  (:require [buddy.auth :refer [authenticated?]]
+            [taoensso.timbre :as log]
             [twitter-clj.application.service :as service]
+            [twitter-clj.adapter.rest.config :refer [rest-config]]
             [twitter-clj.adapter.rest.hateoas :as hateoas]
             [twitter-clj.adapter.rest.util :refer [get-parameter get-from-body
+                                                   new-token
+                                                   ok-response
                                                    ok-with-success
                                                    ok-with-failure
                                                    created
                                                    f
                                                    f-id]])
   (:import [clojure.lang ExceptionInfo]))
+
+(def create-token (partial new-token (:jws-secret rest-config)))
+
+(defn login
+  [req _service]
+  (let [user-id (get-in req [:body :user-id])
+        token (create-token user-id :user)]
+    (log/info "Login of user" (f-id user-id) "[WITHOUT PASSWORD]")
+    (ok-with-success {:token token})))
 
 (defn add-user
   "This will be moved to user management API in the future."
@@ -17,14 +30,14 @@
     (let [user (service/add-user service name email username)
           user-info (str "'" (:name user) "'" " @" (:username user) " [" (:email user) "]")]
       (log/info "Add user" user-info)
-      (created user))))
+      (created (hateoas/add-links :user req user)))))
 
 (defn get-user-by-id
   [req service]
   (let [user-id (get-parameter req :user-id)
         user (service/get-user-by-id service user-id)]
     (log/info "Get user" (f user))
-    (ok-with-success user)))
+    (ok-with-success (hateoas/add-links :user req user))))
 
 (defn add-tweet
   [req service]

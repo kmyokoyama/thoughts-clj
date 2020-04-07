@@ -26,6 +26,12 @@
 
 (defmulti add-links (fn [selector-key & _args] selector-key))
 
+(defmethod add-links :user
+  [_ req tweet]
+  (let [{:keys [id]} tweet]
+    (make-links-map (get-host req) tweet {:self  [:get-user-by-id {:user-id id}]
+                                          :tweets  [:get-tweets-by-user-id {:user-id id}]})))
+
 (defmethod add-links :tweet
   [_ req tweet]
   (let [{:keys [id user-id]} tweet]

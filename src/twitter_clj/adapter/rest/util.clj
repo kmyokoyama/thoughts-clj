@@ -1,5 +1,6 @@
 (ns twitter-clj.adapter.rest.util
-  (:require [clojure.data.json :as json]))
+  (:require [buddy.sign.jwt :as jwt]
+            [clojure.data.json :as json]))
 
 ;; Private functions.
 
@@ -60,6 +61,11 @@
 (def ok-with-success (comp ok-response to-json add-success-result))
 (def ok-with-failure (comp ok-response to-json add-failure-result))
 (def created (comp created-response to-json add-success-result))
+
+
+(defn new-token
+  [secret user-id role]
+  (jwt/sign {:user-id user-id :role role} secret))
 
 (defn add-leading-slash
   [path]
