@@ -2,6 +2,7 @@
   (:require [com.stuartsierra.component :as component]
             [taoensso.timbre :as log]
             [twitter-clj.application.core :as core]
+            [twitter-clj.application.util :refer [highlight]]
             [twitter-clj.application.port.repository :as repository]))
 
 (defrecord Service [repository]
@@ -80,8 +81,14 @@
 
 ;; We can make it part of a protocol.
 
+(defn password-match?
+  [service user-id password]
+  (let [actual-password (repository/fetch-password! (:repository service) user-id)]
+    (core/password-match? password actual-password)))
+
 (defn add-user
   [service name email username password]
+  (highlight password)
   (let [lower-name (clojure.string/lower-case name)
         lower-email (clojure.string/lower-case email)
         lower-username (clojure.string/lower-case username)

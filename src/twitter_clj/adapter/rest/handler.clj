@@ -3,9 +3,11 @@
             [taoensso.timbre :as log]
             [twitter-clj.application.service :as service]
             [twitter-clj.adapter.rest.config :refer [rest-config]]
+            [twitter-clj.application.util :refer [highlight]]
             [twitter-clj.adapter.rest.hateoas :as hateoas]
             [twitter-clj.adapter.rest.util :refer [get-parameter get-from-body
                                                    new-token
+                                                   to-json
                                                    ok-response
                                                    ok-with-success
                                                    ok-with-failure
@@ -17,12 +19,14 @@
 (def create-token (partial new-token (:jws-secret rest-config)))
 
 (defn login
-  [req _service]
+  [req service]
   (let [user-id (get-from-body req :user-id)
         password (get-from-body req :password)
         token (create-token user-id :user)]
-    (log/info "Login of user" (f-id user-id) "[WITH PASSWORD]")
-    (ok-with-success {:token token})))
+    (if (service/password-match? service user-id password)
+      (do (log/info "Login of user" (f-id user-id))
+          (ok-with-success {:token token}))
+      (ok-with-failure {:cause "password does not match"}))))
 
 (defn add-user
   "This will be moved to user management API in the future."
@@ -143,6 +147,16 @@
 (defn- format-failure-info
   [failure-info]
   (update failure-info :type (fn [type] (clojure.string/replace (name type) #"-" " "))))
+
+(defn wrap-authenticated
+  [handler]
+  (fn [request]
+    (highlight request)
+    (if (authenticated? request)
+      (handler request)
+      {:status 401
+       :headers {"Content-Type" "application/json"}
+       :body (to-json {:cause "you need to authenticate"})})))
 
 (defn wrap-service-exception
   [handler]

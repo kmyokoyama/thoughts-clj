@@ -7,6 +7,8 @@
             [twitter-clj.adapter.rest.config :refer [path-prefix jws-backend]]
             [twitter-clj.adapter.rest.handler :refer :all]))
 
+
+
 (defn app-routes
   [service]
   (compojure.core/routes
@@ -34,6 +36,7 @@
   [service]
   (-> (app-routes service)
       (wrap-json-body {:keywords? true :bigdecimals? true})
+      (wrap-authenticated)
       wrap-service-exception
       ;wrap-default-exception
       (wrap-authentication jws-backend)

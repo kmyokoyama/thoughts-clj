@@ -14,6 +14,10 @@
   [password]
   (hashers/derive password))
 
+(defn password-match?
+  [password actual-password]
+  (hashers/check password actual-password))
+
 ;; Tweet-related functions.
 
 (defn new-tweet
