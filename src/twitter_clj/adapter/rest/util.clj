@@ -62,10 +62,9 @@
 (def ok-with-failure (comp ok-response to-json add-failure-result))
 (def created (comp created-response to-json add-success-result))
 
-
 (defn new-token
   [secret user-id role]
-  (jwt/sign {:user-id user-id :role role} secret))
+  (jwt/sign {:user-id user-id :role role} secret {:alg :hs512}))
 
 (defn add-leading-slash
   [path]

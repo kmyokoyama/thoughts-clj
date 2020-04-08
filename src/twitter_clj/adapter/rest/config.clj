@@ -5,7 +5,9 @@
 
 (def rest-config (get-in system-config [:http :api]))
 
-(def jws-backend (backends/jws {:secret (:jws-secret rest-config) :token-name "Bearer"}))
+(def jws-backend (backends/jws {:secret (:jws-secret rest-config)
+                                :token-name "Bearer"
+                                :options {:alg :hs512}}))
 
 (defn -path-prefix
   [config path]
