@@ -7,7 +7,9 @@
 
 ;; Driven-side.
 
-(defrecord InMemoryStorage [users tweets likes retweets join-tweet-likes join-tweet-replies join-tweet-retweets]
+(defrecord InMemoryStorage [users tweets likes retweets
+                            join-tweet-likes join-tweet-replies join-tweet-retweets
+                            passwords]
   component/Lifecycle
   (start [this]
     (log/info "Starting in-memory database")
@@ -18,6 +20,10 @@
     (shutdown this))
 
   repository/Repository
+  (update-password!
+    [_ user-id password]
+    (swap! passwords (fn [passwords] (assoc passwords user-id password))))
+
   (update-user!
     [_ {user-id :id :as user}]
     (swap! users (fn [users] (assoc users user-id user)))
@@ -50,6 +56,10 @@
                                                                  (:source-tweet-id retweet)
                                                                  (fn [retweet-ids] (conj (vec retweet-ids) retweet-id)))))
     retweet)
+
+  (fetch-password!
+    [_ user-id]
+    (get @passwords user-id))
 
   (fetch-users!
     [_ key criteria]
@@ -102,15 +112,16 @@
                                                                             (fn [like-ids] (remove #(= % like-id) like-ids)))))
                                           (swap! likes (fn [likes] (dissoc likes like-id)))))))
 
-(defn make-in-mem-storage ;; Constructor.
+(defn make-in-mem-storage                                   ;; Constructor.
   []
-  (map->InMemoryStorage {:users    (atom {})
-                         :tweets   (atom {})
-                         :retweets (atom {})
-                         :likes    (atom {})
-                         :join-tweet-likes (atom {})
+  (map->InMemoryStorage {:passwords           (atom {})
+                         :users               (atom {})
+                         :tweets              (atom {})
+                         :retweets            (atom {})
+                         :likes               (atom {})
+                         :join-tweet-likes    (atom {})
                          :join-tweet-replies  (atom {})
-                         :join-tweet-retweets  (atom {})}))
+                         :join-tweet-retweets (atom {})}))
 
 (defn shutdown
   [repository]

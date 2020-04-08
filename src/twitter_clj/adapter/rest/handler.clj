@@ -18,16 +18,17 @@
 
 (defn login
   [req _service]
-  (let [user-id (get-in req [:body :user-id])
+  (let [user-id (get-from-body req :user-id)
+        password (get-from-body req :password)
         token (create-token user-id :user)]
-    (log/info "Login of user" (f-id user-id) "[WITHOUT PASSWORD]")
+    (log/info "Login of user" (f-id user-id) "[WITH PASSWORD]")
     (ok-with-success {:token token})))
 
 (defn add-user
   "This will be moved to user management API in the future."
   [req service]
-  (let [{:keys [name email username]} (:body req)]
-    (let [user (service/add-user service name email username)
+  (let [{:keys [name email username password]} (:body req)]
+    (let [user (service/add-user service name email username password)
           user-info (str "'" (:name user) "'" " @" (:username user) " [" (:email user) "]")]
       (log/info "Add user" user-info)
       (created (hateoas/add-links :user req user)))))

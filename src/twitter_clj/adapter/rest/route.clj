@@ -5,12 +5,10 @@
             [ring.middleware.defaults :refer [wrap-defaults api-defaults]]
             [ring.middleware.json :refer [wrap-json-body]]
             [twitter-clj.adapter.rest.config :refer [path-prefix jws-backend]]
-            [twitter-clj.adapter.rest.handler :refer :all]
-            [twitter-clj.application.util :refer [highlight]]))
+            [twitter-clj.adapter.rest.handler :refer :all]))
 
 (defn app-routes
   [service]
-  (highlight (path-prefix "/tweet/:tweet-id"))
   (compojure.core/routes
     ;; User API.
     (POST (path-prefix "/login") req (login req service))
@@ -37,6 +35,6 @@
   (-> (app-routes service)
       (wrap-json-body {:keywords? true :bigdecimals? true})
       wrap-service-exception
-      wrap-default-exception
+      ;wrap-default-exception
       (wrap-authentication jws-backend)
       (wrap-defaults api-defaults)))

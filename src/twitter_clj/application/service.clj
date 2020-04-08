@@ -81,14 +81,15 @@
 ;; We can make it part of a protocol.
 
 (defn add-user
-  [service name email username]
+  [service name email username password]
   (let [lower-name (clojure.string/lower-case name)
         lower-email (clojure.string/lower-case email)
         lower-username (clojure.string/lower-case username)
         user (core/new-user lower-name lower-email lower-username)]
     (if (new-user? (:repository service) email)
       (if (empty? (repository/fetch-users! (:repository service) {:username username} :by-fields))
-        (repository/update-user! (:repository service) user)
+        (do (repository/update-password! (:repository service) (:id user) (core/derive-password password))
+            (repository/update-user! (:repository service) user))
         (throw-duplicate-username! username))
       (throw-duplicate-user-email! email))))
 

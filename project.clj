@@ -12,6 +12,7 @@
                    :plugins [[lein-midje "3.2.1"]]
                    :jvm-opts ["-Dconfig.edn=resources/dev-config.edn"]}}
   :dependencies [[buddy/buddy-auth "2.2.0"]
+                 [buddy/buddy-hashers "1.4.0"]
                  [http-kit "2.3.0"]
                  [org.clojure/clojure "1.10.0"]
                  [org.clojure/data.json "0.2.6"]

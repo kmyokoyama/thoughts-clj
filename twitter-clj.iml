@@ -16,6 +16,7 @@
     <orderEntry type="library" name="Leiningen: args4j:2.0.26" level="project" />
     <orderEntry type="library" name="Leiningen: buddy/buddy-auth:2.2.0" level="project" />
     <orderEntry type="library" name="Leiningen: buddy/buddy-core:1.6.0" level="project" />
+    <orderEntry type="library" name="Leiningen: buddy/buddy-hashers:1.4.0" level="project" />
     <orderEntry type="library" name="Leiningen: buddy/buddy-sign:3.1.0" level="project" />
     <orderEntry type="library" name="Leiningen: cheshire:5.10.0" level="project" />
     <orderEntry type="library" name="Leiningen: clj-http:3.10.0" level="project" />
@@ -23,6 +24,7 @@
     <orderEntry type="library" name="Leiningen: clj-time:0.15.1" level="project" />
     <orderEntry type="library" name="Leiningen: clj-tuple:0.2.2" level="project" />
     <orderEntry type="library" name="Leiningen: clojure-complete:0.2.5" level="project" />
+    <orderEntry type="library" name="Leiningen: clojurewerkz/scrypt:1.2.0" level="project" />
     <orderEntry type="library" name="Leiningen: clout:2.2.1" level="project" />
     <orderEntry type="library" name="Leiningen: colorize:0.1.1" level="project" />
     <orderEntry type="library" name="Leiningen: com.cognitect/transit-clj:0.8.309" level="project" />
@@ -40,6 +42,7 @@
     <orderEntry type="library" name="Leiningen: com.google.jsinterop/jsinterop-annotations:1.0.0" level="project" />
     <orderEntry type="library" name="Leiningen: com.google.protobuf/protobuf-java:3.0.2" level="project" />
     <orderEntry type="library" name="Leiningen: com.googlecode.json-simple/json-simple:1.1.1" level="project" />
+    <orderEntry type="library" name="Leiningen: com.lambdaworks/scrypt:1.4.0" level="project" />
     <orderEntry type="library" name="Leiningen: com.outpace/config:0.13.2" level="project" />
     <orderEntry type="library" name="Leiningen: com.rpl/specter:1.0.5" level="project" />
     <orderEntry type="library" name="Leiningen: com.stuartsierra/component:0.4.0" level="project" />
