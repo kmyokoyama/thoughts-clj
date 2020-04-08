@@ -7,14 +7,16 @@
             [twitter-clj.adapter.rest.config :refer [path-prefix jws-backend]]
             [twitter-clj.adapter.rest.handler :refer :all]))
 
+(defn public-routes
+  [service]
+  (compojure.core/routes
+    (POST (path-prefix "/login") req (login req service))
+    (POST (path-prefix "/user") req (add-user req service))))
 
-
-(defn app-routes
+(defn user-routes
   [service]
   (compojure.core/routes
     ;; User API.
-    (POST (path-prefix "/login") req (login req service))
-    (POST (path-prefix "/user") req (add-user req service))
     (GET (path-prefix "/user/:user-id") req (get-user-by-id req service))
     (GET (path-prefix "/user/:user-id/tweets") req (get-tweets-by-user req service))
 
@@ -34,10 +36,17 @@
 
 (defn handler
   [service]
-  (-> (app-routes service)
-      (wrap-json-body {:keywords? true :bigdecimals? true})
-      (wrap-authenticated)
-      wrap-service-exception
-      ;wrap-default-exception
-      (wrap-authentication jws-backend)
-      (wrap-defaults api-defaults)))
+  (compojure.core/routes
+    (-> (public-routes service)
+        (wrap-json-body {:keywords? true :bigdecimals? true})
+        wrap-service-exception
+        ;wrap-default-exception
+        (wrap-defaults api-defaults))
+
+    (-> (user-routes service)
+        (wrap-json-body {:keywords? true :bigdecimals? true})
+        (wrap-authenticated)
+        (wrap-authentication jws-backend)
+        wrap-service-exception
+        ;wrap-default-exception
+        (wrap-defaults api-defaults))))
