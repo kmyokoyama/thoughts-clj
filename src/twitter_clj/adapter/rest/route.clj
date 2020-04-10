@@ -37,15 +37,14 @@
   (compojure.core/routes
     (-> (public-routes service)
         (wrap-json-body {:keywords? true :bigdecimals? true})
-        wrap-service-exception
-        wrap-invalid-token-exception
-        wrap-default-exception
+        (wrap-service-exception)
+        (wrap-default-exception)
         (wrap-defaults api-defaults))
 
     (-> (user-routes service)
         (wrap-json-body {:keywords? true :bigdecimals? true})
-        (wrap-authenticated)
+        (wrap-authenticated service)
         (wrap-authentication jws-backend)
-        wrap-service-exception
-        wrap-default-exception
+        (wrap-service-exception)
+        (wrap-default-exception)
         (wrap-defaults api-defaults))))

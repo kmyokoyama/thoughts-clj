@@ -69,10 +69,6 @@
                    :cause   "you cannot unlike a tweet before like it"
                    :context {:tweet-id tweet-id :user-id user-id}})))
 
-(defn user-exists?
-  [service id]
-  (not (empty? (repository/fetch-users! (:repository service) id :by-id))))
-
 (defn new-user?
   [repository email]
   (empty? (repository/fetch-users! repository {:email email} :by-fields)))
@@ -80,6 +76,10 @@
 ;; Public functions.
 
 ;; We can make it part of a protocol.
+
+(defn user-exists?
+  [service id]
+  (not (empty? (repository/fetch-users! (:repository service) id :by-id))))
 
 (defn password-match?
   [service user-id password]
