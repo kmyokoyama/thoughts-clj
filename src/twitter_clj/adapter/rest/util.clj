@@ -1,6 +1,7 @@
 (ns twitter-clj.adapter.rest.util
   (:require [buddy.sign.jwt :as jwt]
-            [clojure.data.json :as json]))
+            [clojure.data.json :as json]
+            [taoensso.timbre :as log]))
 
 ;; Private functions.
 
@@ -25,6 +26,10 @@
 (defn get-parameter
   [req param]
   (param (:params req)))
+
+(defn get-user-id
+  [req]
+  (get-in req [:identity :user-id]))
 
 (def ^:const status-success
   {:status "success"})
@@ -103,3 +108,7 @@
      (let [formatted-attr (-> attr (name) (clojure.string/replace #"-" ""))]
        (str "[" formatted-attr ": " attr-val "]"))
      entity)))
+
+(defn log-failure
+  [& args]
+  (log/warn (clojure.string/join " " (cons "Failure -" args))))

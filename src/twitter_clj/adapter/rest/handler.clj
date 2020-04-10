@@ -3,18 +3,8 @@
             [taoensso.timbre :as log]
             [twitter-clj.application.service :as service]
             [twitter-clj.adapter.rest.config :refer [rest-config]]
-            [twitter-clj.application.util :refer [highlight]]
             [twitter-clj.adapter.rest.hateoas :as hateoas]
-            [twitter-clj.adapter.rest.util :refer [get-parameter
-                                                   get-from-body
-                                                   new-token
-                                                   ok-with-success
-                                                   ok-with-failure
-                                                   bad-request
-                                                   need-authenticate
-                                                   created
-                                                   f
-                                                   f-id]])
+            [twitter-clj.adapter.rest.util :refer :all])
   (:import [clojure.lang ExceptionInfo]))
 
 (def create-token (partial new-token (:jws-secret rest-config)))
@@ -29,11 +19,12 @@
         (log/info "Login of user" (f-id user-id))
         (service/login service user-id)
         (ok-with-success {:token token}))
-      (bad-request {:cause "wrong user ID or password"}))))
+      (do (log-failure "Login failed (wrong user ID or password)")
+          (bad-request {:cause "wrong user ID or password"})))))
 
 (defn logout
   [req service]
-  (let [user-id (get-in req [:identity :user-id])]
+  (let [user-id (get-user-id req)]
     (log/info "Logout user" (f-id user-id))
     (service/logout service user-id)
     (ok-with-success {:status "logged out"})))
@@ -55,7 +46,8 @@
 
 (defn add-tweet
   [req service]
-  (let [{:keys [user-id text]} (:body req)
+  (let [user-id (get-user-id req)
+        text (get-from-body req :text)
         tweet (service/add-tweet service user-id text)]
     (log/info "Add tweet" (f tweet) "from user" (f-id user-id))
     (created (hateoas/add-links :tweet req tweet))))
@@ -76,24 +68,26 @@
 
 (defn add-reply
   [req service]
-  (let [source-tweet-id (get-parameter req :tweet-id)
-        {:keys [user-id text]} (:body req)
+  (let [user-id (get-user-id req)
+        source-tweet-id (get-parameter req :tweet-id)
+        text (get-from-body req :text)
         reply (service/add-reply service user-id text source-tweet-id)]
     (log/info "Reply tweet" (f-id source-tweet-id) "from user" (f-id user-id))
     (created (hateoas/add-links :reply req source-tweet-id reply))))
 
 (defn add-retweet
   [req service]
-  (let [source-tweet-id (get-parameter req :tweet-id)
-        user-id (get-in req [:body :user-id])
+  (let [user-id (get-user-id req)
+        source-tweet-id (get-parameter req :tweet-id)
         retweet (service/retweet service user-id source-tweet-id)]
     (log/info "Retweet tweet" (f-id source-tweet-id) "from user" (f-id user-id))
     (created (hateoas/add-links :retweet req source-tweet-id retweet))))
 
 (defn add-retweet-with-comment
   [req service]
-  (let [source-tweet-id (get-parameter req :tweet-id)
-        {:keys [user-id comment]} (:body req)
+  (let [user-id (get-user-id req)
+        source-tweet-id (get-parameter req :tweet-id)
+        comment (get-from-body req :comment)
         retweet (service/retweet-with-comment service user-id comment source-tweet-id)]
     (log/info "Retweet tweet" (f-id source-tweet-id) "from user" (f-id user-id))
     (created (hateoas/add-links :retweet req source-tweet-id retweet))))
@@ -136,8 +130,8 @@
 
 (defn tweet-react
   [req service]
-  (let [tweet-id (get-parameter req :tweet-id)
-        user-id (get-from-body req :user-id)
+  (let [user-id (get-user-id req)
+        tweet-id (get-parameter req :tweet-id)
         reaction (keyword (get-from-body req :reaction))]
     ;; TODO: Maybe we could refactor it.
     (cond
@@ -163,7 +157,8 @@
     (if (and (authenticated? request)
              (service/logged-in? service (get-in request [:identity :user-id])))
       (handler request)
-      (need-authenticate))))
+      (do (log-failure "User is not authenticated (missing authorization token or not logged in)")
+          (need-authenticate)))))
 
 (defn wrap-service-exception
   [handler]
@@ -173,7 +168,7 @@
       (catch ExceptionInfo e
         (let [failure-info (ex-data e)]
           (if (and (:type failure-info) (:subject failure-info))
-            (do (log/warn "Failure -" (.getMessage e))
+            (do (log-failure (.getMessage e))
                 (-> failure-info (format-failure-info) (ok-with-failure)))
             (throw e)))))))
 

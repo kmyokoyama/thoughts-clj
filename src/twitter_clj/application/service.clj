@@ -2,7 +2,6 @@
   (:require [com.stuartsierra.component :as component]
             [taoensso.timbre :as log]
             [twitter-clj.application.core :as core]
-            [twitter-clj.application.util :refer [highlight]]
             [twitter-clj.application.port.repository :as repository]))
 
 (defrecord Service [repository]
@@ -36,6 +35,14 @@
                    :subject :tweet
                    :cause   (str "tweet with ID " tweet-id " not found")
                    :context {:tweet-id tweet-id}})))
+
+(defn- throw-missing-retweet!
+  [tweet-id]
+  (throw (ex-info (str "Retweet [ID: " tweet-id "] not found")
+                  {:type    :resource-not-found
+                   :subject :retweet
+                   :cause   (str "retweet with ID " tweet-id " not found")
+                   :context {:retweet-id tweet-id}})))
 
 (defn- throw-duplicate-user-email!
   [email]
@@ -175,7 +182,7 @@
   [service retweet-id]
   (if-let [retweet (repository/fetch-retweets! (:repository service) retweet-id :by-id)]
     retweet
-    (throw-missing-tweet! retweet-id)))
+    (throw-missing-retweet! retweet-id)))
 
 (defn get-retweets-by-tweet-id
   [service source-tweet-id]
