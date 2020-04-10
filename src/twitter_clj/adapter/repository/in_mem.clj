@@ -22,43 +22,37 @@
   repository/Repository
   (update-password!
     [_ user-id password]
-    (swap! passwords (fn [passwords] (assoc passwords user-id password))))
+    (swap! passwords assoc user-id password))
 
   (update-sessions!
     [_ user-id]
-    (swap! sessions (fn [sessions] (conj sessions user-id))))
+    (swap! sessions conj user-id))
 
   (update-user!
     [_ {user-id :id :as user}]
-    (swap! users (fn [users] (assoc users user-id user)))
+    (swap! users assoc user-id user)
     user)
 
   (update-tweet!
     [_ {tweet-id :id :as tweet}]
-    (swap! tweets (fn [tweets] (assoc tweets tweet-id tweet)))
+    (swap! tweets assoc tweet-id tweet)
     tweet)
 
   (update-like!
     [_ {like-id :id source-tweet-id :source-tweet-id :as like}]
-    (swap! likes (fn [likes] (assoc likes like-id like)))
-    (swap! join-tweet-likes (fn [join-tweet-likes] (update join-tweet-likes
-                                                           source-tweet-id
-                                                           (fn [like-ids] (conj (vec like-ids) like-id)))))
+    (swap! likes assoc like-id like)
+    (swap! join-tweet-likes update source-tweet-id (fn [like-ids] (conj (vec like-ids) like-id)))
     like)
 
   (update-replies!
     [_ source-tweet-id {reply-id :id :as reply}]
-    (swap! join-tweet-replies (fn [join-tweet-replies] (update join-tweet-replies
-                                                               source-tweet-id
-                                                               (fn [reply-ids] (conj (vec reply-ids) reply-id)))))
+    (swap! join-tweet-replies update source-tweet-id (fn [reply-ids] (conj (vec reply-ids) reply-id)))
     reply)
 
   (update-retweets!
     [_ {retweet-id :id :as retweet}]
-    (swap! retweets (fn [retweets] (assoc retweets retweet-id retweet)))
-    (swap! join-tweet-retweets (fn [join-tweet-retweets] (update join-tweet-retweets
-                                                                 (:source-tweet-id retweet)
-                                                                 (fn [retweet-ids] (conj (vec retweet-ids) retweet-id)))))
+    (swap! retweets assoc retweet-id retweet)
+    (swap! join-tweet-retweets update (:source-tweet-id retweet) (fn [retweet-ids] (conj (vec retweet-ids) retweet-id)))
     retweet)
 
   (fetch-password!
@@ -114,15 +108,12 @@
                                                            (filter (fn [like] (= (:user-id like) user-id)))
                                                            (first)
                                                            (:id))]
-                                          (swap! join-tweet-likes (fn [join-tweet-likes]
-                                                                    (update join-tweet-likes
-                                                                            source-tweet-id
-                                                                            (fn [like-ids] (remove #(= % like-id) like-ids)))))
-                                          (swap! likes (fn [likes] (dissoc likes like-id))))))
+                                          (swap! join-tweet-likes update source-tweet-id (fn [like-ids] (remove #(= % like-id) like-ids)))
+                                          (swap! likes dissoc like-id))))
 
   (remove-from-session!
     [_ user-id]
-    (disj @sessions user-id)))
+    (swap! sessions disj user-id)))
 
 (defn make-in-mem-storage                                   ;; Constructor.
   []

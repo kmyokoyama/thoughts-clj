@@ -95,7 +95,7 @@
 
 (defn logged-in?
   [service user-id]
-  (repository/fetch-session! (:repository service) user-id))
+  ((complement nil?) (repository/fetch-session! (:repository service) user-id)))
 
 (defn login
   [service user-id]

@@ -15,10 +15,13 @@
         password (get-from-body req :password)]
     (if (and (service/user-exists? service user-id)
              (service/password-match? service user-id password))
-      (let [token (create-token user-id :user)]
-        (log/info "Login of user" (f-id user-id))
-        (service/login service user-id)
-        (ok-with-success {:token token}))
+      (if-not (service/logged-in? service user-id)
+        (let [token (create-token user-id :user)]
+          (log/info "Login of user" (f-id user-id))
+          (service/login service user-id)
+          (ok-with-success {:token token}))
+        (do (log-failure "Login failed (user" (f-id user-id) "already logged in)")
+            (bad-request {:cause "you are already logged in"})))
       (do (log-failure "Login failed (wrong user ID or password)")
           (bad-request {:cause "wrong user ID or password"})))))
 
