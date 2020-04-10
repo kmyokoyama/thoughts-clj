@@ -69,13 +69,13 @@
                    :cause   "you cannot unlike a tweet before like it"
                    :context {:tweet-id tweet-id :user-id user-id}})))
 
-(defn new-user?
-  [repository email]
-  (empty? (repository/fetch-users! repository {:email email} :by-fields)))
-
 ;; Public functions.
 
 ;; We can make it part of a protocol.
+
+(defn new-user?
+  [service email]
+  (empty? (repository/fetch-users! (:repository service) {:email email} :by-fields)))
 
 (defn user-exists?
   [service id]
@@ -104,7 +104,7 @@
         lower-email (clojure.string/lower-case email)
         lower-username (clojure.string/lower-case username)
         user (core/new-user lower-name lower-email lower-username)]
-    (if (new-user? (:repository service) email)
+    (if (new-user? service email)
       (if (empty? (repository/fetch-users! (:repository service) {:username username} :by-fields))
         (do (repository/update-password! (:repository service) (:id user) (core/derive-password password))
             (repository/update-user! (:repository service) user))
@@ -132,13 +132,13 @@
 
 (defn get-tweets-by-user
   [service user-id]
-  (if (user-exists? (:repository service) user-id)
+  (if (user-exists? service user-id)
     (repository/fetch-tweets! (:repository service) user-id :by-user-id)
     (throw-missing-user! user-id)))
 
 (defn add-reply
   [service user-id text source-tweet-id]
-  (if (user-exists? (:repository service) user-id)
+  (if (user-exists? service user-id)
     (if-let [source-tweet (repository/fetch-tweets! (:repository service) source-tweet-id :by-id)]
       (let [reply (core/new-tweet user-id text)]
         (repository/update-tweet! (:repository service) (core/reply source-tweet))
@@ -155,7 +155,7 @@
 
 (defn retweet
   [service user-id source-tweet-id]
-  (if (user-exists? (:repository service) user-id)
+  (if (user-exists? service user-id)
     (if-let [source-tweet (repository/fetch-tweets! (:repository service) source-tweet-id :by-id)]
       (do (repository/update-tweet! (:repository service) (core/retweet source-tweet))
           (repository/update-retweets! (:repository service) (core/new-retweet user-id source-tweet-id)))
@@ -164,7 +164,7 @@
 
 (defn retweet-with-comment
   [service user-id comment source-tweet-id]
-  (if (user-exists? (:repository service) user-id)
+  (if (user-exists? service user-id)
     (if-let [source-tweet (repository/fetch-tweets! (:repository service) source-tweet-id :by-id)]
       (do (repository/update-tweet! (:repository service) (core/retweet source-tweet))
           (repository/update-retweets! (:repository service) (core/new-retweet user-id source-tweet-id comment)))

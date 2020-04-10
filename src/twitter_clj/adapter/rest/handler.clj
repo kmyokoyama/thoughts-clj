@@ -5,10 +5,9 @@
             [twitter-clj.adapter.rest.config :refer [rest-config]]
             [twitter-clj.application.util :refer [highlight]]
             [twitter-clj.adapter.rest.hateoas :as hateoas]
-            [twitter-clj.adapter.rest.util :refer [get-parameter get-from-body
+            [twitter-clj.adapter.rest.util :refer [get-parameter
+                                                   get-from-body
                                                    new-token
-                                                   to-json
-                                                   ok-response
                                                    ok-with-success
                                                    ok-with-failure
                                                    bad-request

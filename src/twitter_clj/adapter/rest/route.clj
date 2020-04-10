@@ -27,24 +27,16 @@
     (POST (path-prefix "/tweet/:tweet-id/reply") req (add-reply req service))
     (POST (path-prefix "/tweet/:tweet-id/retweet") req (add-retweet req service))
     (POST (path-prefix "/tweet/:tweet-id/retweet-comment") req (add-retweet-with-comment req service))
-    (POST (path-prefix "/tweet/:tweet-id/react") req (tweet-react req service))
-
-    ;; Default.
-    (route/not-found "Error, page not found!")))
+    (POST (path-prefix "/tweet/:tweet-id/react") req (tweet-react req service))))
 
 (defn handler
   [service]
-  (compojure.core/routes
-    (-> (public-routes service)
-        (wrap-json-body {:keywords? true :bigdecimals? true})
-        (wrap-service-exception)
-        (wrap-default-exception)
-        (wrap-defaults api-defaults))
-
-    (-> (user-routes service)
-        (wrap-json-body {:keywords? true :bigdecimals? true})
-        (wrap-authenticated service)
-        (wrap-authentication jws-backend)
-        (wrap-service-exception)
-        (wrap-default-exception)
-        (wrap-defaults api-defaults))))
+  (-> (compojure.core/routes
+        (public-routes service)
+        (-> (user-routes service)
+            (wrap-authenticated service)
+            (wrap-authentication jws-backend)))
+      (wrap-service-exception)
+      (wrap-default-exception)
+      (wrap-json-body {:keywords? true :bigdecimals? true})
+      (wrap-defaults api-defaults)))
