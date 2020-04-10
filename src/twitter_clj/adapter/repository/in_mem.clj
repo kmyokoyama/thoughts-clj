@@ -9,7 +9,7 @@
 
 (defrecord InMemoryStorage [users tweets likes retweets
                             join-tweet-likes join-tweet-replies join-tweet-retweets
-                            passwords]
+                            passwords sessions]
   component/Lifecycle
   (start [this]
     (log/info "Starting in-memory database")
@@ -23,6 +23,10 @@
   (update-password!
     [_ user-id password]
     (swap! passwords (fn [passwords] (assoc passwords user-id password))))
+
+  (update-sessions!
+    [_ user-id]
+    (swap! sessions (fn [sessions] (conj sessions user-id))))
 
   (update-user!
     [_ {user-id :id :as user}]
@@ -60,6 +64,10 @@
   (fetch-password!
     [_ user-id]
     (get @passwords user-id))
+
+  (fetch-session!
+    [_ user-id]
+    (get @sessions user-id))
 
   (fetch-users!
     [_ key criteria]
@@ -110,11 +118,16 @@
                                                                     (update join-tweet-likes
                                                                             source-tweet-id
                                                                             (fn [like-ids] (remove #(= % like-id) like-ids)))))
-                                          (swap! likes (fn [likes] (dissoc likes like-id)))))))
+                                          (swap! likes (fn [likes] (dissoc likes like-id))))))
+
+  (remove-from-session!
+    [_ user-id]
+    (disj @sessions user-id)))
 
 (defn make-in-mem-storage                                   ;; Constructor.
   []
   (map->InMemoryStorage {:passwords           (atom {})
+                         :sessions            (atom #{})
                          :users               (atom {})
                          :tweets              (atom {})
                          :retweets            (atom {})
@@ -125,6 +138,8 @@
 
 (defn shutdown
   [repository]
+  (reset! (:passwords repository) {})
+  (reset! (:sesions repository) #{})
   (reset! (:users repository) {})
   (reset! (:tweets repository) {})
   (reset! (:retweets repository) {})

@@ -16,11 +16,9 @@
 (defn user-routes
   [service]
   (compojure.core/routes
-    ;; User API.
+    (POST (path-prefix "/logout") req (logout req service))
     (GET (path-prefix "/user/:user-id") req (get-user-by-id req service))
     (GET (path-prefix "/user/:user-id/tweets") req (get-tweets-by-user req service))
-
-    ;; Tweet API.
     (GET (path-prefix "/tweet/:tweet-id") req (get-tweet-by-id req service))
     (GET (path-prefix "/tweet/:tweet-id/replies") req (get-replies-by-tweet-id req service))
     (GET (path-prefix "/tweet/:tweet-id/retweets") req (get-retweets-by-tweet-id req service))
@@ -40,7 +38,8 @@
     (-> (public-routes service)
         (wrap-json-body {:keywords? true :bigdecimals? true})
         wrap-service-exception
-        ;wrap-default-exception
+        wrap-invalid-token-exception
+        wrap-default-exception
         (wrap-defaults api-defaults))
 
     (-> (user-routes service)
@@ -48,5 +47,5 @@
         (wrap-authenticated)
         (wrap-authentication jws-backend)
         wrap-service-exception
-        ;wrap-default-exception
+        wrap-default-exception
         (wrap-defaults api-defaults))))

@@ -11,6 +11,7 @@
                                                    ok-response
                                                    ok-with-success
                                                    ok-with-failure
+                                                   need-authenticate
                                                    created
                                                    f
                                                    f-id]])
@@ -23,13 +24,23 @@
   (let [user-id (get-from-body req :user-id)
         password (get-from-body req :password)
         token (create-token user-id :user)]
-    (if (service/password-match? service user-id password)
+    (if (and (service/user-exists? service user-id)
+             (service/password-match? service user-id password))
       (do (log/info "Login of user" (f-id user-id))
+          (service/login service user-id)
           (ok-with-success {:token token}))
-      (ok-with-failure {:cause "password does not match"}))))
+      (ok-with-failure {:cause "wrong user ID or password"}))))
+
+(defn logout
+  [req service]
+  (let [user-id (get-in req [:identity :user-id])]
+    (if (service/logged-in? service user-id)
+      (do (log/info "Logout user" (f-id user-id))
+          (service/logout service user-id)
+          (ok-with-success {:status "logged out"}))
+      (need-authenticate))))
 
 (defn add-user
-  "This will be moved to user management API in the future."
   [req service]
   (let [{:keys [name email username password]} (:body req)]
     (let [user (service/add-user service name email username password)
@@ -39,10 +50,13 @@
 
 (defn get-user-by-id
   [req service]
-  (let [user-id (get-parameter req :user-id)
-        user (service/get-user-by-id service user-id)]
-    (log/info "Get user" (f user))
-    (ok-with-success (hateoas/add-links :user req user))))
+  (highlight req)
+  (if (service/logged-in? service (get-in req [:identity :user-id]))
+    (let [user-id (get-parameter req :user-id)
+          user (service/get-user-by-id service user-id)]
+      (log/info "Get user" (f user))
+      (ok-with-success (hateoas/add-links :user req user)))
+    (need-authenticate)))
 
 (defn add-tweet
   [req service]
@@ -151,12 +165,22 @@
 (defn wrap-authenticated
   [handler]
   (fn [request]
-    (highlight request)
     (if (authenticated? request)
       (handler request)
-      {:status 401
-       :headers {"Content-Type" "application/json"}
-       :body (to-json {:cause "you need to authenticate"})})))
+      (need-authenticate))))
+
+(defn wrap-invalid-token-exception
+  [handler]
+  (fn [request]
+    (try
+      (handler request)
+      (catch ExceptionInfo e
+        (let [failure-info (ex-data e)]
+          (if (= :invalid-token (:type failure-info))
+            (do (log/warn "Failure -" (.getMessage e))
+                (-> {:cause "wrong user ID or password"}
+                    (ok-with-failure)))
+            (throw e)))))))
 
 (defn wrap-service-exception
   [handler]
@@ -166,7 +190,7 @@
       (catch ExceptionInfo e
         (let [failure-info (ex-data e)]
           (if (and (:type failure-info) (:subject failure-info))
-            (do (log/warn "Failure - " (.getMessage e))
+            (do (log/warn "Failure -" (.getMessage e))
                 (-> failure-info (format-failure-info) (ok-with-failure)))
             (throw e)))))))
 

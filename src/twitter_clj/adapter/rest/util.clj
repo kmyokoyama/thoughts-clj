@@ -47,20 +47,34 @@
 (defn ok-response
   "Respond with 200 (HTTP OK)"
   [body]
-  {:status 200
+  {:status  200
    :headers {"Content-Type" "application/json"}
-   :body body})
+   :body    body})
 
 (defn created-response
   "Respond with 201 (HTTP Created)"
   [body]
-  {:status 201
+  {:status  201
    :headers {"Content-Type" "application/json"}
-   :body body})
+   :body    body})
+
+(defn authenticate-response
+  "Respond with 401 (HTTP Authenticate)"
+  [body]
+  {:status  401
+   :headers {"Content-Type" "application/json"}
+   :body    body})
+
 
 (def ok-with-success (comp ok-response to-json add-success-result))
 (def ok-with-failure (comp ok-response to-json add-failure-result))
 (def created (comp created-response to-json add-success-result))
+(defn need-authenticate
+  []
+  (-> {:cause "you are not logged in"}
+      (add-failure-result)
+      (to-json)
+      (authenticate-response)))
 
 (defn new-token
   [secret user-id role]

@@ -7,6 +7,7 @@
   (update-like! [this like])
   (update-replies! [this source-tweet-id reply])
   (update-retweets! [this retweet])
+  (update-sessions! [this user-id])
 
   (fetch-password! [this user-id])
   (fetch-users! [this key criteria])
@@ -14,5 +15,7 @@
   (fetch-likes! [this key criteria])
   (fetch-replies! [this key criteria])
   (fetch-retweets! [this key criteria])
+  (fetch-session! [this user-id])
 
-  (remove-like! [this key criteria]))
+  (remove-like! [this key criteria])
+  (remove-from-session! [this user-id]))

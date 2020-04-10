@@ -70,8 +70,8 @@
                    :context {:tweet-id tweet-id :user-id user-id}})))
 
 (defn user-exists?
-  [repository id]
-  (not (empty? (repository/fetch-users! repository id :by-id))))
+  [service id]
+  (not (empty? (repository/fetch-users! (:repository service) id :by-id))))
 
 (defn new-user?
   [repository email]
@@ -86,9 +86,20 @@
   (let [actual-password (repository/fetch-password! (:repository service) user-id)]
     (core/password-match? password actual-password)))
 
+(defn logged-in?
+  [service user-id]
+  (repository/fetch-session! (:repository service) user-id))
+
+(defn login
+  [service user-id]
+  (repository/update-sessions! (:repository service) user-id))
+
+(defn logout
+  [service user-id]
+  (repository/remove-from-session! (:repository service) user-id))
+
 (defn add-user
   [service name email username password]
-  (highlight password)
   (let [lower-name (clojure.string/lower-case name)
         lower-email (clojure.string/lower-case email)
         lower-username (clojure.string/lower-case username)
@@ -109,7 +120,7 @@
 (defn add-tweet
   [service user-id text]
   (let [tweet (core/new-tweet user-id text)]
-    (if (user-exists? (:repository service) user-id)
+    (if (user-exists? service user-id)
       (repository/update-tweet! (:repository service) tweet)
       (throw-missing-user! user-id))))
 
