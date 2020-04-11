@@ -6,791 +6,941 @@
 	},
 	"item": [
 		{
-			"name": "User",
-			"item": [
+			"name": "Create user",
+			"event": [
 				{
-					"name": "Create user",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "cc257ca0-cbf9-4997-8ce7-5b5250302382",
-								"exec": [
-									"var body = pm.response.json();",
-									"var result = body[\"result\"];",
-									"",
-									"pm.environment.set(\"created_user_id\", body[\"result\"][\"id\"]);",
-									"",
-									"pm.test(\"Test response metadata\", function () {",
-									"    pm.expect(pm.response.code).to.equal(201);",
-									"    pm.response.to.be.json;",
-									"});",
-									"",
-									"pm.test(\"Test response body\", function () {",
-									"    ",
-									"    ",
-									"    pm.expect(body[\"status\"]).to.equal(\"success\");",
-									"    pm.expect(result[\"active\"]).to.equal(true);",
-									"    pm.expect(result[\"name\"]).to.be.a(\"string\");",
-									"    pm.expect(result[\"email\"]).to.be.a(\"string\");",
-									"    pm.expect(result[\"username\"]).to.be.a(\"string\");",
-									"})"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n\t\"name\": \"{{$randomFullName}}\",\n\t\"email\": \"{{$randomEmail}}\",\n\t\"username\": \"{{$randomUserName}}\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{scheme}}://{{url}}:{{port}}/{{path_prefix}}/user",
-							"protocol": "{{scheme}}",
-							"host": [
-								"{{url}}"
-							],
-							"port": "{{port}}",
-							"path": [
-								"{{path_prefix}}",
-								"user"
-							]
-						}
-					},
-					"response": []
+					"listen": "test",
+					"script": {
+						"id": "cc257ca0-cbf9-4997-8ce7-5b5250302382",
+						"exec": [
+							"var body = pm.response.json();",
+							"var result = body[\"result\"];",
+							"",
+							"pm.environment.set(\"created_user_id\", body[\"result\"][\"id\"]);",
+							"",
+							"pm.test(\"Test response metadata\", function () {",
+							"    pm.expect(pm.response.code).to.equal(201);",
+							"    pm.response.to.be.json;",
+							"});",
+							"",
+							"pm.test(\"Test response body\", function () {",
+							"    ",
+							"    ",
+							"    pm.expect(body[\"status\"]).to.equal(\"success\");",
+							"    pm.expect(result[\"active\"]).to.equal(true);",
+							"    pm.expect(result[\"name\"]).to.be.a(\"string\");",
+							"    pm.expect(result[\"email\"]).to.be.a(\"string\");",
+							"    pm.expect(result[\"username\"]).to.be.a(\"string\");",
+							"})"
+						],
+						"type": "text/javascript"
+					}
 				},
 				{
-					"name": "Get user",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "e75b7b3d-bd1e-47c3-8f6f-7d0850f1146b",
-								"exec": [
-									"var body = pm.response.json();",
-									"var result = body[\"result\"];",
-									"",
-									"pm.test(\"Test response metadata\", function () {",
-									"    pm.expect(pm.response.code).to.equal(200);",
-									"    pm.response.to.be.json;",
-									"});",
-									"",
-									"pm.test(\"Test response body\", function () {",
-									"    pm.expect(body[\"status\"]).to.equal(\"success\");",
-									"    pm.expect(result[\"active\"]).to.equal(true);",
-									"    pm.expect(result[\"name\"]).to.be.a(\"string\");",
-									"    pm.expect(result[\"email\"]).to.be.a(\"string\");",
-									"    pm.expect(result[\"username\"]).to.be.a(\"string\");",
-									"})"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"protocolProfileBehavior": {
-						"disableBodyPruning": true
-					},
-					"request": {
-						"method": "GET",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{scheme}}://{{url}}:{{port}}/{{path_prefix}}/user/{{created_user_id}}",
-							"protocol": "{{scheme}}",
-							"host": [
-								"{{url}}"
-							],
-							"port": "{{port}}",
-							"path": [
-								"{{path_prefix}}",
-								"user",
-								"{{created_user_id}}"
-							]
-						}
-					},
-					"response": []
+					"listen": "prerequest",
+					"script": {
+						"id": "c47abd8e-4cb1-4e73-a77c-0a985afaa486",
+						"exec": [
+							"pm.environment.set(\"created_user_password\", \"123\");"
+						],
+						"type": "text/javascript"
+					}
 				}
 			],
-			"protocolProfileBehavior": {}
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"name\": \"{{$randomFullName}}\",\n\t\"email\": \"{{$randomEmail}}\",\n\t\"username\": \"{{$randomUserName}}\",\n\t\"password\": \"{{created_user_password}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{scheme}}://{{url}}:{{port}}/{{path_prefix}}/user",
+					"protocol": "{{scheme}}",
+					"host": [
+						"{{url}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"{{path_prefix}}",
+						"user"
+					]
+				}
+			},
+			"response": []
 		},
 		{
-			"name": "Tweet",
-			"item": [
+			"name": "Login",
+			"event": [
 				{
-					"name": "Create tweet",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "e75b7b3d-bd1e-47c3-8f6f-7d0850f1146b",
-								"exec": [
-									"var body = pm.response.json();",
-									"var result = body[\"result\"];",
-									"",
-									"pm.environment.set(\"created_tweet_id\", body[\"result\"][\"id\"]);",
-									"",
-									"pm.test(\"Test response metadata\", function () {",
-									"    pm.expect(pm.response.code).to.equal(201);",
-									"    pm.response.to.be.json;",
-									"});",
-									"",
-									"pm.test(\"Test response body\", function () {",
-									"    pm.expect(body[\"status\"]).to.equal(\"success\");",
-									"    pm.expect(result[\"user-id\"]).to.equal(pm.environment.get(\"created_user_id\"));",
-									"    pm.expect(result[\"text\"]).to.be.a(\"string\");",
-									"    pm.expect(result[\"likes\"]).to.equal(0);",
-									"    pm.expect(result[\"retweets\"]).to.equal(0);",
-									"    pm.expect(result[\"replies\"]).to.equal(0);",
-									"})"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n\t\"user-id\": \"{{created_user_id}}\",\n\t\"text\": \"{{$randomLoremLines}}\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{scheme}}://{{url}}:{{port}}/{{path_prefix}}/tweet",
-							"protocol": "{{scheme}}",
-							"host": [
-								"{{url}}"
-							],
-							"port": "{{port}}",
-							"path": [
-								"{{path_prefix}}",
-								"tweet"
-							]
-						}
-					},
-					"response": []
+					"listen": "test",
+					"script": {
+						"id": "e75b7b3d-bd1e-47c3-8f6f-7d0850f1146b",
+						"exec": [
+							"var body = pm.response.json();",
+							"var result = body[\"result\"];",
+							"",
+							"if (pm.response.code == 200) {",
+							"    pm.environment.set(\"created_token\", result[\"token\"]);",
+							"}",
+							"",
+							"pm.test(\"Test response metadata\", function () {",
+							"    pm.expect(pm.response.code).to.equal(200);",
+							"    pm.response.to.be.json;",
+							"});",
+							"",
+							"pm.test(\"Test response body\", function () {",
+							"    pm.expect(body[\"status\"]).to.equal(\"success\");",
+							"    pm.expect(result[\"token\"]).to.be.a(\"string\");",
+							"})"
+						],
+						"type": "text/javascript"
+					}
 				},
 				{
-					"name": "Get tweet",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "e75b7b3d-bd1e-47c3-8f6f-7d0850f1146b",
-								"exec": [
-									"var body = pm.response.json();",
-									"var result = body[\"result\"];",
-									"",
-									"pm.test(\"Test response metadata\", function () {",
-									"    pm.expect(pm.response.code).to.equal(200);",
-									"    pm.response.to.be.json;",
-									"});",
-									"",
-									"pm.test(\"Test response body\", function () {",
-									"    pm.expect(body[\"status\"]).to.equal(\"success\");",
-									"    pm.expect(result[\"text\"]).to.be.a(\"string\");",
-									"    pm.expect(result[\"likes\"]).to.equal(0);",
-									"    pm.expect(result[\"retweets\"]).to.equal(0);",
-									"    pm.expect(result[\"replies\"]).to.equal(0);",
-									"})"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"protocolProfileBehavior": {
-						"disableBodyPruning": true
-					},
-					"request": {
-						"method": "GET",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{scheme}}://{{url}}:{{port}}/{{path_prefix}}/tweet/{{created_tweet_id}}",
-							"protocol": "{{scheme}}",
-							"host": [
-								"{{url}}"
-							],
-							"port": "{{port}}",
-							"path": [
-								"{{path_prefix}}",
-								"tweet",
-								"{{created_tweet_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get tweets by user",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "e75b7b3d-bd1e-47c3-8f6f-7d0850f1146b",
-								"exec": [
-									"var body = pm.response.json();",
-									"var result = body[\"result\"];",
-									"",
-									"pm.test(\"Test response metadata\", function () {",
-									"    pm.expect(pm.response.code).to.equal(200);",
-									"    pm.response.to.be.json;",
-									"});",
-									"",
-									"pm.test(\"Test response body\", function () {",
-									"    pm.expect(result).to.be.an(\"array\");",
-									"    pm.expect(body[\"status\"]).to.equal(\"success\");",
-									"    ",
-									"    var user_ids = result.map(function(r) {",
-									"        return r[\"user-id\"];",
-									"    });",
-									"    ",
-									"    var user_id = pm.environment.get(\"created_user_id\");",
-									"    ",
-									"    pm.expect(user_ids).to.have.members(Array(user_ids.length).fill(user_id));",
-									"})"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"protocolProfileBehavior": {
-						"disableBodyPruning": true
-					},
-					"request": {
-						"method": "GET",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{scheme}}://{{url}}:{{port}}/{{path_prefix}}/tweet?user-id={{created_user_id}}",
-							"protocol": "{{scheme}}",
-							"host": [
-								"{{url}}"
-							],
-							"port": "{{port}}",
-							"path": [
-								"{{path_prefix}}",
-								"tweet"
-							],
-							"query": [
-								{
-									"key": "user-id",
-									"value": "{{created_user_id}}"
-								}
-							]
-						}
-					},
-					"response": []
+					"listen": "prerequest",
+					"script": {
+						"id": "180df119-cc60-4034-b170-a6a0c8d0c1f8",
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
 				}
 			],
-			"protocolProfileBehavior": {}
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"user-id\": \"{{created_user_id}}\",\n\t\"password\": \"{{created_user_password}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{scheme}}://{{url}}:{{port}}/{{path_prefix}}/login",
+					"protocol": "{{scheme}}",
+					"host": [
+						"{{url}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"{{path_prefix}}",
+						"login"
+					]
+				}
+			},
+			"response": []
 		},
 		{
-			"name": "Reaction",
-			"item": [
+			"name": "Get user",
+			"event": [
 				{
-					"name": "Like tweet",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "e75b7b3d-bd1e-47c3-8f6f-7d0850f1146b",
-								"exec": [
-									"var body = pm.response.json();",
-									"var result = body[\"result\"];",
-									"",
-									"pm.test(\"Test response metadata\", function () {",
-									"    pm.expect(pm.response.code).to.equal(200);",
-									"    pm.response.to.be.json;",
-									"});",
-									"",
-									"pm.test(\"Test response body\", function () {",
-									"    pm.expect(body[\"status\"]).to.equal(\"success\");",
-									"    pm.expect(result[\"user-id\"]).to.equal(pm.environment.get(\"created_user_id\"));",
-									"    pm.expect(result[\"likes\"]).to.not.equal(0);",
-									"})"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n\t\"reaction\": \"like\",\n\t\"user-id\": \"{{created_user_id}}\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{scheme}}://{{url}}:{{port}}/{{path_prefix}}/tweet/{{created_tweet_id}}/react",
-							"protocol": "{{scheme}}",
-							"host": [
-								"{{url}}"
-							],
-							"port": "{{port}}",
-							"path": [
-								"{{path_prefix}}",
-								"tweet",
-								"{{created_tweet_id}}",
-								"react"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Unlike tweet",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "e75b7b3d-bd1e-47c3-8f6f-7d0850f1146b",
-								"exec": [
-									"var body = pm.response.json();",
-									"var result = body[\"result\"];",
-									"",
-									"pm.test(\"Test response metadata\", function () {",
-									"    pm.expect(pm.response.code).to.equal(200);",
-									"    pm.response.to.be.json;",
-									"});",
-									"",
-									"pm.test(\"Test response body\", function () {",
-									"    pm.expect(body[\"status\"]).to.equal(\"success\");",
-									"    pm.expect(result[\"user-id\"]).to.equal(pm.environment.get(\"created_user_id\"));",
-									"    pm.expect(result[\"likes\"]).to.be.at.least(0);",
-									"})"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n\t\"reaction\": \"unlike\",\n\t\"user-id\": \"{{created_user_id}}\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{scheme}}://{{url}}:{{port}}/{{path_prefix}}/tweet/{{created_tweet_id}}/react",
-							"protocol": "{{scheme}}",
-							"host": [
-								"{{url}}"
-							],
-							"port": "{{port}}",
-							"path": [
-								"{{path_prefix}}",
-								"tweet",
-								"{{created_tweet_id}}",
-								"react"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Reply to tweet",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "e75b7b3d-bd1e-47c3-8f6f-7d0850f1146b",
-								"exec": [
-									"var body = pm.response.json();",
-									"var result = body[\"result\"];",
-									"",
-									"pm.test(\"Test response metadata\", function () {",
-									"    pm.expect(pm.response.code).to.equal(201);",
-									"    pm.response.to.be.json;",
-									"});",
-									"",
-									"pm.test(\"Test response body\", function () {",
-									"    pm.expect(body[\"status\"]).to.equal(\"success\");",
-									"    pm.expect(result[\"user-id\"]).to.equal(pm.environment.get(\"created_user_id\"));",
-									"    pm.expect(result[\"text\"]).to.be.a(\"string\");",
-									"    pm.expect(result[\"likes\"]).to.equal(0);",
-									"    pm.expect(result[\"retweets\"]).to.equal(0);",
-									"    pm.expect(result[\"replies\"]).to.equal(0);",
-									"})"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n\t\"user-id\": \"{{created_user_id}}\",\n\t\"text\": \"{{$randomLoremLines}}\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{scheme}}://{{url}}:{{port}}/{{path_prefix}}/tweet/{{created_tweet_id}}/reply",
-							"protocol": "{{scheme}}",
-							"host": [
-								"{{url}}"
-							],
-							"port": "{{port}}",
-							"path": [
-								"{{path_prefix}}",
-								"tweet",
-								"{{created_tweet_id}}",
-								"reply"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Retweet",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "e75b7b3d-bd1e-47c3-8f6f-7d0850f1146b",
-								"exec": [
-									"var body = pm.response.json();",
-									"var result = body[\"result\"];",
-									"",
-									"pm.environment.set(\"created_retweet_id\", body[\"result\"][\"id\"]);",
-									"",
-									"pm.test(\"Test response metadata\", function () {",
-									"    pm.expect(pm.response.code).to.equal(201);",
-									"    pm.response.to.be.json;",
-									"});",
-									"",
-									"pm.test(\"Test response body\", function () {",
-									"    pm.expect(body[\"status\"]).to.equal(\"success\");",
-									"    pm.expect(result[\"user-id\"]).to.equal(pm.environment.get(\"created_user_id\"));",
-									"    pm.expect(result[\"has-comment\"]).to.be.false;",
-									"    pm.expect(result[\"comment\"]).to.be.null;",
-									"    pm.expect(result[\"source-tweet-id\"]).to.equal(pm.environment.get(\"created_tweet_id\"));",
-									"})"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n\t\"user-id\": \"{{created_user_id}}\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{scheme}}://{{url}}:{{port}}/{{path_prefix}}/tweet/{{created_tweet_id}}/retweet",
-							"protocol": "{{scheme}}",
-							"host": [
-								"{{url}}"
-							],
-							"port": "{{port}}",
-							"path": [
-								"{{path_prefix}}",
-								"tweet",
-								"{{created_tweet_id}}",
-								"retweet"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Retweet with comment",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "e75b7b3d-bd1e-47c3-8f6f-7d0850f1146b",
-								"exec": [
-									"var body = pm.response.json();",
-									"var result = body[\"result\"];",
-									"",
-									"pm.environment.set(\"created_retweet_id\", body[\"result\"][\"id\"]);",
-									"",
-									"pm.test(\"Test response metadata\", function () {",
-									"    pm.expect(pm.response.code).to.equal(201);",
-									"    pm.response.to.be.json;",
-									"});",
-									"",
-									"pm.test(\"Test response body\", function () {",
-									"    pm.expect(body[\"status\"]).to.equal(\"success\");",
-									"    pm.expect(result[\"user-id\"]).to.equal(pm.environment.get(\"created_user_id\"));",
-									"    pm.expect(result[\"has-comment\"]).to.be.true;",
-									"    pm.expect(result[\"comment\"]).to.be.a(\"string\");",
-									"    pm.expect(result[\"source-tweet-id\"]).to.equal(pm.environment.get(\"created_tweet_id\"));",
-									"})"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n\t\"user-id\": \"{{created_user_id}}\",\n\t\"comment\": \"{{$randomLoremSentence}}\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{scheme}}://{{url}}:{{port}}/{{path_prefix}}/tweet/{{created_tweet_id}}/retweet-comment",
-							"protocol": "{{scheme}}",
-							"host": [
-								"{{url}}"
-							],
-							"port": "{{port}}",
-							"path": [
-								"{{path_prefix}}",
-								"tweet",
-								"{{created_tweet_id}}",
-								"retweet-comment"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get retweet",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "e75b7b3d-bd1e-47c3-8f6f-7d0850f1146b",
-								"exec": [
-									"var body = pm.response.json();",
-									"var result = body[\"result\"];",
-									"",
-									"pm.test(\"Test response metadata\", function () {",
-									"    pm.expect(pm.response.code).to.equal(200);",
-									"    pm.response.to.be.json;",
-									"});",
-									"",
-									"pm.test(\"Test response body\", function () {",
-									"    pm.expect(body[\"status\"]).to.equal(\"success\");",
-									"    pm.expect(result[\"id\"]).to.equal(pm.environment.get(\"created_retweet_id\"));",
-									"})"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"protocolProfileBehavior": {
-						"disableBodyPruning": true
-					},
-					"request": {
-						"method": "GET",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{scheme}}://{{url}}:{{port}}/{{path_prefix}}/retweet/{{created_retweet_id}}",
-							"protocol": "{{scheme}}",
-							"host": [
-								"{{url}}"
-							],
-							"port": "{{port}}",
-							"path": [
-								"{{path_prefix}}",
-								"retweet",
-								"{{created_retweet_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get retweets by tweet ID",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "e75b7b3d-bd1e-47c3-8f6f-7d0850f1146b",
-								"exec": [
-									"var body = pm.response.json();",
-									"var result = body[\"result\"];",
-									"",
-									"pm.test(\"Test response metadata\", function () {",
-									"    pm.expect(pm.response.code).to.equal(200);",
-									"    pm.response.to.be.json;",
-									"});",
-									"",
-									"pm.test(\"Test response body\", function () {",
-									"    pm.expect(body[\"status\"]).to.equal(\"success\");",
-									"    pm.expect(result).to.be.an(\"array\");",
-									"    ",
-									"    var tweet_ids = result.map(function(r) {",
-									"        return r[\"source-tweet-id\"];",
-									"    });",
-									"    ",
-									"    var tweet_id = pm.environment.get(\"created_tweet_id\");",
-									"    ",
-									"    pm.expect(tweet_ids).to.have.members(Array(result.length).fill(tweet_id));",
-									"})"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"protocolProfileBehavior": {
-						"disableBodyPruning": true
-					},
-					"request": {
-						"method": "GET",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{scheme}}://{{url}}:{{port}}/{{path_prefix}}/tweet/{{created_tweet_id}}/retweets",
-							"protocol": "{{scheme}}",
-							"host": [
-								"{{url}}"
-							],
-							"port": "{{port}}",
-							"path": [
-								"{{path_prefix}}",
-								"tweet",
-								"{{created_tweet_id}}",
-								"retweets"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get replies by tweet ID",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "e75b7b3d-bd1e-47c3-8f6f-7d0850f1146b",
-								"exec": [
-									"var body = pm.response.json();",
-									"var result = body[\"result\"];",
-									"",
-									"pm.environment.set(\"created_retweet_id\", body[\"result\"][\"id\"]);",
-									"",
-									"pm.test(\"Test response metadata\", function () {",
-									"    pm.expect(pm.response.code).to.equal(200);",
-									"    pm.response.to.be.json;",
-									"});",
-									"",
-									"pm.test(\"Test response body\", function () {",
-									"    pm.expect(body[\"status\"]).to.equal(\"success\");",
-									"})"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"protocolProfileBehavior": {
-						"disableBodyPruning": true
-					},
-					"request": {
-						"method": "GET",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{scheme}}://{{url}}:{{port}}/{{path_prefix}}/tweet/{{created_tweet_id}}/replies",
-							"protocol": "{{scheme}}",
-							"host": [
-								"{{url}}"
-							],
-							"port": "{{port}}",
-							"path": [
-								"{{path_prefix}}",
-								"tweet",
-								"{{created_tweet_id}}",
-								"replies"
-							]
-						}
-					},
-					"response": []
+					"listen": "test",
+					"script": {
+						"id": "e75b7b3d-bd1e-47c3-8f6f-7d0850f1146b",
+						"exec": [
+							"var body = pm.response.json();",
+							"var result = body[\"result\"];",
+							"",
+							"pm.test(\"Test response metadata\", function () {",
+							"    pm.expect(pm.response.code).to.equal(200);",
+							"    pm.response.to.be.json;",
+							"});",
+							"",
+							"pm.test(\"Test response body\", function () {",
+							"    pm.expect(body[\"status\"]).to.equal(\"success\");",
+							"    pm.expect(result[\"active\"]).to.equal(true);",
+							"    pm.expect(result[\"name\"]).to.be.a(\"string\");",
+							"    pm.expect(result[\"email\"]).to.be.a(\"string\");",
+							"    pm.expect(result[\"username\"]).to.be.a(\"string\");",
+							"})"
+						],
+						"type": "text/javascript"
+					}
 				}
 			],
-			"protocolProfileBehavior": {}
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{scheme}}://{{url}}:{{port}}/{{path_prefix}}/user/{{created_user_id}}",
+					"protocol": "{{scheme}}",
+					"host": [
+						"{{url}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"{{path_prefix}}",
+						"user",
+						"{{created_user_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create tweet",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "e75b7b3d-bd1e-47c3-8f6f-7d0850f1146b",
+						"exec": [
+							"var body = pm.response.json();",
+							"var result = body[\"result\"];",
+							"",
+							"pm.environment.set(\"created_tweet_id\", body[\"result\"][\"id\"]);",
+							"",
+							"pm.test(\"Test response metadata\", function () {",
+							"    pm.expect(pm.response.code).to.equal(201);",
+							"    pm.response.to.be.json;",
+							"});",
+							"",
+							"pm.test(\"Test response body\", function () {",
+							"    pm.expect(body[\"status\"]).to.equal(\"success\");",
+							"    pm.expect(result[\"user-id\"]).to.equal(pm.environment.get(\"created_user_id\"));",
+							"    pm.expect(result[\"text\"]).to.be.a(\"string\");",
+							"    pm.expect(result[\"likes\"]).to.equal(0);",
+							"    pm.expect(result[\"retweets\"]).to.equal(0);",
+							"    pm.expect(result[\"replies\"]).to.equal(0);",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"user-id\": \"{{created_user_id}}\",\n\t\"text\": \"{{$randomLoremLines}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{scheme}}://{{url}}:{{port}}/{{path_prefix}}/tweet",
+					"protocol": "{{scheme}}",
+					"host": [
+						"{{url}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"{{path_prefix}}",
+						"tweet"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get tweet",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "e75b7b3d-bd1e-47c3-8f6f-7d0850f1146b",
+						"exec": [
+							"var body = pm.response.json();",
+							"var result = body[\"result\"];",
+							"",
+							"pm.test(\"Test response metadata\", function () {",
+							"    pm.expect(pm.response.code).to.equal(200);",
+							"    pm.response.to.be.json;",
+							"});",
+							"",
+							"pm.test(\"Test response body\", function () {",
+							"    pm.expect(body[\"status\"]).to.equal(\"success\");",
+							"    pm.expect(result[\"text\"]).to.be.a(\"string\");",
+							"    pm.expect(result[\"likes\"]).to.equal(0);",
+							"    pm.expect(result[\"retweets\"]).to.equal(0);",
+							"    pm.expect(result[\"replies\"]).to.equal(0);",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{scheme}}://{{url}}:{{port}}/{{path_prefix}}/tweet/{{created_tweet_id}}",
+					"protocol": "{{scheme}}",
+					"host": [
+						"{{url}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"{{path_prefix}}",
+						"tweet",
+						"{{created_tweet_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get tweets by user",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "e75b7b3d-bd1e-47c3-8f6f-7d0850f1146b",
+						"exec": [
+							"var body = pm.response.json();",
+							"var result = body[\"result\"];",
+							"",
+							"pm.test(\"Test response metadata\", function () {",
+							"    pm.expect(pm.response.code).to.equal(200);",
+							"    pm.response.to.be.json;",
+							"});",
+							"",
+							"pm.test(\"Test response body\", function () {",
+							"    pm.expect(result).to.be.an(\"array\");",
+							"    pm.expect(body[\"status\"]).to.equal(\"success\");",
+							"    ",
+							"    var user_ids = result.map(function(r) {",
+							"        return r[\"user-id\"];",
+							"    });",
+							"    ",
+							"    var user_id = pm.environment.get(\"created_user_id\");",
+							"    ",
+							"    pm.expect(user_ids).to.have.members(Array(user_ids.length).fill(user_id));",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{scheme}}://{{url}}:{{port}}/{{path_prefix}}/user/{{created_user_id}}/tweets",
+					"protocol": "{{scheme}}",
+					"host": [
+						"{{url}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"{{path_prefix}}",
+						"user",
+						"{{created_user_id}}",
+						"tweets"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Like tweet",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "e75b7b3d-bd1e-47c3-8f6f-7d0850f1146b",
+						"exec": [
+							"var body = pm.response.json();",
+							"var result = body[\"result\"];",
+							"",
+							"pm.test(\"Test response metadata\", function () {",
+							"    pm.expect(pm.response.code).to.equal(200);",
+							"    pm.response.to.be.json;",
+							"});",
+							"",
+							"pm.test(\"Test response body\", function () {",
+							"    pm.expect(body[\"status\"]).to.equal(\"success\");",
+							"    pm.expect(result[\"user-id\"]).to.equal(pm.environment.get(\"created_user_id\"));",
+							"    pm.expect(result[\"likes\"]).to.not.equal(0);",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"reaction\": \"like\",\n\t\"user-id\": \"{{created_user_id}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{scheme}}://{{url}}:{{port}}/{{path_prefix}}/tweet/{{created_tweet_id}}/react",
+					"protocol": "{{scheme}}",
+					"host": [
+						"{{url}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"{{path_prefix}}",
+						"tweet",
+						"{{created_tweet_id}}",
+						"react"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Unlike tweet",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "e75b7b3d-bd1e-47c3-8f6f-7d0850f1146b",
+						"exec": [
+							"var body = pm.response.json();",
+							"var result = body[\"result\"];",
+							"",
+							"pm.test(\"Test response metadata\", function () {",
+							"    pm.expect(pm.response.code).to.equal(200);",
+							"    pm.response.to.be.json;",
+							"});",
+							"",
+							"pm.test(\"Test response body\", function () {",
+							"    pm.expect(body[\"status\"]).to.equal(\"success\");",
+							"    pm.expect(result[\"user-id\"]).to.equal(pm.environment.get(\"created_user_id\"));",
+							"    pm.expect(result[\"likes\"]).to.be.at.least(0);",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"reaction\": \"unlike\",\n\t\"user-id\": \"{{created_user_id}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{scheme}}://{{url}}:{{port}}/{{path_prefix}}/tweet/{{created_tweet_id}}/react",
+					"protocol": "{{scheme}}",
+					"host": [
+						"{{url}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"{{path_prefix}}",
+						"tweet",
+						"{{created_tweet_id}}",
+						"react"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Reply to tweet",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "e75b7b3d-bd1e-47c3-8f6f-7d0850f1146b",
+						"exec": [
+							"var body = pm.response.json();",
+							"var result = body[\"result\"];",
+							"",
+							"pm.test(\"Test response metadata\", function () {",
+							"    pm.expect(pm.response.code).to.equal(201);",
+							"    pm.response.to.be.json;",
+							"});",
+							"",
+							"pm.test(\"Test response body\", function () {",
+							"    pm.expect(body[\"status\"]).to.equal(\"success\");",
+							"    pm.expect(result[\"user-id\"]).to.equal(pm.environment.get(\"created_user_id\"));",
+							"    pm.expect(result[\"text\"]).to.be.a(\"string\");",
+							"    pm.expect(result[\"likes\"]).to.equal(0);",
+							"    pm.expect(result[\"retweets\"]).to.equal(0);",
+							"    pm.expect(result[\"replies\"]).to.equal(0);",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"user-id\": \"{{created_user_id}}\",\n\t\"text\": \"{{$randomLoremLines}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{scheme}}://{{url}}:{{port}}/{{path_prefix}}/tweet/{{created_tweet_id}}/reply",
+					"protocol": "{{scheme}}",
+					"host": [
+						"{{url}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"{{path_prefix}}",
+						"tweet",
+						"{{created_tweet_id}}",
+						"reply"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Retweet",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "e75b7b3d-bd1e-47c3-8f6f-7d0850f1146b",
+						"exec": [
+							"var body = pm.response.json();",
+							"var result = body[\"result\"];",
+							"",
+							"pm.environment.set(\"created_retweet_id\", body[\"result\"][\"id\"]);",
+							"",
+							"pm.test(\"Test response metadata\", function () {",
+							"    pm.expect(pm.response.code).to.equal(201);",
+							"    pm.response.to.be.json;",
+							"});",
+							"",
+							"pm.test(\"Test response body\", function () {",
+							"    pm.expect(body[\"status\"]).to.equal(\"success\");",
+							"    pm.expect(result[\"user-id\"]).to.equal(pm.environment.get(\"created_user_id\"));",
+							"    pm.expect(result[\"has-comment\"]).to.be.false;",
+							"    pm.expect(result[\"comment\"]).to.be.null;",
+							"    pm.expect(result[\"source-tweet-id\"]).to.equal(pm.environment.get(\"created_tweet_id\"));",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"user-id\": \"{{created_user_id}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{scheme}}://{{url}}:{{port}}/{{path_prefix}}/tweet/{{created_tweet_id}}/retweet",
+					"protocol": "{{scheme}}",
+					"host": [
+						"{{url}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"{{path_prefix}}",
+						"tweet",
+						"{{created_tweet_id}}",
+						"retweet"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Retweet with comment",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "e75b7b3d-bd1e-47c3-8f6f-7d0850f1146b",
+						"exec": [
+							"var body = pm.response.json();",
+							"var result = body[\"result\"];",
+							"",
+							"pm.environment.set(\"created_retweet_id\", body[\"result\"][\"id\"]);",
+							"",
+							"pm.test(\"Test response metadata\", function () {",
+							"    pm.expect(pm.response.code).to.equal(201);",
+							"    pm.response.to.be.json;",
+							"});",
+							"",
+							"pm.test(\"Test response body\", function () {",
+							"    pm.expect(body[\"status\"]).to.equal(\"success\");",
+							"    pm.expect(result[\"user-id\"]).to.equal(pm.environment.get(\"created_user_id\"));",
+							"    pm.expect(result[\"has-comment\"]).to.be.true;",
+							"    pm.expect(result[\"comment\"]).to.be.a(\"string\");",
+							"    pm.expect(result[\"source-tweet-id\"]).to.equal(pm.environment.get(\"created_tweet_id\"));",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"user-id\": \"{{created_user_id}}\",\n\t\"comment\": \"{{$randomLoremSentence}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{scheme}}://{{url}}:{{port}}/{{path_prefix}}/tweet/{{created_tweet_id}}/retweet-comment",
+					"protocol": "{{scheme}}",
+					"host": [
+						"{{url}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"{{path_prefix}}",
+						"tweet",
+						"{{created_tweet_id}}",
+						"retweet-comment"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get retweet",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "e75b7b3d-bd1e-47c3-8f6f-7d0850f1146b",
+						"exec": [
+							"var body = pm.response.json();",
+							"var result = body[\"result\"];",
+							"",
+							"pm.test(\"Test response metadata\", function () {",
+							"    pm.expect(pm.response.code).to.equal(200);",
+							"    pm.response.to.be.json;",
+							"});",
+							"",
+							"pm.test(\"Test response body\", function () {",
+							"    pm.expect(body[\"status\"]).to.equal(\"success\");",
+							"    pm.expect(result[\"id\"]).to.equal(pm.environment.get(\"created_retweet_id\"));",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{scheme}}://{{url}}:{{port}}/{{path_prefix}}/retweet/{{created_retweet_id}}",
+					"protocol": "{{scheme}}",
+					"host": [
+						"{{url}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"{{path_prefix}}",
+						"retweet",
+						"{{created_retweet_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get retweets by tweet ID",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "e75b7b3d-bd1e-47c3-8f6f-7d0850f1146b",
+						"exec": [
+							"var body = pm.response.json();",
+							"var result = body[\"result\"];",
+							"",
+							"pm.test(\"Test response metadata\", function () {",
+							"    pm.expect(pm.response.code).to.equal(200);",
+							"    pm.response.to.be.json;",
+							"});",
+							"",
+							"pm.test(\"Test response body\", function () {",
+							"    pm.expect(body[\"status\"]).to.equal(\"success\");",
+							"    pm.expect(result).to.be.an(\"array\");",
+							"    ",
+							"    var tweet_ids = result.map(function(r) {",
+							"        return r[\"source-tweet-id\"];",
+							"    });",
+							"    ",
+							"    var tweet_id = pm.environment.get(\"created_tweet_id\");",
+							"    ",
+							"    pm.expect(tweet_ids).to.have.members(Array(result.length).fill(tweet_id));",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{scheme}}://{{url}}:{{port}}/{{path_prefix}}/tweet/{{created_tweet_id}}/retweets",
+					"protocol": "{{scheme}}",
+					"host": [
+						"{{url}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"{{path_prefix}}",
+						"tweet",
+						"{{created_tweet_id}}",
+						"retweets"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get replies by tweet ID",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "e75b7b3d-bd1e-47c3-8f6f-7d0850f1146b",
+						"exec": [
+							"var body = pm.response.json();",
+							"var result = body[\"result\"];",
+							"",
+							"pm.environment.set(\"created_retweet_id\", body[\"result\"][\"id\"]);",
+							"",
+							"pm.test(\"Test response metadata\", function () {",
+							"    pm.expect(pm.response.code).to.equal(200);",
+							"    pm.response.to.be.json;",
+							"});",
+							"",
+							"pm.test(\"Test response body\", function () {",
+							"    pm.expect(body[\"status\"]).to.equal(\"success\");",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{scheme}}://{{url}}:{{port}}/{{path_prefix}}/tweet/{{created_tweet_id}}/replies",
+					"protocol": "{{scheme}}",
+					"host": [
+						"{{url}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"{{path_prefix}}",
+						"tweet",
+						"{{created_tweet_id}}",
+						"replies"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Logout",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "e75b7b3d-bd1e-47c3-8f6f-7d0850f1146b",
+						"exec": [
+							"var body = pm.response.json();",
+							"var result = body[\"result\"];",
+							"",
+							"pm.environment.set(\"created_token\", result[\"token\"]);",
+							"",
+							"pm.test(\"Test response metadata\", function () {",
+							"    pm.expect(pm.response.code).to.equal(200);",
+							"    pm.response.to.be.json;",
+							"});",
+							"",
+							"pm.test(\"Test response body\", function () {",
+							"    pm.expect(body[\"status\"]).to.equal(\"success\");",
+							"    pm.expect(result[\"status\"]).to.equal(\"logged out\");",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "180df119-cc60-4034-b170-a6a0c8d0c1f8",
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{scheme}}://{{url}}:{{port}}/{{path_prefix}}/logout",
+					"protocol": "{{scheme}}",
+					"host": [
+						"{{url}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"{{path_prefix}}",
+						"logout"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{created_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "8388682a-f68d-4ba5-b0b8-e534945e260c",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "fe56a6aa-4469-4b48-8e55-c63d31a60330",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
 		}
 	],
 	"protocolProfileBehavior": {}
