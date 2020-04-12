@@ -16,7 +16,7 @@
                          (update-user! [_ user] user)
                          (fetch-users! [_ _ _] []))
                   service {:repository stub}
-                  user (add-user service fullname email username)]
+                  user (add-user service fullname email username (random-password))]
               (:name user) => (clojure.string/lower-case fullname)
               (:email user) => (clojure.string/lower-case email)
               (:username user) => (clojure.string/lower-case username))
@@ -30,7 +30,7 @@
                   stub (reify Repository
                          (update-user! [_ user] user))
                   service {:repository stub}]
-              (add-user service fullname email username) => (throws IExceptionInfo))
+              (add-user service fullname email username (random-password)) => (throws IExceptionInfo))
             (against-background
               (new-user? anything anything) => false)))
 

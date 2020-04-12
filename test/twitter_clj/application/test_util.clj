@@ -1,5 +1,6 @@
 (ns twitter-clj.application.test-util
   (:require [clojure.test :refer :all]
+            [clojure.data.generators :as random]
             [faker.name :as name]
             [faker.internet :as internet]
             [faker.lorem :as lorem]
@@ -9,28 +10,6 @@
             [twitter-clj.adapter.rest.config :refer [path-prefix]])
   (:import [java.util UUID]
            [java.time ZonedDateTime]))
-
-;; REST API.
-
-;; TODO: Implement get-json.
-
-(defn post-json
-  [url body]
-  (client/post url {:form-params body :content-type :json}))
-
-(defn resource-path
-  [url path]
-  (join "/" (list url (path-prefix path))))
-
-(defn body-as-json [{:keys [body]}]
-  (if (string? body)
-    (json/read-str body :key-fn keyword)
-    body))
-
-(defn parse-response
-  [response]
-  (let [body (body-as-json response)]
-    [response body (:result body)]))
 
 ;; Random data generators.
 
@@ -46,13 +25,20 @@
   []
   (internet/user-name))
 
+(defn random-password
+  ([]
+   (random-password 10))
+
+  ([n]
+   (->> (random/string) (take n) (apply str))))
+
 (defn random-text
   []
   (join "\n" (take 2 (lorem/paragraphs))))
 
 (defn random-uuid
   []
-  (UUID/randomUUID))
+  (str (UUID/randomUUID)))
 
 (defn now [] (ZonedDateTime/now))
 
@@ -60,17 +46,14 @@
 
 (defn random-user
   []
-  {:name (random-fullname) :email (random-email) :username (random-username)})
+  {:name (random-fullname) :email (random-email) :username (random-username) :password (random-password)})
 
 (defn random-tweet
   ([]
    (random-tweet (random-uuid)))
 
-  ([user-id]
-   {:user-id user-id :text (random-text)})
-
-  ([user-id text]
-   {:user-id user-id :text text}))
+  ([text]
+   {:text text}))
 
 ;; Checkers.
 

@@ -161,7 +161,7 @@
              (service/logged-in? service (get-in request [:identity :user-id])))
       (handler request)
       (do (log-failure "User is not authenticated (missing authorization token or not logged in)")
-          (need-authenticate)))))
+          (unauthorized)))))
 
 (defn wrap-service-exception
   [handler]

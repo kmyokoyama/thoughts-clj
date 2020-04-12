@@ -58,19 +58,19 @@
 (def ok-response (partial json-response 200))
 (def created-response (partial json-response 201))
 (def bad-request-response (partial json-response 400))
-(def authenticate-response (partial json-response 401))
+(def unauthorized-response (partial json-response 401))
 
 
 (def ok-with-success (comp ok-response to-json add-success-result))
 (def ok-with-failure (comp ok-response to-json add-failure-result))
 (def created (comp created-response to-json add-success-result))
 (def bad-request (comp bad-request-response to-json add-failure-result))
-(defn need-authenticate
+(defn unauthorized
   []
   (-> {:cause "you are not logged in"}
       (add-failure-result)
       (to-json)
-      (authenticate-response)))
+      (unauthorized-response)))
 
 (defn new-token
   [secret user-id role]

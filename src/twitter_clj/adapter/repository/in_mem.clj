@@ -130,7 +130,7 @@
 (defn shutdown
   [repository]
   (reset! (:passwords repository) {})
-  (reset! (:sesions repository) #{})
+  (reset! (:sessions repository) #{})
   (reset! (:users repository) {})
   (reset! (:tweets repository) {})
   (reset! (:retweets repository) {})
