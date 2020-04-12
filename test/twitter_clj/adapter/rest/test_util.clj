@@ -44,6 +44,10 @@
   (let [body (get-body response)]
     {:response response :body body :result (:result body)}))
 
+(def post-and-parse (comp parse-response post))
+
+(def get-and-parse (comp parse-response get))
+
 ;; API paths manipulation.
 
 (defn resource-path

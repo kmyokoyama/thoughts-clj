@@ -151,7 +151,7 @@
         (repository/update-tweet! (:repository service) (core/reply source-tweet))
         (repository/update-replies! (:repository service) source-tweet-id reply)
         (repository/update-tweet! (:repository service) reply))
-      (throw-missing-user! source-tweet-id))
+      (throw-missing-tweet! source-tweet-id))
     (throw-missing-user! user-id)))
 
 (defn get-replies-by-tweet-id

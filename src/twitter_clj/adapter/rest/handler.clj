@@ -172,7 +172,7 @@
         (let [failure-info (ex-data e)]
           (if (and (:type failure-info) (:subject failure-info))
             (do (log-failure (.getMessage e))
-                (-> failure-info (format-failure-info) (ok-with-failure)))
+                (-> failure-info (format-failure-info) (bad-request)))
             (throw e)))))))
 
 (defn wrap-default-exception
