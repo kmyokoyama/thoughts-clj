@@ -1,8 +1,13 @@
 (ns twitter-clj.adapter.rest.config
-  (:require [twitter-clj.application.config :refer [system-config]]
+  (:require [buddy.auth.backends :as backends]
+            [twitter-clj.application.config :refer [system-config]]
             [twitter-clj.adapter.rest.util :refer [add-leading-slash join-path]]))
 
 (def rest-config (get-in system-config [:http :api]))
+
+(def jws-backend (backends/jws {:secret (:jws-secret rest-config)
+                                :token-name "Bearer"
+                                :options {:alg :hs512}}))
 
 (defn -path-prefix
   [config path]
@@ -15,6 +20,7 @@
 (def path-prefix (partial -path-prefix rest-config))
 
 (def routes-map {:get-tweet-by-id (path-prefix "/tweet/:tweet-id")
+                 :get-tweets-by-user-id (path-prefix "/user/:user-id/tweets")
                  :get-user-by-id (path-prefix "/user/:user-id")
                  :get-replies-by-tweet-id (path-prefix "/tweet/:tweet-id/replies")
                  :get-retweets-by-tweet-id (path-prefix "/tweet/:tweet-id/retweets")

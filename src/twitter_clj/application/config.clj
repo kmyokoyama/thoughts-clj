@@ -5,10 +5,12 @@
 (defconfig twitter-clj.application.config/http-port)
 (defconfig twitter-clj.application.config/http-api-version)
 (defconfig twitter-clj.application.config/http-api-path-prefix)
+(defconfig twitter-clj.application.config/http-api-jws-secret)
 
 (def system-config {:http {:port twitter-clj.application.config/http-port
                            :api {:version twitter-clj.application.config/http-api-version
-                                 :path-prefix twitter-clj.application.config/http-api-path-prefix}}})
+                                 :path-prefix twitter-clj.application.config/http-api-path-prefix
+                                 :jws-secret twitter-clj.application.config/http-api-jws-secret}}})
 
 (def timbre-config {:timestamp-opts {:pattern "yyyy-MM-dd'T'HH:mm:ss.SSSX"}
                     :output-fn      (fn [{:keys [timestamp_ level hostname_ msg_]}]

@@ -36,6 +36,14 @@
                    :cause   (str "tweet with ID " tweet-id " not found")
                    :context {:tweet-id tweet-id}})))
 
+(defn- throw-missing-retweet!
+  [tweet-id]
+  (throw (ex-info (str "Retweet [ID: " tweet-id "] not found")
+                  {:type    :resource-not-found
+                   :subject :retweet
+                   :cause   (str "retweet with ID " tweet-id " not found")
+                   :context {:retweet-id tweet-id}})))
+
 (defn- throw-duplicate-user-email!
   [email]
   (throw (ex-info (str "User [email: " email "] already exists")
@@ -68,27 +76,45 @@
                    :cause   "you cannot unlike a tweet before like it"
                    :context {:tweet-id tweet-id :user-id user-id}})))
 
-(defn user-exists?
-  [repository id]
-  (not (empty? (repository/fetch-users! repository id :by-id))))
-
-(defn new-user?
-  [repository email]
-  (empty? (repository/fetch-users! repository {:email email} :by-fields)))
-
 ;; Public functions.
 
 ;; We can make it part of a protocol.
 
+(defn new-user?
+  [service email]
+  (empty? (repository/fetch-users! (:repository service) {:email email} :by-fields)))
+
+(defn user-exists?
+  [service id]
+  (not (empty? (repository/fetch-users! (:repository service) id :by-id))))
+
+(defn password-match?
+  [service user-id password]
+  (let [actual-password (repository/fetch-password! (:repository service) user-id)]
+    (core/password-match? password actual-password)))
+
+(defn logged-in?
+  [service user-id]
+  ((complement nil?) (repository/fetch-session! (:repository service) user-id)))
+
+(defn login
+  [service user-id]
+  (repository/update-sessions! (:repository service) user-id))
+
+(defn logout
+  [service user-id]
+  (repository/remove-from-session! (:repository service) user-id))
+
 (defn add-user
-  [service name email username]
+  [service name email username password]
   (let [lower-name (clojure.string/lower-case name)
         lower-email (clojure.string/lower-case email)
         lower-username (clojure.string/lower-case username)
         user (core/new-user lower-name lower-email lower-username)]
-    (if (new-user? (:repository service) email)
+    (if (new-user? service email)
       (if (empty? (repository/fetch-users! (:repository service) {:username username} :by-fields))
-        (repository/update-user! (:repository service) user)
+        (do (repository/update-password! (:repository service) (:id user) (core/derive-password password))
+            (repository/update-user! (:repository service) user))
         (throw-duplicate-username! username))
       (throw-duplicate-user-email! email))))
 
@@ -101,7 +127,7 @@
 (defn add-tweet
   [service user-id text]
   (let [tweet (core/new-tweet user-id text)]
-    (if (user-exists? (:repository service) user-id)
+    (if (user-exists? service user-id)
       (repository/update-tweet! (:repository service) tweet)
       (throw-missing-user! user-id))))
 
@@ -113,19 +139,19 @@
 
 (defn get-tweets-by-user
   [service user-id]
-  (if (user-exists? (:repository service) user-id)
+  (if (user-exists? service user-id)
     (repository/fetch-tweets! (:repository service) user-id :by-user-id)
     (throw-missing-user! user-id)))
 
 (defn add-reply
   [service user-id text source-tweet-id]
-  (if (user-exists? (:repository service) user-id)
+  (if (user-exists? service user-id)
     (if-let [source-tweet (repository/fetch-tweets! (:repository service) source-tweet-id :by-id)]
       (let [reply (core/new-tweet user-id text)]
         (repository/update-tweet! (:repository service) (core/reply source-tweet))
         (repository/update-replies! (:repository service) source-tweet-id reply)
         (repository/update-tweet! (:repository service) reply))
-      (throw-missing-user! source-tweet-id))
+      (throw-missing-tweet! source-tweet-id))
     (throw-missing-user! user-id)))
 
 (defn get-replies-by-tweet-id
@@ -136,7 +162,7 @@
 
 (defn retweet
   [service user-id source-tweet-id]
-  (if (user-exists? (:repository service) user-id)
+  (if (user-exists? service user-id)
     (if-let [source-tweet (repository/fetch-tweets! (:repository service) source-tweet-id :by-id)]
       (do (repository/update-tweet! (:repository service) (core/retweet source-tweet))
           (repository/update-retweets! (:repository service) (core/new-retweet user-id source-tweet-id)))
@@ -145,7 +171,7 @@
 
 (defn retweet-with-comment
   [service user-id comment source-tweet-id]
-  (if (user-exists? (:repository service) user-id)
+  (if (user-exists? service user-id)
     (if-let [source-tweet (repository/fetch-tweets! (:repository service) source-tweet-id :by-id)]
       (do (repository/update-tweet! (:repository service) (core/retweet source-tweet))
           (repository/update-retweets! (:repository service) (core/new-retweet user-id source-tweet-id comment)))
@@ -156,7 +182,7 @@
   [service retweet-id]
   (if-let [retweet (repository/fetch-retweets! (:repository service) retweet-id :by-id)]
     retweet
-    (throw-missing-tweet! retweet-id)))
+    (throw-missing-retweet! retweet-id)))
 
 (defn get-retweets-by-tweet-id
   [service source-tweet-id]

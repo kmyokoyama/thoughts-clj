@@ -1,4 +1,5 @@
 (ns twitter-clj.application.core
+  (:require [buddy.hashers :as hashers])
   (:import (java.util UUID)
            (java.time ZonedDateTime)))
 
@@ -8,6 +9,14 @@
 (defrecord Tweet [id user-id text publish-date likes retweets replies])
 (defrecord Retweet [id user-id has-comment comment publish-date source-tweet-id])
 (defrecord TweetLike [id created-at user-id source-tweet-id])
+
+(defn derive-password
+  [password]
+  (hashers/derive password))
+
+(defn password-match?
+  [password actual-password]
+  (hashers/check password actual-password))
 
 ;; Tweet-related functions.
 
