@@ -23,5 +23,5 @@
                  [ring/ring-defaults "0.3.2"]
                  [ring/ring-json "0.5.0"]
                  [ring-server "0.4.0"]]
-  :repl-options {:init-ns twitter-clj.core}
+  :repl-options {:init-ns twitter-clj.application.service}
   :main twitter-clj.application.main)
