@@ -13,6 +13,7 @@
                    :jvm-opts ["-Dconfig.edn=resources/dev-config.edn"]}}
   :dependencies [[buddy/buddy-auth "2.2.0"]
                  [buddy/buddy-hashers "1.4.0"]
+                 [com.datomic/client-pro "0.9.41"]
                  [http-kit "2.3.0"]
                  [org.clojure/clojure "1.10.0"]
                  [org.clojure/data.json "0.2.6"]
@@ -23,5 +24,5 @@
                  [ring/ring-defaults "0.3.2"]
                  [ring/ring-json "0.5.0"]
                  [ring-server "0.4.0"]]
-  :repl-options {:init-ns twitter-clj.application.service}
+  :repl-options {:init-ns dev}
   :main twitter-clj.application.main)
