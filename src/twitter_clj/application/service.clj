@@ -1,7 +1,6 @@
 (ns twitter-clj.application.service
   (:require [com.stuartsierra.component :as component]
             [taoensso.timbre :as log]
-            [twitter-clj.adapter.repository.datomic :as datomic]
             [twitter-clj.application.core :as core]
             [twitter-clj.application.port.repository :as repository]))
 

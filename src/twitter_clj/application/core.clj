@@ -3,8 +3,6 @@
   (:import (java.util UUID)
            (java.time ZonedDateTime)))
 
-(declare new-thread)
-
 (defrecord User [id active name email username])
 (defrecord Tweet [id user-id text publish-date likes retweets replies])
 (defrecord Retweet [id user-id has-comment comment publish-date source-tweet-id])
