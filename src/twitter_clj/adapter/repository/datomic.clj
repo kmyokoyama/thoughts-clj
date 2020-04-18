@@ -68,6 +68,7 @@
   (symbol (str "?" (name k))))
 
 (defn make-query
+  "Makes a query by replacing the token '<params>' in q with a list of keyword params."
   [q params]
   (read-string (clojure.string/replace q #"<params>" (clojure.string/join " " (map v params)))))
 
@@ -82,6 +83,7 @@
   (map-if m (fn [k _v] (k ks)) (fn [v] (UUID/fromString v))))
 
 (defn inst->ZonedDateTime
+  "Converts from java.time.Instant to java.time.ZonedDateTime."
   [inst]
   (ZonedDateTime/ofInstant (.toInstant inst) (ZoneId/systemDefault)))
 
