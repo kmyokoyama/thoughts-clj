@@ -32,15 +32,6 @@
   [conn tx]
   (d/transact conn {:tx-data tx}))
 
-(defn inst->ZonedDateTime
-  [inst]
-  (ZonedDateTime/ofInstant (.toInstant inst) (ZoneId/systemDefault)))
-
-(def fetch-tweets-query '[:find ?id ?user-id ?text ?created-at ?likes ?retweets ?replies
-                          :in $ % ?key
-                          :where
-                          (get-tweet-rule ?id ?user-id ?created-at ?text ?likes ?retweets ?replies)])
-
 (def tweet-rules '[[(get-tweet-rule ?id ?user-id ?created-at ?text ?likes ?retweets ?replies)
                     [?t :tweet/id ?id]
                     [?t :tweet/created-at ?created-at]
@@ -51,19 +42,48 @@
                     [?t :tweet/user ?u]
                     [?u :user/id ?user-id]]])
 
-(defn- -fetch-tweets!
-  [db key criteria]
-  (let [k (case criteria
-            :by-id '?id
-            :by-user-id '?user-id)]
-    (as-> (first (d/q (replace {'?key k} fetch-tweets-query)
-                      db
-                      tweet-rules
-                      key)) $
-          (apply core/->Tweet $)
-          (update $ :publish-date inst->ZonedDateTime)
-          (update $ :id str)
-          (update $ :user-id str))))
+(def user-rules '[[(get-user-rule ?id ?active ?name ?email ?username)
+                   [?t :user/id ?id]
+                   [?t :user/active ?active]
+                   [?t :user/name ?name]
+                   [?t :user/email ?email]
+                   [?t :user/username ?username]]])
+
+(def fetch-tweets-q
+  "[:find ?id ?user-id ?text ?created-at ?likes ?retweets ?replies
+    :in $ % <params>
+    :where
+    (get-tweet-rule ?id ?user-id ?created-at ?text ?likes ?retweets ?replies)])")
+
+(def fetch-users-q
+  "[:find ?id ?active ?name ?email ?username
+    :in $ % <params>
+    :where
+    (get-user-rule ?id ?active ?name ?email ?username)]")
+
+(defn v
+  "Transforms a keyword k into a Datomic query variable symbol, e.g.,
+  (v :user-id) => ?user-id"
+  [k]
+  (symbol (str "?" (name k))))
+
+(defn make-query
+  [q params]
+  (read-string (clojure.string/replace q #"<params>" (clojure.string/join " " (map v params)))))
+
+(defn map-if
+  "Applies f to each value of m if p, a function of key and value, is truthy."
+  [m p f]
+  (into {} (map (fn [[k v]] (if (p k v) [k (f v)] [k v])) m)))
+
+(defn map-uuid
+  "Converts each value of m into an UUID if the respective key is in the set ks."
+  [m ks]
+  (map-if m (fn [k _v] (k ks)) (fn [v] (UUID/fromString v))))
+
+(defn inst->ZonedDateTime
+  [inst]
+  (ZonedDateTime/ofInstant (.toInstant inst) (ZoneId/systemDefault)))
 
 (defn make-tweet
   [{:keys [id user-id text publish-date likes retweets replies]}]
@@ -95,10 +115,34 @@
   [conn user]
   (do-transaction conn [(make-user user)]))
 
-(defn fetch-tweets!                                         ;; TODO: Handle trouble paths.
-  [repo key criteria]
+(defn fetch-tweets!
+  [repo criteria]
   (let [conn (:conn repo)
         db (d/db conn)]
-    (case criteria
-      :by-id (-fetch-tweets! db (UUID/fromString key) criteria)
-      :by-user-id (-fetch-tweets! db (UUID/fromString key) criteria))))
+    (let [mc (map-uuid criteria #{:id :user-id})
+          params (keys mc)
+          params-val (vals mc)]
+      (as-> (apply (partial d/q
+                            (make-query fetch-tweets-q params)
+                            db
+                            tweet-rules)
+                   params-val) results
+            (map (fn [result] (apply core/->Tweet result)) results)
+            (map (fn [result] (update result :publish-date inst->ZonedDateTime)) results)
+            (map (fn [result] (update result :id str)) results)
+            (map (fn [result] (update result :user-id str)) results)))))
+
+(defn fetch-users!
+  [repo criteria]
+  (let [conn (:conn repo)
+        db (d/db conn)]
+    (let [mc (map-uuid criteria #{:id})
+          params (keys mc)
+          params-val (vals mc)]
+      (as-> (apply (partial d/q
+                            (make-query fetch-users-q params)
+                            db
+                            user-rules)
+                   params-val) results
+            (map (fn [result] (apply core/->User result)) results)
+            (map (fn [result] (update result :id str)) results)))))
