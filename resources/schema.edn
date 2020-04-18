@@ -44,6 +44,9 @@
     :db/cardinality :db.cardinality/one}
    {:db/ident       :tweet/replies
     :db/valueType   :db.type/long
+    :db/cardinality :db.cardinality/one}
+   {:db/ident       :reply/source-tweet
+    :db/valueType   :db.type/ref
     :db/cardinality :db.cardinality/one}]]
 
  :retweet

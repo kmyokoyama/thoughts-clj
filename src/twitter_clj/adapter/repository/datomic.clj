@@ -32,7 +32,7 @@
   [conn tx]
   (d/transact conn {:tx-data tx}))
 
-(def tweet-rules '[[(get-tweet-rule ?id ?user-id ?created-at ?text ?likes ?retweets ?replies)
+(def tweet-rules '[[(get-tweet-rule ?id ?user-id ?text ?created-at ?likes ?retweets ?replies)
                     [?t :tweet/id ?id]
                     [?t :tweet/created-at ?created-at]
                     [?t :tweet/text ?text]
@@ -57,11 +57,24 @@
                    [?l :like/source-tweet ?s]
                    [?s :tweet/id ?source-tweet-id]]])
 
+;; TODO: We can probably reuse tweet-rules.
+(def reply-rules '[[(get-reply-rule ?id ?user-id ?text ?created-at ?likes ?retweets ?replies ?source-tweet-id)
+                    [?r :tweet/id ?id]
+                    [?r :tweet/created-at ?created-at]
+                    [?r :tweet/text ?text]
+                    [?r :tweet/likes ?likes]
+                    [?r :tweet/retweets ?retweets]
+                    [?r :tweet/replies ?replies]
+                    [?r :tweet/user ?u]
+                    [?u :user/id ?user-id]
+                    [?r :reply/source-tweet ?s]
+                    [?s :tweet/id ?source-tweet-id]]])
+
 (def fetch-tweets-q
   "[:find ?id ?user-id ?text ?created-at ?likes ?retweets ?replies
     :in $ % <params>
     :where
-    (get-tweet-rule ?id ?user-id ?created-at ?text ?likes ?retweets ?replies)])")
+    (get-tweet-rule ?id ?user-id ?text ?created-at ?likes ?retweets ?replies)])")
 
 (def fetch-users-q
   "[:find ?id ?active ?name ?email ?username
@@ -74,6 +87,12 @@
     :in $ % <params>
     :where
     (get-like-rule ?id ?created-at ?user-id ?source-tweet-id)]")
+
+(def fetch-replies-q
+  "[:find ?id ?user-id ?text ?created-at ?likes ?retweets ?replies
+    :in $ % <params>
+    :where
+    (get-reply-rule ?id ?user-id ?text ?created-at ?likes ?retweets ?replies ?source-tweet-id)])")
 
 (defn v
   "Transforms a keyword k into a Datomic query variable symbol, e.g.,
@@ -99,6 +118,7 @@
 (defn inst->ZonedDateTime
   "Converts from java.time.Instant to java.time.ZonedDateTime."
   [inst]
+  (println inst)
   (ZonedDateTime/ofInstant (.toInstant inst) (ZoneId/systemDefault)))
 
 (defn ZonedDateTime->inst
@@ -139,6 +159,12 @@
            :user         [:user/id user-uuid]
            :source-tweet [:tweet/id source-tweet-uuid]}))
 
+(defn make-reply
+  [source-tweet-id reply]
+  (let [source-tweet-uuid (UUID/fromString source-tweet-id)]
+    (-> (make-tweet reply)
+        (assoc :reply/source-tweet [:tweet/id source-tweet-uuid]))))
+
 (defn update-tweet!
   [conn tweet]
   (do-transaction conn [(make-tweet tweet)]))
@@ -150,6 +176,10 @@
 (defn update-like!
   [conn like]
   (do-transaction conn [(make-like like)]))
+
+(defn update-reply!
+  [conn source-tweet-id reply]
+  (do-transaction conn [(make-reply source-tweet-id reply)]))
 
 (defn fetch-tweets!
   [repo criteria]
@@ -199,3 +229,21 @@
             (map (fn [result] (update result :id str)) results)
             (map (fn [result] (update result :user-id str)) results)
             (map (fn [result] (update result :source-tweet-id str)) results)))))
+
+(defn fetch-replies!
+  [repo criteria]
+  (let [conn (:conn repo)
+        db (d/db conn)]
+    (let [mc (map-uuid criteria #{:id :user-id :source-tweet-id})
+          params (keys mc)
+          params-val (vals mc)]
+      (as-> (apply (partial d/q
+                            (make-query fetch-replies-q params)
+                            db
+                            reply-rules)
+                   params-val) results
+            (do (println results) results)
+            (map (fn [result] (apply core/->Tweet result)) results)
+            (map (fn [result] (update result :publish-date inst->ZonedDateTime)) results)
+            (map (fn [result] (update result :id str)) results)
+            (map (fn [result] (update result :user-id str)) results)))))
