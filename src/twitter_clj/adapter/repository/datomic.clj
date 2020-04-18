@@ -118,7 +118,6 @@
 (defn inst->ZonedDateTime
   "Converts from java.time.Instant to java.time.ZonedDateTime."
   [inst]
-  (println inst)
   (ZonedDateTime/ofInstant (.toInstant inst) (ZoneId/systemDefault)))
 
 (defn ZonedDateTime->inst
@@ -242,7 +241,6 @@
                             db
                             reply-rules)
                    params-val) results
-            (do (println results) results)
             (map (fn [result] (apply core/->Tweet result)) results)
             (map (fn [result] (update result :publish-date inst->ZonedDateTime)) results)
             (map (fn [result] (update result :id str)) results)
