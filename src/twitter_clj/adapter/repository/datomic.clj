@@ -49,6 +49,14 @@
                    [?t :user/email ?email]
                    [?t :user/username ?username]]])
 
+(def like-rules '[[(get-like-rule ?id ?created-at ?user-id ?source-tweet-id)
+                   [?l :like/id ?id]
+                   [?l :like/created-at ?created-at]
+                   [?l :like/user ?u]
+                   [?u :user/id ?user-id]
+                   [?l :like/source-tweet ?s]
+                   [?s :tweet/id ?source-tweet-id]]])
+
 (def fetch-tweets-q
   "[:find ?id ?user-id ?text ?created-at ?likes ?retweets ?replies
     :in $ % <params>
@@ -60,6 +68,12 @@
     :in $ % <params>
     :where
     (get-user-rule ?id ?active ?name ?email ?username)]")
+
+(def fetch-likes-q
+  "[:find ?id ?created-at ?user-id ?source-tweet-id
+    :in $ % <params>
+    :where
+    (get-like-rule ?id ?created-at ?user-id ?source-tweet-id)]")
 
 (defn v
   "Transforms a keyword k into a Datomic query variable symbol, e.g.,
@@ -87,10 +101,15 @@
   [inst]
   (ZonedDateTime/ofInstant (.toInstant inst) (ZoneId/systemDefault)))
 
+(defn ZonedDateTime->inst
+  "Converts from java.time.ZonedDateTime to java.util.Date (#inst)"
+  [zdt]
+  (Date/from (.toInstant zdt)))
+
 (defn make-tweet
   [{:keys [id user-id text publish-date likes retweets replies]}]
   (let [uuid (UUID/fromString id)
-        created-at (Date/from (.toInstant publish-date))
+        created-at (ZonedDateTime->inst publish-date)
         user-uuid (UUID/fromString user-id)]
     #:tweet{:id         uuid
             :created-at created-at
@@ -109,6 +128,17 @@
            :email    email
            :username username}))
 
+(defn make-like
+  [{:keys [id created-at user-id source-tweet-id]}]
+  (let [uuid (UUID/fromString id)
+        created-at (ZonedDateTime->inst created-at)
+        user-uuid (UUID/fromString user-id)
+        source-tweet-uuid (UUID/fromString source-tweet-id)]
+    #:like{:id           uuid
+           :created-at   created-at
+           :user         [:user/id user-uuid]
+           :source-tweet [:tweet/id source-tweet-uuid]}))
+
 (defn update-tweet!
   [conn tweet]
   (do-transaction conn [(make-tweet tweet)]))
@@ -116,6 +146,10 @@
 (defn update-user!
   [conn user]
   (do-transaction conn [(make-user user)]))
+
+(defn update-like!
+  [conn like]
+  (do-transaction conn [(make-like like)]))
 
 (defn fetch-tweets!
   [repo criteria]
@@ -148,3 +182,20 @@
                    params-val) results
             (map (fn [result] (apply core/->User result)) results)
             (map (fn [result] (update result :id str)) results)))))
+
+(defn fetch-likes!
+  [repo criteria]
+  (let [conn (:conn repo)
+        db (d/db conn)]
+    (let [mc (map-uuid criteria #{:id :user-id :source-tweet-id})
+          params (keys mc)
+          params-val (vals mc)]
+      (as-> (apply (partial d/q
+                            (make-query fetch-likes-q params)
+                            db
+                            like-rules)
+                   params-val) results
+            (map (fn [result] (apply core/->TweetLike result)) results)
+            (map (fn [result] (update result :id str)) results)
+            (map (fn [result] (update result :user-id str)) results)
+            (map (fn [result] (update result :source-tweet-id str)) results)))))
