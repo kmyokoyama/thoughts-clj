@@ -70,6 +70,16 @@
                     [?r :reply/source-tweet ?s]
                     [?s :tweet/id ?source-tweet-id]]])
 
+(def retweet-rules '[[(get-retweet-rule ?id ?user-id ?has-comment ?comment ?created-at ?source-tweet-id)
+                      [?rt :retweet/id ?id]
+                      [?rt :retweet/created-at ?created-at]
+                      [?rt :retweet/has-comment ?has-comment]
+                      [?rt :retweet/comment ?comment]
+                      [?rt :retweet/user ?u]
+                      [?u :user/id ?user-id]
+                      [?rt :retweet/source-tweet ?s]
+                      [?s :tweet/id ?source-tweet-id]]])
+
 (def fetch-tweets-q
   "[:find ?id ?user-id ?text ?created-at ?likes ?retweets ?replies
     :in $ % <params>
@@ -93,6 +103,12 @@
     :in $ % <params>
     :where
     (get-reply-rule ?id ?user-id ?text ?created-at ?likes ?retweets ?replies ?source-tweet-id)])")
+
+(def fetch-retweets-q
+  "[:find ?id ?user-id ?has-comment ?comment ?created-at ?source-tweet-id
+    :in $ % <params>
+    :where
+    (get-retweet-rule ?id ?user-id ?has-comment ?comment ?created-at ?source-tweet-id)]")
 
 (defn v
   "Transforms a keyword k into a Datomic query variable symbol, e.g.,
@@ -123,6 +139,7 @@
 (defn ZonedDateTime->inst
   "Converts from java.time.ZonedDateTime to java.util.Date (#inst)"
   [zdt]
+  (println zdt)
   (Date/from (.toInstant zdt)))
 
 (defn make-tweet
@@ -164,6 +181,19 @@
     (-> (make-tweet reply)
         (assoc :reply/source-tweet [:tweet/id source-tweet-uuid]))))
 
+(defn make-retweet
+  [{:keys [id user-id has-comment comment publish-date source-tweet-id]}]
+  (let [uuid (UUID/fromString id)
+        created-at (ZonedDateTime->inst publish-date)
+        user-uuid (UUID/fromString user-id)
+        source-tweet-uuid (UUID/fromString source-tweet-id)]
+    #:retweet{:id           uuid
+              :user         [:user/id user-uuid]
+              :has-comment  has-comment
+              :comment      (if-not has-comment "" comment) ;; TODO: Fix it. Perhaps we need to rethink the retweet model.
+              :created-at   created-at
+              :source-tweet [:tweet/id source-tweet-uuid]}))
+
 (defn update-tweet!
   [conn tweet]
   (do-transaction conn [(make-tweet tweet)]))
@@ -179,6 +209,10 @@
 (defn update-reply!
   [conn source-tweet-id reply]
   (do-transaction conn [(make-reply source-tweet-id reply)]))
+
+(defn update-retweet!
+  [conn retweet]
+  (do-transaction conn [(make-retweet retweet)]))
 
 (defn fetch-tweets!
   [repo criteria]
@@ -245,3 +279,20 @@
             (map (fn [result] (update result :publish-date inst->ZonedDateTime)) results)
             (map (fn [result] (update result :id str)) results)
             (map (fn [result] (update result :user-id str)) results)))))
+
+(defn fetch-retweets!
+  [repo criteria]
+  (let [conn (:conn repo)
+        db (d/db conn)]
+    (let [mc (map-uuid criteria #{:id :user-id :source-tweet-id})
+          params (keys mc)
+          params-val (vals mc)]
+      (as-> (apply (partial d/q
+                            (make-query fetch-retweets-q params)
+                            db
+                            retweet-rules)
+                   params-val) results
+            (map (fn [result] (apply core/->Retweet result)) results)
+            (map (fn [result] (update result :id str)) results)
+            (map (fn [result] (update result :user-id str)) results)
+            (map (fn [result] (update result :source-tweet-id str)) results)))))
