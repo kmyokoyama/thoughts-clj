@@ -110,6 +110,13 @@
     :where
     (get-retweet-rule ?id ?user-id ?has-comment ?comment ?created-at ?source-tweet-id)]")
 
+(def fetch-password-q
+  "[:find ?password
+    :in $ % ?user-id
+    :where
+    [?u :user/id ?user-id]
+    [?u :user/password ?password]]")
+
 (defn v
   "Transforms a keyword k into a Datomic query variable symbol, e.g.,
   (v :user-id) => ?user-id"
@@ -194,6 +201,12 @@
               :created-at   created-at
               :source-tweet [:tweet/id source-tweet-uuid]}))
 
+(defn make-password
+  [user-id password]
+  (let [user-uuid (UUID/fromString user-id)]
+    {:db/id         [:user/id user-uuid]
+     :user/password password}))
+
 (defn update-tweet!
   [conn tweet]
   (do-transaction conn [(make-tweet tweet)]))
@@ -213,6 +226,10 @@
 (defn update-retweet!
   [conn retweet]
   (do-transaction conn [(make-retweet retweet)]))
+
+(defn update-password!
+  [conn user-id password]
+  (do-transaction conn [(make-password user-id password)]))
 
 (defn fetch-tweets!
   [repo criteria]
@@ -296,3 +313,10 @@
             (map (fn [result] (update result :id str)) results)
             (map (fn [result] (update result :user-id str)) results)
             (map (fn [result] (update result :source-tweet-id str)) results)))))
+
+(defn fetch-password!
+  [repo user-id]
+  (let [conn (:conn repo)
+        db (d/db conn)]
+    (let [user-uuid (UUID/fromString user-id)]
+      (ffirst (d/q fetch-password-q db retweet-rules user-uuid)))))

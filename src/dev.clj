@@ -3,8 +3,7 @@
             [datomic.client.api :as d]
             [com.stuartsierra.component :as component]
             [twitter-clj.adapter.repository.datomic :refer [make-datomic-storage]]
-            [twitter-clj.application.service :refer [make-service]])
-  (:import [java.util Date UUID]))
+            [twitter-clj.application.service :refer [make-service]]))
 
 ;; Component.
 
@@ -22,26 +21,38 @@
    (start-system-dev {}))
 
   ([config-dev]
-   (component/start (system-dev config-dev))))
+   (let [s (component/start (system-dev config-dev))
+         c (get-in s [:repository :conn])
+         d (d/db c)]
+     (def sys (atom nil))
+     (def conn (atom nil))
+     (def db (atom nil))
+     (reset! sys s)
+     (reset! conn c)
+     (reset! db d))))
+
+(defn reload
+  []
+  (reset! conn (get-in @sys [:repository :conn]))
+  (reset! db (d/db @conn)))
 
 ;; Util.
 
 (defn load-schema
-  [conn resource]
-  (let [m (-> resource io/resource slurp read-string)]
-    (doseq [v (vals m)]
-      (doseq [tx v]
-        (println tx)
-        (d/transact conn {:tx-data tx})))))
+  ([]
+   (load-schema @conn "schema.edn"))
 
-(defn make-tweet
-  [id created-at username]
-  (let [uuid (UUID/fromString id)
-        created-date (Date/from (.toInstant created-at))]
-    {:tweet/id uuid
-     :tweet/created-at created-date
-     :tweet/text "This is a new tweet"
-     :tweet/likes 0
-     :tweet/retweets 0
-     :tweet/replies 0
-     :tweet/user [:user/email username]}))
+  ([conn resource]
+   (let [m (-> resource io/resource slurp read-string)]
+     (doseq [v (vals m)]
+       (doseq [tx v]
+         (println tx)
+         (d/transact conn {:tx-data tx}))))))
+
+(defn find-by-eid
+  [eid]
+  (d/q '[:find ?attr ?v
+         :in $ ?eid
+         :where
+         [?eid ?a ?v]
+         [?a :db/ident ?attr]] @db eid))
