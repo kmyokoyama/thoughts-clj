@@ -117,6 +117,15 @@
     [?u :user/id ?user-id]
     [?u :user/password ?password]]")
 
+(def fetch-session-q
+  "[:find ?id ?user-id ?created-at
+    :in $ % <params>
+    :where
+    [?s :session/user ?u]
+    [?u :user/id ?user-id]
+    [?s :session/id ?id]
+    [?s :session/created-at ?created-at]]")
+
 (defn v
   "Transforms a keyword k into a Datomic query variable symbol, e.g.,
   (v :user-id) => ?user-id"
@@ -207,6 +216,15 @@
     {:db/id         [:user/id user-uuid]
      :user/password password}))
 
+(defn make-session
+  [{:keys [:id :user-id :created-at]}]
+  (let [session-uuid (UUID/fromString id)
+        user-uuid (UUID/fromString user-id)
+        created-at-inst (ZonedDateTime->inst created-at)]
+    {:session/id         session-uuid
+     :session/user       [:user/id user-uuid]
+     :session/created-at created-at-inst}))
+
 (defn update-tweet!
   [conn tweet]
   (do-transaction conn [(make-tweet tweet)]))
@@ -230,6 +248,10 @@
 (defn update-password!
   [conn user-id password]
   (do-transaction conn [(make-password user-id password)]))
+
+(defn update-session!
+  [conn session]
+  (do-transaction conn [(make-session session)]))
 
 (defn fetch-tweets!
   [repo criteria]
@@ -320,3 +342,22 @@
         db (d/db conn)]
     (let [user-uuid (UUID/fromString user-id)]
       (ffirst (d/q fetch-password-q db retweet-rules user-uuid)))))
+
+(defrecord Session [id user-id created-at])
+
+(defn fetch-session!
+  [repo criteria]
+  (let [conn (:conn repo)
+        db (d/db conn)]
+    (let [mc (map-uuid criteria #{:id :user-id :source-tweet-id})
+          params (keys mc)
+          params-val (vals mc)]
+      (as-> (apply (partial d/q
+                            (make-query fetch-session-q params)
+                            db
+                            retweet-rules)
+                   params-val) results
+            (map (fn [result] (apply ->Session result)) results)
+            (map (fn [result] (update result :id str)) results)
+            (map (fn [result] (update result :user-id str)) results)
+            (map (fn [result] (update result :created-at inst->ZonedDateTime)) results)))))
