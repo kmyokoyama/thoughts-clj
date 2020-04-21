@@ -345,7 +345,7 @@
 
 (defrecord Session [id user-id created-at])
 
-(defn fetch-session!
+(defn fetch-sessions!
   [repo criteria]
   (let [conn (:conn repo)
         db (d/db conn)]
@@ -361,3 +361,21 @@
             (map (fn [result] (update result :id str)) results)
             (map (fn [result] (update result :user-id str)) results)
             (map (fn [result] (update result :created-at inst->ZonedDateTime)) results)))))
+
+(defn remove-like!
+  [repo criteria]
+  (let [conn (:conn repo)]
+    (->> (fetch-likes! repo criteria)
+         (map :id)
+         (map (fn [id] (UUID/fromString id)))
+         (map (fn [uuid] [:db/retractEntity [:like/id uuid]]))
+         (do-transaction conn))))
+
+(defn remove-session!
+  [repo criteria]
+  (let [conn (:conn repo)]
+    (->> (fetch-sessions! repo criteria)
+         (map :id)
+         (map (fn [id] (UUID/fromString id)))
+         (map (fn [uuid] [:db/retractEntity [:session/id uuid]]))
+         (do-transaction conn))))
