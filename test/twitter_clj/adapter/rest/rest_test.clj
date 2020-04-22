@@ -36,7 +36,7 @@
                         (f)
                         (stop-test-system! system))))
 
-(defn- create-user-and-login                                 ;; TODO: Move it.
+(defn- create-user-and-login                                ;; TODO: Move it.
   ([]
    (let [user (random-user)
          password (:password user)
@@ -204,7 +204,7 @@
 
 (deftest like-tweet
   (testing "Like an existing tweet"
-    (let [{:keys [user-id token]} (create-user-and-login)
+    (let [{:keys [token]} (create-user-and-login)
           tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)
           {:keys [response body result]} (post-and-parse (resource (str "tweet/" tweet-id "/react"))
                                                          token
@@ -271,7 +271,7 @@
 
 (deftest unlike-tweet-with-another-user
   (testing "Unlike an existing tweet with another user does not have any effect"
-    (let [{:keys [user-id token]} (create-user-and-login)
+    (let [{:keys [token]} (create-user-and-login)
           {other-user-id :user-id other-token :token} (create-user-and-login)
           tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)]
       (post (resource (str "tweet/" tweet-id "/react")) token {:reaction "like"})
@@ -331,7 +331,7 @@
       (is (= "success" (:status body)))
       (is (empty? result)))))
 
-(deftest get-non-empty-retweets
+(deftest get-retweets
   (testing "Get retweets from a tweet already retweeted returns all replies"
     (let [{:keys [user-id token]} (create-user-and-login)
           tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet user-id)) :result :id)]
@@ -351,7 +351,7 @@
       (is (= "success" (:status body)))
       (is (empty? result)))))
 
-(deftest get-non-empty-replies
+(deftest get-replies
   (testing "Get retweets from a tweet already retweeted returns all replies"
     (let [{:keys [user-id token]} (create-user-and-login)
           tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)]

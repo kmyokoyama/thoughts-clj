@@ -2,7 +2,7 @@
   (:require [datomic.client.api :as d]
             [com.stuartsierra.component :as component]
             [taoensso.timbre :as log]
-            [twitter-clj.application.core :as core])
+            [twitter-clj.application.core :refer :all])
   (:import [java.util Date UUID]
            [java.time ZonedDateTime ZoneId]))
 
@@ -265,7 +265,7 @@
                             db
                             tweet-rules)
                    params-val) results
-            (map (fn [result] (apply core/->Tweet result)) results)
+            (map (fn [result] (apply ->Tweet result)) results)
             (map (fn [result] (update result :publish-date inst->ZonedDateTime)) results)
             (map (fn [result] (update result :id str)) results)
             (map (fn [result] (update result :user-id str)) results)))))
@@ -282,7 +282,7 @@
                             db
                             user-rules)
                    params-val) results
-            (map (fn [result] (apply core/->User result)) results)
+            (map (fn [result] (apply ->User result)) results)
             (map (fn [result] (update result :id str)) results)))))
 
 (defn fetch-likes!
@@ -297,7 +297,7 @@
                             db
                             like-rules)
                    params-val) results
-            (map (fn [result] (apply core/->TweetLike result)) results)
+            (map (fn [result] (apply ->TweetLike result)) results)
             (map (fn [result] (update result :id str)) results)
             (map (fn [result] (update result :user-id str)) results)
             (map (fn [result] (update result :source-tweet-id str)) results)))))
@@ -314,7 +314,7 @@
                             db
                             reply-rules)
                    params-val) results
-            (map (fn [result] (apply core/->Tweet result)) results)
+            (map (fn [result] (apply ->Tweet result)) results)
             (map (fn [result] (update result :publish-date inst->ZonedDateTime)) results)
             (map (fn [result] (update result :id str)) results)
             (map (fn [result] (update result :user-id str)) results)))))
@@ -331,7 +331,7 @@
                             db
                             retweet-rules)
                    params-val) results
-            (map (fn [result] (apply core/->Retweet result)) results)
+            (map (fn [result] (apply ->Retweet result)) results)
             (map (fn [result] (update result :id str)) results)
             (map (fn [result] (update result :user-id str)) results)
             (map (fn [result] (update result :source-tweet-id str)) results)))))
@@ -342,8 +342,6 @@
         db (d/db conn)]
     (let [user-uuid (UUID/fromString user-id)]
       (ffirst (d/q fetch-password-q db retweet-rules user-uuid)))))
-
-(defrecord Session [id user-id created-at])
 
 (defn fetch-sessions!
   [repo criteria]
