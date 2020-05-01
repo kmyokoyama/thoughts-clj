@@ -22,11 +22,13 @@
   repository/Repository
   (update-password!
     [_ user-id password]
-    (swap! passwords assoc user-id password))
+    (swap! passwords assoc user-id password)
+    user-id)
 
   (update-session!
     [_ {session-id :id :as session}]
-    (swap! sessions assoc session-id session))
+    (swap! sessions assoc session-id session)
+    session)
 
   (update-user!
     [_ {user-id :id :as user}]

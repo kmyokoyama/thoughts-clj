@@ -37,6 +37,6 @@
             (wrap-authenticated service)
             (wrap-authentication jws-backend)))
       (wrap-service-exception)
-      (wrap-default-exception)
+      ;(wrap-default-exception)
       (wrap-json-body {:keywords? true :bigdecimals? true})
       (wrap-defaults api-defaults)))

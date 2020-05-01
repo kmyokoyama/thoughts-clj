@@ -113,8 +113,9 @@
         user (core/new-user lower-name lower-email lower-username)]
     (if (new-user? service email)
       (if (empty? (repository/fetch-users! (:repository service) {:username username}))
-        (do (repository/update-password! (:repository service) (:id user) (core/derive-password password))
-            (repository/update-user! (:repository service) user))
+        (do (repository/update-user! (:repository service) user)
+            (repository/update-password! (:repository service) (:id user) (core/derive-password password))
+            user)
         (throw-duplicate-username! username))
       (throw-duplicate-user-email! email))))
 
@@ -180,7 +181,7 @@
 
 (defn get-retweet-by-id
   [service retweet-id]
-  (if-let [retweet (repository/fetch-retweets! (:repository service) {:id retweet-id})]
+  (if-let [retweet (first (repository/fetch-retweets! (:repository service) {:id retweet-id}))]
     retweet
     (throw-missing-retweet! retweet-id)))
 

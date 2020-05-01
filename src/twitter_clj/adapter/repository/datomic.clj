@@ -3,7 +3,8 @@
             [com.stuartsierra.component :as component]
             [taoensso.timbre :as log]
             [twitter-clj.application.core :refer :all]
-            [twitter-clj.application.port.repository :as repository])
+            [twitter-clj.application.port.repository :as repository]
+            [clojure.java.io :as io])
   (:import [java.util Date UUID]
            [java.time ZonedDateTime ZoneId]))
 
@@ -12,6 +13,13 @@
           :secret             "mysecret"
           :endpoint           "localhost:8998"
           :validate-hostnames false})
+
+(defn load-schema
+  [conn resource]
+  (let [m (-> resource io/resource slurp read-string)]
+    (doseq [v (vals m)]
+      (doseq [tx v]
+        (d/transact conn {:tx-data tx})))))
 
 (defn do-transaction
   [conn tx]
@@ -140,7 +148,6 @@
 (defn ZonedDateTime->inst
   "Converts from java.time.ZonedDateTime to java.util.Date (#inst)"
   [zdt]
-  (println zdt)
   (Date/from (.toInstant zdt)))
 
 (defn make-tweet
@@ -225,31 +232,38 @@
   repository/Repository
   (update-tweet!
     [_ tweet]
-    (do-transaction conn [(make-tweet tweet)]))
+    (do-transaction conn [(make-tweet tweet)])
+    tweet)
 
   (update-user!
     [_ user]
-    (do-transaction conn [(make-user user)]))
+    (do-transaction conn [(make-user user)])
+    user)
 
   (update-like!
     [_ like]
-    (do-transaction conn [(make-like like)]))
+    (do-transaction conn [(make-like like)])
+    like)
 
   (update-reply!
     [_ source-tweet-id reply]
-    (do-transaction conn [(make-reply source-tweet-id reply)]))
+    (do-transaction conn [(make-reply source-tweet-id reply)])
+    reply)
 
   (update-retweet!
     [_ retweet]
-    (do-transaction conn [(make-retweet retweet)]))
+    (do-transaction conn [(make-retweet retweet)])
+    retweet)
 
   (update-password!
     [_ user-id password]
-    (do-transaction conn [(make-password user-id password)]))
+    (do-transaction conn [(make-password user-id password)])
+    user-id)
 
   (update-session!
     [_ session]
-    (do-transaction conn [(make-session session)]))
+    (do-transaction conn [(make-session session)])
+    session)
 
   (fetch-tweets!
     [_ criteria]
