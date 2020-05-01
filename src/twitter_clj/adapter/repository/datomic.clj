@@ -2,7 +2,8 @@
   (:require [datomic.client.api :as d]
             [com.stuartsierra.component :as component]
             [taoensso.timbre :as log]
-            [twitter-clj.application.core :refer :all])
+            [twitter-clj.application.core :refer :all]
+            [twitter-clj.application.port.repository :as repository])
   (:import [java.util Date UUID]
            [java.time ZonedDateTime ZoneId]))
 
@@ -11,22 +12,6 @@
           :secret             "mysecret"
           :endpoint           "localhost:8998"
           :validate-hostnames false})
-
-(defrecord DatomicStorage [conn]
-  component/Lifecycle
-  (start
-    [this]
-    (log/info "Starting Datomic storage")
-    (let [connection (d/connect (d/client cfg) {:db-name "hello"})]
-      (assoc this :conn connection)))
-
-  (stop
-    [_this]
-    (log/info "Stopping Datomic storage")))
-
-(defn make-datomic-storage
-  []
-  (->DatomicStorage {}))
 
 (defn do-transaction
   [conn tx]
@@ -225,155 +210,163 @@
      :session/user       [:user/id user-uuid]
      :session/created-at created-at-inst}))
 
-(defn update-tweet!
-  [conn tweet]
-  (do-transaction conn [(make-tweet tweet)]))
+(defrecord DatomicStorage [conn]
+  component/Lifecycle
+  (start
+    [this]
+    (log/info "Starting Datomic storage")
+    (let [connection (d/connect (d/client cfg) {:db-name "hello"})]
+      (assoc this :conn connection)))
 
-(defn update-user!
-  [conn user]
-  (do-transaction conn [(make-user user)]))
+  (stop
+    [_this]
+    (log/info "Stopping Datomic storage"))
 
-(defn update-like!
-  [conn like]
-  (do-transaction conn [(make-like like)]))
+  repository/Repository
+  (update-tweet!
+    [_ tweet]
+    (do-transaction conn [(make-tweet tweet)]))
 
-(defn update-reply!
-  [conn source-tweet-id reply]
-  (do-transaction conn [(make-reply source-tweet-id reply)]))
+  (update-user!
+    [_ user]
+    (do-transaction conn [(make-user user)]))
 
-(defn update-retweet!
-  [conn retweet]
-  (do-transaction conn [(make-retweet retweet)]))
+  (update-like!
+    [_ like]
+    (do-transaction conn [(make-like like)]))
 
-(defn update-password!
-  [conn user-id password]
-  (do-transaction conn [(make-password user-id password)]))
+  (update-reply!
+    [_ source-tweet-id reply]
+    (do-transaction conn [(make-reply source-tweet-id reply)]))
 
-(defn update-session!
-  [conn session]
-  (do-transaction conn [(make-session session)]))
+  (update-retweet!
+    [_ retweet]
+    (do-transaction conn [(make-retweet retweet)]))
 
-(defn fetch-tweets!
-  [repo criteria]
-  (let [conn (:conn repo)
-        db (d/db conn)]
-    (let [mc (map-uuid criteria #{:id :user-id})
-          params (keys mc)
-          params-val (vals mc)]
-      (as-> (apply (partial d/q
-                            (make-query fetch-tweets-q params)
-                            db
-                            tweet-rules)
-                   params-val) results
-            (map (fn [result] (apply ->Tweet result)) results)
-            (map (fn [result] (update result :publish-date inst->ZonedDateTime)) results)
-            (map (fn [result] (update result :id str)) results)
-            (map (fn [result] (update result :user-id str)) results)))))
+  (update-password!
+    [_ user-id password]
+    (do-transaction conn [(make-password user-id password)]))
 
-(defn fetch-users!
-  [repo criteria]
-  (let [conn (:conn repo)
-        db (d/db conn)]
-    (let [mc (map-uuid criteria #{:id})
-          params (keys mc)
-          params-val (vals mc)]
-      (as-> (apply (partial d/q
-                            (make-query fetch-users-q params)
-                            db
-                            user-rules)
-                   params-val) results
-            (map (fn [result] (apply ->User result)) results)
-            (map (fn [result] (update result :id str)) results)))))
+  (update-session!
+    [_ session]
+    (do-transaction conn [(make-session session)]))
 
-(defn fetch-likes!
-  [repo criteria]
-  (let [conn (:conn repo)
-        db (d/db conn)]
-    (let [mc (map-uuid criteria #{:id :user-id :source-tweet-id})
-          params (keys mc)
-          params-val (vals mc)]
-      (as-> (apply (partial d/q
-                            (make-query fetch-likes-q params)
-                            db
-                            like-rules)
-                   params-val) results
-            (map (fn [result] (apply ->TweetLike result)) results)
-            (map (fn [result] (update result :id str)) results)
-            (map (fn [result] (update result :user-id str)) results)
-            (map (fn [result] (update result :source-tweet-id str)) results)))))
+  (fetch-tweets!
+    [_ criteria]
+    (let [db (d/db conn)]
+      (let [mc (map-uuid criteria #{:id :user-id})
+            params (keys mc)
+            params-val (vals mc)]
+        (as-> (apply (partial d/q
+                              (make-query fetch-tweets-q params)
+                              db
+                              tweet-rules)
+                     params-val) results
+              (map (fn [result] (apply ->Tweet result)) results)
+              (map (fn [result] (update result :publish-date inst->ZonedDateTime)) results)
+              (map (fn [result] (update result :id str)) results)
+              (map (fn [result] (update result :user-id str)) results)))))
 
-(defn fetch-replies!
-  [repo criteria]
-  (let [conn (:conn repo)
-        db (d/db conn)]
-    (let [mc (map-uuid criteria #{:id :user-id :source-tweet-id})
-          params (keys mc)
-          params-val (vals mc)]
-      (as-> (apply (partial d/q
-                            (make-query fetch-replies-q params)
-                            db
-                            reply-rules)
-                   params-val) results
-            (map (fn [result] (apply ->Tweet result)) results)
-            (map (fn [result] (update result :publish-date inst->ZonedDateTime)) results)
-            (map (fn [result] (update result :id str)) results)
-            (map (fn [result] (update result :user-id str)) results)))))
+  (fetch-users!
+    [_ criteria]
+    (let [db (d/db conn)]
+      (let [mc (map-uuid criteria #{:id})
+            params (keys mc)
+            params-val (vals mc)]
+        (as-> (apply (partial d/q
+                              (make-query fetch-users-q params)
+                              db
+                              user-rules)
+                     params-val) results
+              (map (fn [result] (apply ->User result)) results)
+              (map (fn [result] (update result :id str)) results)))))
 
-(defn fetch-retweets!
-  [repo criteria]
-  (let [conn (:conn repo)
-        db (d/db conn)]
-    (let [mc (map-uuid criteria #{:id :user-id :source-tweet-id})
-          params (keys mc)
-          params-val (vals mc)]
-      (as-> (apply (partial d/q
-                            (make-query fetch-retweets-q params)
-                            db
-                            retweet-rules)
-                   params-val) results
-            (map (fn [result] (apply ->Retweet result)) results)
-            (map (fn [result] (update result :id str)) results)
-            (map (fn [result] (update result :user-id str)) results)
-            (map (fn [result] (update result :source-tweet-id str)) results)))))
+  (fetch-likes!
+    [_ criteria]
+    (let [db (d/db conn)]
+      (let [mc (map-uuid criteria #{:id :user-id :source-tweet-id})
+            params (keys mc)
+            params-val (vals mc)]
+        (as-> (apply (partial d/q
+                              (make-query fetch-likes-q params)
+                              db
+                              like-rules)
+                     params-val) results
+              (map (fn [result] (apply ->TweetLike result)) results)
+              (map (fn [result] (update result :id str)) results)
+              (map (fn [result] (update result :user-id str)) results)
+              (map (fn [result] (update result :source-tweet-id str)) results)))))
 
-(defn fetch-password!
-  [repo user-id]
-  (let [conn (:conn repo)
-        db (d/db conn)]
-    (let [user-uuid (UUID/fromString user-id)]
-      (ffirst (d/q fetch-password-q db retweet-rules user-uuid)))))
+  (fetch-replies!
+    [_ criteria]
+    (let [db (d/db conn)]
+      (let [mc (map-uuid criteria #{:id :user-id :source-tweet-id})
+            params (keys mc)
+            params-val (vals mc)]
+        (as-> (apply (partial d/q
+                              (make-query fetch-replies-q params)
+                              db
+                              reply-rules)
+                     params-val) results
+              (map (fn [result] (apply ->Tweet result)) results)
+              (map (fn [result] (update result :publish-date inst->ZonedDateTime)) results)
+              (map (fn [result] (update result :id str)) results)
+              (map (fn [result] (update result :user-id str)) results)))))
 
-(defn fetch-sessions!
-  [repo criteria]
-  (let [conn (:conn repo)
-        db (d/db conn)]
-    (let [mc (map-uuid criteria #{:id :user-id :source-tweet-id})
-          params (keys mc)
-          params-val (vals mc)]
-      (as-> (apply (partial d/q
-                            (make-query fetch-session-q params)
-                            db
-                            retweet-rules)
-                   params-val) results
-            (map (fn [result] (apply ->Session result)) results)
-            (map (fn [result] (update result :id str)) results)
-            (map (fn [result] (update result :user-id str)) results)
-            (map (fn [result] (update result :created-at inst->ZonedDateTime)) results)))))
+  (fetch-retweets!
+    [_ criteria]
+    (let [db (d/db conn)]
+      (let [mc (map-uuid criteria #{:id :user-id :source-tweet-id})
+            params (keys mc)
+            params-val (vals mc)]
+        (as-> (apply (partial d/q
+                              (make-query fetch-retweets-q params)
+                              db
+                              retweet-rules)
+                     params-val) results
+              (map (fn [result] (apply ->Retweet result)) results)
+              (map (fn [result] (update result :id str)) results)
+              (map (fn [result] (update result :user-id str)) results)
+              (map (fn [result] (update result :source-tweet-id str)) results)))))
 
-(defn remove-like!
-  [repo criteria]
-  (let [conn (:conn repo)]
-    (->> (fetch-likes! repo criteria)
+  (fetch-password!
+    [_ user-id]
+    (let [db (d/db conn)]
+      (let [user-uuid (UUID/fromString user-id)]
+        (ffirst (d/q fetch-password-q db retweet-rules user-uuid)))))
+
+  (fetch-sessions!
+    [_ criteria]
+    (let [db (d/db conn)]
+      (let [mc (map-uuid criteria #{:id :user-id :source-tweet-id})
+            params (keys mc)
+            params-val (vals mc)]
+        (as-> (apply (partial d/q
+                              (make-query fetch-session-q params)
+                              db
+                              retweet-rules)
+                     params-val) results
+              (map (fn [result] (apply ->Session result)) results)
+              (map (fn [result] (update result :id str)) results)
+              (map (fn [result] (update result :user-id str)) results)
+              (map (fn [result] (update result :created-at inst->ZonedDateTime)) results)))))
+
+  (remove-like!
+    [this criteria]
+    (->> (repository/fetch-likes! this criteria)
          (map :id)
          (map (fn [id] (UUID/fromString id)))
          (map (fn [uuid] [:db/retractEntity [:like/id uuid]]))
-         (do-transaction conn))))
+         (do-transaction conn)))
 
-(defn remove-session!
-  [repo criteria]
-  (let [conn (:conn repo)]
-    (->> (fetch-sessions! repo criteria)
+  (remove-session!
+    [this criteria]
+    (->> (repository/fetch-sessions! this criteria)
          (map :id)
          (map (fn [id] (UUID/fromString id)))
          (map (fn [uuid] [:db/retractEntity [:session/id uuid]]))
          (do-transaction conn))))
+
+(defn make-datomic-storage
+  []
+  (->DatomicStorage {}))
