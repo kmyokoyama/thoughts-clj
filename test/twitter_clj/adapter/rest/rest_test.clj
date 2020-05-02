@@ -3,7 +3,7 @@
             [com.stuartsierra.component :as component]
             [twitter-clj.application.config :refer [system-config]]
             [twitter-clj.application.test-util :refer :all]
-            [twitter-clj.adapter.repository.in-mem :refer [make-in-mem-storage]]
+            [twitter-clj.adapter.repository.datomic :refer [make-datomic-storage load-schema]]
             [twitter-clj.application.service :refer [make-service]]
             [twitter-clj.adapter.rest.component :refer [make-http-controller]]
             [twitter-clj.adapter.rest.test-util :refer :all]))
@@ -16,7 +16,7 @@
 (defn- test-system
   [system-config]
   (component/system-map
-    :repository (make-in-mem-storage)
+    :repository (make-datomic-storage)
     :service (component/using
                (make-service)
                [:repository])
@@ -26,17 +26,19 @@
 
 (defn- start-test-system!
   [system-config]
-  (component/start (test-system system-config)))
+  (let [system (component/start (test-system system-config))]
+    (load-schema (get-in system [:repository :conn]) "schema.edn")
+    system))
 
 (defn- stop-test-system! [system]
   (component/stop system))
 
-(use-fixtures :each (fn [f]
+(use-fixtures :once (fn [f]
                       (let [system (start-test-system! system-config)]
                         (f)
                         (stop-test-system! system))))
 
-(defn- create-user-and-login                                 ;; TODO: Move it.
+(defn- create-user-and-login                                ;; TODO: Move it.
   ([]
    (let [user (random-user)
          password (:password user)
@@ -204,7 +206,7 @@
 
 (deftest like-tweet
   (testing "Like an existing tweet"
-    (let [{:keys [user-id token]} (create-user-and-login)
+    (let [{:keys [token]} (create-user-and-login)
           tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)
           {:keys [response body result]} (post-and-parse (resource (str "tweet/" tweet-id "/react"))
                                                          token
@@ -271,7 +273,7 @@
 
 (deftest unlike-tweet-with-another-user
   (testing "Unlike an existing tweet with another user does not have any effect"
-    (let [{:keys [user-id token]} (create-user-and-login)
+    (let [{:keys [token]} (create-user-and-login)
           {other-user-id :user-id other-token :token} (create-user-and-login)
           tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)]
       (post (resource (str "tweet/" tweet-id "/react")) token {:reaction "like"})
@@ -331,7 +333,7 @@
       (is (= "success" (:status body)))
       (is (empty? result)))))
 
-(deftest get-non-empty-retweets
+(deftest get-retweets
   (testing "Get retweets from a tweet already retweeted returns all replies"
     (let [{:keys [user-id token]} (create-user-and-login)
           tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet user-id)) :result :id)]
@@ -351,7 +353,7 @@
       (is (= "success" (:status body)))
       (is (empty? result)))))
 
-(deftest get-non-empty-replies
+(deftest get-replies
   (testing "Get retweets from a tweet already retweeted returns all replies"
     (let [{:keys [user-id token]} (create-user-and-login)
           tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)]

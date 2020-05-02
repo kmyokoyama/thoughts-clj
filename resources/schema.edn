@@ -1,0 +1,103 @@
+{:user
+ [[{:db/ident       :user/id
+    :db/valueType   :db.type/uuid
+    :db/cardinality :db.cardinality/one
+    :db/unique      :db.unique/identity
+    :db/index       true}
+   {:db/ident       :user/active
+    :db/valueType   :db.type/boolean
+    :db/cardinality :db.cardinality/one}
+   {:db/ident       :user/name
+    :db/valueType   :db.type/string
+    :db/cardinality :db.cardinality/one}
+   {:db/ident       :user/email
+    :db/valueType   :db.type/string
+    :db/cardinality :db.cardinality/one
+    :db/unique      :db.unique/identity
+    :db/index       true}
+   {:db/ident       :user/username
+    :db/valueType   :db.type/string
+    :db/cardinality :db.cardinality/one
+    :db/unique      :db.unique/identity
+    :db/index       true}
+   {:db/ident       :user/password
+    :db/valueType   :db.type/string
+    :db/cardinality :db.cardinality/one}]]
+
+ :tweet
+ [[{:db/ident       :tweet/id
+    :db/valueType   :db.type/uuid
+    :db/cardinality :db.cardinality/one
+    :db/unique      :db.unique/identity
+    :db/index       true}
+   {:db/ident       :tweet/user
+    :db/valueType   :db.type/ref
+    :db/cardinality :db.cardinality/one}
+   {:db/ident       :tweet/text
+    :db/valueType   :db.type/string
+    :db/cardinality :db.cardinality/one}
+   {:db/ident       :tweet/created-at
+    :db/valueType   :db.type/instant
+    :db/cardinality :db.cardinality/one}
+   {:db/ident       :tweet/likes
+    :db/valueType   :db.type/long
+    :db/cardinality :db.cardinality/one}
+   {:db/ident       :tweet/retweets
+    :db/valueType   :db.type/long
+    :db/cardinality :db.cardinality/one}
+   {:db/ident       :tweet/replies
+    :db/valueType   :db.type/long
+    :db/cardinality :db.cardinality/one}
+   {:db/ident       :reply/source-tweet
+    :db/valueType   :db.type/ref
+    :db/cardinality :db.cardinality/one}]]
+
+ :retweet
+ [[{:db/ident       :retweet/id
+    :db/valueType   :db.type/uuid
+    :db/cardinality :db.cardinality/one
+    :db/unique      :db.unique/identity
+    :db/index       true}
+   {:db/ident       :retweet/user
+    :db/valueType   :db.type/ref
+    :db/cardinality :db.cardinality/one}
+   {:db/ident       :retweet/has-comment
+    :db/valueType   :db.type/boolean
+    :db/cardinality :db.cardinality/one}
+   {:db/ident       :retweet/comment
+    :db/valueType   :db.type/string
+    :db/cardinality :db.cardinality/one}
+   {:db/ident       :retweet/created-at
+    :db/valueType   :db.type/instant
+    :db/cardinality :db.cardinality/one}
+   {:db/ident       :retweet/source-tweet
+    :db/valueType   :db.type/ref
+    :db/cardinality :db.cardinality/one}]]
+
+ :like
+ [[{:db/ident       :like/id
+    :db/valueType   :db.type/uuid
+    :db/cardinality :db.cardinality/one
+    :db/unique      :db.unique/identity
+    :db/index       true}
+   {:db/ident       :like/created-at
+    :db/valueType   :db.type/instant
+    :db/cardinality :db.cardinality/one}
+   {:db/ident       :like/user
+    :db/valueType   :db.type/ref
+    :db/cardinality :db.cardinality/one}
+   {:db/ident       :like/source-tweet
+    :db/valueType   :db.type/ref
+    :db/cardinality :db.cardinality/one}]]
+
+ :session
+ [[{:db/ident       :session/id
+    :db/valueType   :db.type/uuid
+    :db/cardinality :db.cardinality/one
+    :db/unique      :db.unique/identity}
+   {:db/ident       :session/user
+    :db/valueType   :db.type/ref
+    :db/cardinality :db.cardinality/one}
+   {:db/ident       :session/created-at
+    :db/valueType   :db.type/instant
+    :db/cardinality :db.cardinality/one}]]}

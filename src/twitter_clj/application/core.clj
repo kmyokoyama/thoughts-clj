@@ -3,12 +3,15 @@
   (:import (java.util UUID)
            (java.time ZonedDateTime)))
 
-(declare new-thread)
-
 (defrecord User [id active name email username])
 (defrecord Tweet [id user-id text publish-date likes retweets replies])
 (defrecord Retweet [id user-id has-comment comment publish-date source-tweet-id])
 (defrecord TweetLike [id created-at user-id source-tweet-id])
+(defrecord Session [id user-id created-at]) ;; TODO: Remove it from here.
+
+(defn new-session
+  [user-id]
+  (->Session (str (UUID/randomUUID)) user-id (ZonedDateTime/now)))
 
 (defn derive-password
   [password]

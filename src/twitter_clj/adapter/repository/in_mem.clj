@@ -22,11 +22,13 @@
   repository/Repository
   (update-password!
     [_ user-id password]
-    (swap! passwords assoc user-id password))
+    (swap! passwords assoc user-id password)
+    user-id)
 
-  (update-sessions!
-    [_ user-id]
-    (swap! sessions conj user-id))
+  (update-session!
+    [_ {session-id :id :as session}]
+    (swap! sessions assoc session-id session)
+    session)
 
   (update-user!
     [_ {user-id :id :as user}]
@@ -44,12 +46,12 @@
     (swap! join-tweet-likes update source-tweet-id (fn [like-ids] (conj (vec like-ids) like-id)))
     like)
 
-  (update-replies!
+  (update-reply!
     [_ source-tweet-id {reply-id :id :as reply}]
     (swap! join-tweet-replies update source-tweet-id (fn [reply-ids] (conj (vec reply-ids) reply-id)))
     reply)
 
-  (update-retweets!
+  (update-retweet!
     [_ {retweet-id :id :as retweet}]
     (swap! retweets assoc retweet-id retweet)
     (swap! join-tweet-retweets update (:source-tweet-id retweet) (fn [retweet-ids] (conj (vec retweet-ids) retweet-id)))
@@ -59,66 +61,47 @@
     [_ user-id]
     (get @passwords user-id))
 
-  (fetch-session!
-    [_ user-id]
-    (get @sessions user-id))
+  (fetch-sessions!
+    [_ criteria]
+    (filter (fn [e] (= criteria (select-keys e (keys criteria)))) (vals @sessions)))
 
   (fetch-users!
-    [_ key criteria]
-    (case criteria
-      :by-id (get @users key)
-      :by-fields (filter (fn [user] (= key (select-keys user (keys key)))) (vals @users))))
+    [_ criteria]
+    (filter (fn [e] (= criteria (select-keys e (keys criteria)))) (vals @users)))
 
   (fetch-tweets!
-    [_ key criteria]
-    (case criteria
-      :by-id (get @tweets key)
-      :by-user-id (filter #(= (:user-id %) key) (vals @tweets))))
+    [_ criteria]
+    (filter (fn [e] (= criteria (select-keys e (keys criteria)))) (vals @tweets)))
 
   (fetch-likes!
-    [_ key criteria]
-    (case criteria
-      [:by-source-tweet-id :by-user-id] (let [[source-tweet-id user-id] key]
-                                          (->> (get @join-tweet-likes source-tweet-id [])
-                                               (map (fn [like-id] (get @likes like-id)))
-                                               (filter (fn [like] (= (:user-id like) user-id)))
-                                               (first)))
-      :by-source-tweet-id (->> (get @join-tweet-likes key [])
-                               (map (fn [like-id] (get @likes like-id))))))
+    [_ criteria]
+    (filter (fn [e] (= criteria (select-keys e (keys criteria)))) (vals @likes)))
 
   (fetch-replies!
-    [_ key criteria]
-    (case criteria
-      :by-source-tweet-id (->> (get @join-tweet-replies key [])
-                               (map (fn [reply-id] (get @tweets reply-id))))))
+    [_ criteria]
+    (->> (get @join-tweet-replies (:source-tweet-id criteria) [])
+         (map (fn [reply-id] (get @tweets reply-id)))))
 
   (fetch-retweets!
-    [_ key criteria]
-    (case criteria
-      :by-id (get @retweets key)
-      :by-source-tweet-id (->> (get @join-tweet-retweets key [])
-                               (map (fn [retweet-id] (get @retweets retweet-id))))))
+    [_ criteria]
+    (filter (fn [e] (= criteria (select-keys e (keys criteria)))) (vals @retweets)))
 
   (remove-like!
-    [_ key criteria]
-    (case criteria
-      [:by-source-tweet-id :by-user-id] (let [[source-tweet-id user-id] key
-                                              like-id (->> (get @join-tweet-likes source-tweet-id [])
-                                                           (map (fn [like-id] (get @likes like-id)))
-                                                           (filter (fn [like] (= (:user-id like) user-id)))
-                                                           (first)
-                                                           (:id))]
-                                          (swap! join-tweet-likes update source-tweet-id (fn [like-ids] (remove #(= % like-id) like-ids)))
-                                          (swap! likes dissoc like-id))))
+    [_ criteria]
+    (->> (filter (fn [e] (= criteria (select-keys e (keys criteria)))) (vals @likes))
+         (map :id)
+         (map (fn [like-id] (swap! likes dissoc like-id)))))
 
-  (remove-from-session!
-    [_ user-id]
-    (swap! sessions disj user-id)))
+  (remove-session!
+    [_ criteria]
+    (->> (filter (fn [e] (= criteria (select-keys e (keys criteria)))) (vals @sessions))
+         (map :id)
+         (map (fn [session-id] (swap! sessions dissoc session-id))))))
 
 (defn make-in-mem-storage                                   ;; Constructor.
   []
   (map->InMemoryStorage {:passwords           (atom {})
-                         :sessions            (atom #{})
+                         :sessions            (atom {})
                          :users               (atom {})
                          :tweets              (atom {})
                          :retweets            (atom {})
@@ -130,7 +113,7 @@
 (defn shutdown
   [repository]
   (reset! (:passwords repository) {})
-  (reset! (:sessions repository) #{})
+  (reset! (:sessions repository) {})
   (reset! (:users repository) {})
   (reset! (:tweets repository) {})
   (reset! (:retweets repository) {})

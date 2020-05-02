@@ -4,7 +4,7 @@
             [taoensso.timbre :as log]
             [outpace.config :refer [defconfig]]
             [twitter-clj.adapter.rest.component :refer [make-http-controller]]
-            [twitter-clj.adapter.repository.in-mem :refer [make-in-mem-storage]]
+            [twitter-clj.adapter.repository.datomic :refer [make-datomic-storage]]
             [twitter-clj.application.config :refer [system-config init-system!]]
             [twitter-clj.application.service :refer [make-service]])
   (:gen-class))
@@ -12,7 +12,7 @@
 (defn system
   [system-config]
   (component/system-map
-    :repository (make-in-mem-storage)
+    :repository (make-datomic-storage)
     :service (component/using
                (make-service)
                [:repository])

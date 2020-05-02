@@ -1,7 +1,6 @@
 (ns twitter-clj.adapter.rest.route
   (:require [buddy.auth.middleware :refer [wrap-authentication]]
             [compojure.core :refer :all]
-            [compojure.route :as route]
             [ring.middleware.defaults :refer [wrap-defaults api-defaults]]
             [ring.middleware.json :refer [wrap-json-body]]
             [twitter-clj.adapter.rest.config :refer [path-prefix jws-backend]]
