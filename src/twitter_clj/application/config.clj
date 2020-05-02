@@ -2,15 +2,15 @@
   (:require [outpace.config :refer [defconfig]]
             [taoensso.timbre :as log]))
 
-(defconfig twitter-clj.application.config/http-port)
-(defconfig twitter-clj.application.config/http-api-version)
-(defconfig twitter-clj.application.config/http-api-path-prefix)
-(defconfig twitter-clj.application.config/http-api-jws-secret)
+(defconfig ^{:validate [number? "Port must be a numeric value"]} http-port)
+(defconfig http-api-version)
+(defconfig http-api-path-prefix)
+(defconfig http-api-jws-secret)
 
-(def system-config {:http {:port twitter-clj.application.config/http-port
-                           :api {:version twitter-clj.application.config/http-api-version
-                                 :path-prefix twitter-clj.application.config/http-api-path-prefix
-                                 :jws-secret twitter-clj.application.config/http-api-jws-secret}}})
+(def system-config {:http {:port http-port
+                           :api  {:version     http-api-version
+                                  :path-prefix http-api-path-prefix
+                                  :jws-secret  http-api-jws-secret}}})
 
 (def timbre-config {:timestamp-opts {:pattern "yyyy-MM-dd'T'HH:mm:ss.SSSX"}
                     :output-fn      (fn [{:keys [timestamp_ level hostname_ msg_]}]
