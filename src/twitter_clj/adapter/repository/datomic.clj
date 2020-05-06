@@ -219,7 +219,7 @@
      :session/user       [:user/id user-uuid]
      :session/created-at created-at-inst}))
 
-(defrecord DatomicStorage [conn uri]
+(defrecord DatomicStorage [uri conn]
   component/Lifecycle
   (start
     [this]

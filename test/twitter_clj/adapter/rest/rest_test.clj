@@ -1,47 +1,45 @@
 (ns twitter-clj.adapter.rest.rest-test
   (:require [clojure.test :refer :all]
             [com.stuartsierra.component :as component]
-            [twitter-clj.application.config :refer [system-config]]
             [twitter-clj.application.test-util :refer :all]
             [twitter-clj.adapter.repository.datomic :refer [create-database
                                                             delete-database
                                                             make-datomic-storage
                                                             load-schema]]
+            [twitter-clj.application.config :refer [datomic-uri http-port]]
             [twitter-clj.application.service :refer [make-service]]
             [twitter-clj.adapter.rest.component :refer [make-http-controller]]
             [twitter-clj.adapter.rest.test-util :refer :all]))
 
-(def ^:const port (get-in system-config [:http :port]))
-(def ^:const url (str "http://localhost:" port))
-(def ^:const db-uri "datomic:mem://hello")
+(def ^:const url (str "http://localhost:" http-port))
 
 (def resource (partial resource-path url))
 
 (defn- test-system-map
-  [config]
+  []
   (component/system-map
-    :repository (make-datomic-storage db-uri)
+    :repository (make-datomic-storage datomic-uri)
     :service (component/using
                (make-service)
                [:repository])
     :controller (component/using
-                  (make-http-controller (:http config))
+                  (make-http-controller http-port)
                   [:service])))
 
 (defn- start-test-system
-  [system-config]
-  (create-database db-uri)
-  (let [sys (component/start (test-system-map system-config))
+  []
+  (create-database datomic-uri)
+  (let [sys (component/start (test-system-map))
         conn (get-in sys [:repository :conn])]
     (load-schema conn "schema.edn")
     sys))
 
 (defn- stop-test-system [system]
-  (delete-database db-uri)
+  (delete-database datomic-uri)
   (component/stop system))
 
 (use-fixtures :each (fn [f]
-                      (let [sys (start-test-system system-config)]
+                      (let [sys (start-test-system)]
                         (f)
                         (stop-test-system sys))))
 

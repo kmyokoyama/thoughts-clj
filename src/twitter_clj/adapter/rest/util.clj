@@ -1,7 +1,8 @@
 (ns twitter-clj.adapter.rest.util
   (:require [buddy.sign.jwt :as jwt]
             [clojure.data.json :as json]
-            [taoensso.timbre :as log]))
+            [taoensso.timbre :as log]
+            [twitter-clj.application.config :refer [http-api-jws-secret http-api-path-prefix http-api-version]]))
 
 ;; Private functions.
 
@@ -60,7 +61,6 @@
 (def bad-request-response (partial json-response 400))
 (def unauthorized-response (partial json-response 401))
 
-
 (def ok-with-success (comp ok-response to-json add-success-result))
 (def ok-with-failure (comp ok-response to-json add-failure-result))
 (def created (comp created-response to-json add-success-result))
@@ -75,6 +75,8 @@
 (defn new-token
   [secret user-id role]
   (jwt/sign {:user-id user-id :role role} secret {:alg :hs512}))
+
+(def create-token (partial new-token http-api-jws-secret))
 
 (defn add-leading-slash
   [path]
@@ -92,6 +94,14 @@
       (clojure.string/replace #"://" "!")
       (remove-duplicate-slashes)
       (clojure.string/replace #"!" "://")))
+
+(defn path-prefix
+  [path]
+  (->> (list http-api-path-prefix
+             http-api-version
+             path)
+       (apply join-path)
+       (add-leading-slash)))
 
 (defn f-id
   [id]

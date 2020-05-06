@@ -2,7 +2,7 @@
   (:require [clojure.test :refer :all]
             [clj-http.client :as client]
             [clojure.data.json :as json]
-            [twitter-clj.adapter.rest.config :refer [path-prefix]]))
+            [twitter-clj.adapter.rest.util :refer [path-prefix]]))
 
 ;; REST API.
 

@@ -6,8 +6,7 @@
             [faker.lorem :as lorem]
             [clojure.string :refer [join]]
             [clj-http.client :as client]
-            [clojure.data.json :as json]
-            [twitter-clj.adapter.rest.config :refer [path-prefix]])
+            [clojure.data.json :as json])
   (:import [java.util UUID]
            [java.time ZonedDateTime]))
 

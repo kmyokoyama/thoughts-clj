@@ -4,19 +4,19 @@
             [taoensso.timbre :as log]
             [twitter-clj.adapter.rest.component :refer [make-http-controller]]
             [twitter-clj.adapter.repository.datomic :refer [make-datomic-storage]]
-            [twitter-clj.application.config :refer [system-config init-system!]]
+            [twitter-clj.application.config :refer [datomic-uri init-system! http-port]]
             [twitter-clj.application.service :refer [make-service]])
   (:gen-class))
 
 (defn system-map
-  [config]
+  []
   (component/system-map
-    :repository (make-datomic-storage (get-in config [:datomic :uri]))
+    :repository (make-datomic-storage datomic-uri)
     :service (component/using
                (make-service)
                [:repository])
     :controller (component/using
-                  (make-http-controller (:http config))
+                  (make-http-controller http-port)
                   [:service])))
 
 (defn on-exit
@@ -33,6 +33,6 @@
   [& _args]
   (init-system!)
   (log/info "Starting system")
-  (let [sys (component/start (system-map system-config))]
-    (log/info (str "Running server at http://127.0.0.1:" (get-in system-config [:http :port]) "/"))
+  (let [sys (component/start (system-map))]
+    (log/info (str "Running server at http://127.0.0.1:" http-port "/"))
     (handle-sigint on-exit sys)))
