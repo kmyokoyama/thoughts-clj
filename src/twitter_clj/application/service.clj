@@ -7,11 +7,11 @@
 (defrecord Service [repository]
   component/Lifecycle
   (start [this]
-    (log/info "Starting service")
+    (log/info "Starting application service")
     this)
 
   (stop [this]
-    (log/info "Stopping service")
+    (log/info "Stopping application service")
     this))
 
 (defn make-service ;; Constructor.

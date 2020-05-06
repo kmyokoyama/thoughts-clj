@@ -1,7 +1,6 @@
 (ns twitter-clj.adapter.rest.rest-test
   (:require [clojure.test :refer :all]
             [com.stuartsierra.component :as component]
-            [datomic.api :as d]
             [twitter-clj.application.config :refer [system-config]]
             [twitter-clj.application.test-util :refer :all]
             [twitter-clj.adapter.repository.datomic :refer [create-database
@@ -18,30 +17,30 @@
 
 (def resource (partial resource-path url))
 
-(defn- test-system
-  [system-config]
+(defn- test-system-map
+  [config]
   (component/system-map
     :repository (make-datomic-storage db-uri)
     :service (component/using
                (make-service)
                [:repository])
     :controller (component/using
-                  (make-http-controller (:http system-config))
+                  (make-http-controller (:http config))
                   [:service])))
 
 (defn- start-test-system
   [system-config]
   (create-database db-uri)
-  (let [system (component/start (test-system system-config))
-        conn (get-in system [:repository :conn])]
+  (let [sys (component/start (test-system-map system-config))
+        conn (get-in sys [:repository :conn])]
     (load-schema conn "schema.edn")
-    system))
+    sys))
 
 (defn- stop-test-system [system]
   (delete-database db-uri)
   (component/stop system))
 
-(use-fixtures :once (fn [f]
+(use-fixtures :each (fn [f]
                       (let [sys (start-test-system system-config)]
                         (f)
                         (stop-test-system sys))))
