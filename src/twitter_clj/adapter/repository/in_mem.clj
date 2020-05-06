@@ -3,7 +3,18 @@
             [taoensso.timbre :as log]
             [twitter-clj.application.port.repository :as repository]))
 
-(declare shutdown)
+(defn- shutdown
+  [repository]
+  (reset! (:passwords repository) {})
+  (reset! (:sessions repository) {})
+  (reset! (:users repository) {})
+  (reset! (:tweets repository) {})
+  (reset! (:retweets repository) {})
+  (reset! (:likes repository) {})
+  (reset! (:join-tweet-likes repository) {})
+  (reset! (:join-tweet-replies repository) {})
+  (reset! (:join-tweet-retweets repository) {})
+  repository)
 
 ;; Driven-side.
 
@@ -109,16 +120,3 @@
                          :join-tweet-likes    (atom {})
                          :join-tweet-replies  (atom {})
                          :join-tweet-retweets (atom {})}))
-
-(defn shutdown
-  [repository]
-  (reset! (:passwords repository) {})
-  (reset! (:sessions repository) {})
-  (reset! (:users repository) {})
-  (reset! (:tweets repository) {})
-  (reset! (:retweets repository) {})
-  (reset! (:likes repository) {})
-  (reset! (:join-tweet-likes repository) {})
-  (reset! (:join-tweet-replies repository) {})
-  (reset! (:join-tweet-retweets repository) {})
-  repository)

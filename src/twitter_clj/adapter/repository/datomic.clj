@@ -27,92 +27,92 @@
   [conn tx]
   (d/transact conn tx))
 
-(def tweet-rules '[[(get-tweet-rule ?id ?user-id ?text ?created-at ?likes ?retweets ?replies)
-                    [?t :tweet/id ?id]
-                    [?t :tweet/created-at ?created-at]
-                    [?t :tweet/text ?text]
-                    [?t :tweet/likes ?likes]
-                    [?t :tweet/retweets ?retweets]
-                    [?t :tweet/replies ?replies]
-                    [?t :tweet/user ?u]
-                    [?u :user/id ?user-id]]])
+(def ^:private tweet-rules '[[(get-tweet-rule ?id ?user-id ?text ?created-at ?likes ?retweets ?replies)
+                              [?t :tweet/id ?id]
+                              [?t :tweet/created-at ?created-at]
+                              [?t :tweet/text ?text]
+                              [?t :tweet/likes ?likes]
+                              [?t :tweet/retweets ?retweets]
+                              [?t :tweet/replies ?replies]
+                              [?t :tweet/user ?u]
+                              [?u :user/id ?user-id]]])
 
-(def user-rules '[[(get-user-rule ?id ?active ?name ?email ?username)
-                   [?t :user/id ?id]
-                   [?t :user/active ?active]
-                   [?t :user/name ?name]
-                   [?t :user/email ?email]
-                   [?t :user/username ?username]]])
+(def ^:private user-rules '[[(get-user-rule ?id ?active ?name ?email ?username)
+                             [?t :user/id ?id]
+                             [?t :user/active ?active]
+                             [?t :user/name ?name]
+                             [?t :user/email ?email]
+                             [?t :user/username ?username]]])
 
-(def like-rules '[[(get-like-rule ?id ?created-at ?user-id ?source-tweet-id)
-                   [?l :like/id ?id]
-                   [?l :like/created-at ?created-at]
-                   [?l :like/user ?u]
-                   [?u :user/id ?user-id]
-                   [?l :like/source-tweet ?s]
-                   [?s :tweet/id ?source-tweet-id]]])
+(def ^:private like-rules '[[(get-like-rule ?id ?created-at ?user-id ?source-tweet-id)
+                             [?l :like/id ?id]
+                             [?l :like/created-at ?created-at]
+                             [?l :like/user ?u]
+                             [?u :user/id ?user-id]
+                             [?l :like/source-tweet ?s]
+                             [?s :tweet/id ?source-tweet-id]]])
 
 ;; TODO: We can probably reuse tweet-rules.
-(def reply-rules '[[(get-reply-rule ?id ?user-id ?text ?created-at ?likes ?retweets ?replies ?source-tweet-id)
-                    [?r :tweet/id ?id]
-                    [?r :tweet/created-at ?created-at]
-                    [?r :tweet/text ?text]
-                    [?r :tweet/likes ?likes]
-                    [?r :tweet/retweets ?retweets]
-                    [?r :tweet/replies ?replies]
-                    [?r :tweet/user ?u]
-                    [?u :user/id ?user-id]
-                    [?r :reply/source-tweet ?s]
-                    [?s :tweet/id ?source-tweet-id]]])
+(def ^:private reply-rules '[[(get-reply-rule ?id ?user-id ?text ?created-at ?likes ?retweets ?replies ?source-tweet-id)
+                              [?r :tweet/id ?id]
+                              [?r :tweet/created-at ?created-at]
+                              [?r :tweet/text ?text]
+                              [?r :tweet/likes ?likes]
+                              [?r :tweet/retweets ?retweets]
+                              [?r :tweet/replies ?replies]
+                              [?r :tweet/user ?u]
+                              [?u :user/id ?user-id]
+                              [?r :reply/source-tweet ?s]
+                              [?s :tweet/id ?source-tweet-id]]])
 
-(def retweet-rules '[[(get-retweet-rule ?id ?user-id ?has-comment ?comment ?created-at ?source-tweet-id)
-                      [?rt :retweet/id ?id]
-                      [?rt :retweet/created-at ?created-at]
-                      [?rt :retweet/has-comment ?has-comment]
-                      [?rt :retweet/comment ?comment]
-                      [?rt :retweet/user ?u]
-                      [?u :user/id ?user-id]
-                      [?rt :retweet/source-tweet ?s]
-                      [?s :tweet/id ?source-tweet-id]]])
+(def ^:private retweet-rules '[[(get-retweet-rule ?id ?user-id ?has-comment ?comment ?created-at ?source-tweet-id)
+                                [?rt :retweet/id ?id]
+                                [?rt :retweet/created-at ?created-at]
+                                [?rt :retweet/has-comment ?has-comment]
+                                [?rt :retweet/comment ?comment]
+                                [?rt :retweet/user ?u]
+                                [?u :user/id ?user-id]
+                                [?rt :retweet/source-tweet ?s]
+                                [?s :tweet/id ?source-tweet-id]]])
 
-(def fetch-tweets-q
+(def ^:private fetch-tweets-q
   "[:find ?id ?user-id ?text ?created-at ?likes ?retweets ?replies
     :in $ % <params>
     :where
     (get-tweet-rule ?id ?user-id ?text ?created-at ?likes ?retweets ?replies)])")
 
-(def fetch-users-q
+(def ^:private fetch-users-q
   "[:find ?id ?active ?name ?email ?username
     :in $ % <params>
     :where
     (get-user-rule ?id ?active ?name ?email ?username)]")
 
-(def fetch-likes-q
+(def ^:private fetch-likes-q
   "[:find ?id ?created-at ?user-id ?source-tweet-id
     :in $ % <params>
     :where
     (get-like-rule ?id ?created-at ?user-id ?source-tweet-id)]")
 
-(def fetch-replies-q
+(def ^:private fetch-replies-q
   "[:find ?id ?user-id ?text ?created-at ?likes ?retweets ?replies
     :in $ % <params>
     :where
     (get-reply-rule ?id ?user-id ?text ?created-at ?likes ?retweets ?replies ?source-tweet-id)])")
 
-(def fetch-retweets-q
+(def ^:private fetch-retweets-q
   "[:find ?id ?user-id ?has-comment ?comment ?created-at ?source-tweet-id
     :in $ % <params>
     :where
     (get-retweet-rule ?id ?user-id ?has-comment ?comment ?created-at ?source-tweet-id)]")
 
-(def fetch-password-q
+(def ^:private fetch-password-q
   "[:find ?password
     :in $ % ?user-id
     :where
     [?u :user/id ?user-id]
     [?u :user/password ?password]]")
 
-(def fetch-session-q
+(def ^:private fetch-session-q
   "[:find ?id ?user-id ?created-at
     :in $ % <params>
     :where
@@ -121,38 +121,38 @@
     [?s :session/id ?id]
     [?s :session/created-at ?created-at]]")
 
-(defn v
+(defn- v
   "Transforms a keyword k into a Datomic query variable symbol, e.g.,
   (v :user-id) => ?user-id"
   [k]
   (symbol (str "?" (name k))))
 
-(defn make-query
+(defn- make-query
   "Makes a query by replacing the token '<params>' in q with a list of keyword params."
   [q params]
   (read-string (clojure.string/replace q #"<params>" (clojure.string/join " " (map v params)))))
 
-(defn map-if
+(defn- map-if
   "Applies f to each value of m if p, a function of key and value, is truthy."
   [m p f]
   (into {} (map (fn [[k v]] (if (p k v) [k (f v)] [k v])) m)))
 
-(defn map-uuid
+(defn- map-uuid
   "Converts each value of m into an UUID if the respective key is in the set ks."
   [m ks]
   (map-if m (fn [k _v] (k ks)) (fn [v] (UUID/fromString v))))
 
-(defn inst->ZonedDateTime
+(defn- inst->ZonedDateTime
   "Converts from java.time.Instant to java.time.ZonedDateTime."
   [inst]
   (ZonedDateTime/ofInstant (.toInstant inst) (ZoneId/systemDefault)))
 
-(defn ZonedDateTime->inst
+(defn- ZonedDateTime->inst
   "Converts from java.time.ZonedDateTime to java.util.Date (#inst)"
   [zdt]
   (Date/from (.toInstant zdt)))
 
-(defn make-tweet
+(defn- make-tweet
   [{:keys [id user-id text publish-date likes retweets replies]}]
   (let [uuid (UUID/fromString id)
         created-at (ZonedDateTime->inst publish-date)
@@ -165,7 +165,7 @@
             :replies    replies
             :user       [:user/id user-uuid]}))
 
-(defn make-user
+(defn- make-user
   [{:keys [id active name email username]}]
   (let [uuid (UUID/fromString id)]
     #:user{:id       uuid
@@ -174,7 +174,7 @@
            :email    email
            :username username}))
 
-(defn make-like
+(defn- make-like
   [{:keys [id created-at user-id source-tweet-id]}]
   (let [uuid (UUID/fromString id)
         created-at (ZonedDateTime->inst created-at)
@@ -185,13 +185,13 @@
            :user         [:user/id user-uuid]
            :source-tweet [:tweet/id source-tweet-uuid]}))
 
-(defn make-reply
+(defn- make-reply
   [source-tweet-id reply]
   (let [source-tweet-uuid (UUID/fromString source-tweet-id)]
     (-> (make-tweet reply)
         (assoc :reply/source-tweet [:tweet/id source-tweet-uuid]))))
 
-(defn make-retweet
+(defn- make-retweet
   [{:keys [id user-id has-comment comment publish-date source-tweet-id]}]
   (let [uuid (UUID/fromString id)
         created-at (ZonedDateTime->inst publish-date)
@@ -204,13 +204,13 @@
               :created-at   created-at
               :source-tweet [:tweet/id source-tweet-uuid]}))
 
-(defn make-password
+(defn- make-password
   [user-id password]
   (let [user-uuid (UUID/fromString user-id)]
     {:db/id         [:user/id user-uuid]
      :user/password password}))
 
-(defn make-session
+(defn- make-session
   [{:keys [:id :user-id :created-at]}]
   (let [session-uuid (UUID/fromString id)
         user-uuid (UUID/fromString user-id)

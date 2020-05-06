@@ -2,13 +2,13 @@
   (:require [com.stuartsierra.component :as component]
             [ring.middleware.defaults :refer :all]
             [taoensso.timbre :as log]
-            [twitter-clj.adapter.rest.component :refer [make-http-controller]]
+            [twitter-clj.adapter.http.component :refer [make-http-controller]]
             [twitter-clj.adapter.repository.datomic :refer [make-datomic-storage]]
             [twitter-clj.application.config :refer [datomic-uri init-system! http-port]]
             [twitter-clj.application.service :refer [make-service]])
   (:gen-class))
 
-(defn system-map
+(defn- system-map
   []
   (component/system-map
     :repository (make-datomic-storage datomic-uri)
@@ -19,13 +19,13 @@
                   (make-http-controller http-port)
                   [:service])))
 
-(defn on-exit
+(defn- on-exit
   [sys]
   (fn []
     (log/info "Stopping system")
     (component/stop sys)))
 
-(defn handle-sigint
+(defn- handle-sigint
   [on-exit sys]
   (.addShutdownHook (Runtime/getRuntime) (Thread. ^Runnable (on-exit sys))))
 

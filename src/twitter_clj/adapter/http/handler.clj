@@ -1,4 +1,4 @@
-(ns twitter-clj.adapter.rest.handler
+(ns twitter-clj.adapter.http.handler
   (:require [buddy.auth :refer [authenticated?]]
             [buddy.auth.backends :as backends]
             [buddy.auth.middleware :refer [wrap-authentication]]
@@ -7,7 +7,7 @@
             [taoensso.timbre :as log]
             [twitter-clj.application.config :refer [http-api-jws-secret]]
             [twitter-clj.application.service :as service]
-            [twitter-clj.adapter.rest.util :refer :all]
+            [twitter-clj.adapter.http.util :refer :all]
             [ring.middleware.defaults :refer [wrap-defaults api-defaults]]
             [ring.middleware.json :refer [wrap-json-body]])
   (:import [clojure.lang ExceptionInfo]))
@@ -159,7 +159,7 @@
   [failure-info]
   (update failure-info :type (fn [type] (clojure.string/replace (name type) #"-" " "))))
 
-(defn wrap-authenticated
+(defn- wrap-authenticated
   [handler service]
   (fn [request]
     (if (and (authenticated? request)
@@ -168,7 +168,7 @@
       (do (log-failure "User is not authenticated (missing authorization token or not logged in)")
           (unauthorized)))))
 
-(defn wrap-service-exception
+(defn- wrap-service-exception
   [handler]
   (fn [request]
     (try
@@ -180,7 +180,7 @@
                 (-> failure-info (format-failure-info) (bad-request)))
             (throw e)))))))
 
-(defn wrap-default-exception
+(defn- wrap-default-exception
   [handler]
   (fn [request]
     (try
@@ -191,29 +191,29 @@
 
 ;; Routes.
 
-(def jws-backend (backends/jws {:secret http-api-jws-secret
-                                :token-name "Bearer"
-                                :options {:alg :hs512}}))
+(def ^:private jws-backend (backends/jws {:secret http-api-jws-secret
+                                          :token-name "Bearer"
+                                          :options {:alg :hs512}}))
 
-(def routes-map {:get-tweet-by-id (path-prefix "/tweet/:tweet-id")
-                 :get-tweets-by-user-id (path-prefix "/user/:user-id/tweets")
-                 :get-user-by-id (path-prefix "/user/:user-id")
-                 :get-replies-by-tweet-id (path-prefix "/tweet/:tweet-id/replies")
-                 :get-retweets-by-tweet-id (path-prefix "/tweet/:tweet-id/retweets")
-                 :get-retweet-by-id (path-prefix "/retweet/:retweet-id")
-                 :add-tweet (path-prefix "/tweet")
-                 :add-reply (path-prefix "/tweet/:tweet-id/reply")
-                 :add-retweet (path-prefix "/tweet/:tweet-id/retweet")
-                 :add-retweet-with-comment (path-prefix "/tweet/:tweet-id/retweet-comment")
-                 :tweet-react (path-prefix "/tweet/:tweet-id/react")})
+(def ^:private routes-map {:get-tweet-by-id (path-prefix "/tweet/:tweet-id")
+                           :get-tweets-by-user-id (path-prefix "/user/:user-id/tweets")
+                           :get-user-by-id (path-prefix "/user/:user-id")
+                           :get-replies-by-tweet-id (path-prefix "/tweet/:tweet-id/replies")
+                           :get-retweets-by-tweet-id (path-prefix "/tweet/:tweet-id/retweets")
+                           :get-retweet-by-id (path-prefix "/retweet/:retweet-id")
+                           :add-tweet (path-prefix "/tweet")
+                           :add-reply (path-prefix "/tweet/:tweet-id/reply")
+                           :add-retweet (path-prefix "/tweet/:tweet-id/retweet")
+                           :add-retweet-with-comment (path-prefix "/tweet/:tweet-id/retweet-comment")
+                           :tweet-react (path-prefix "/tweet/:tweet-id/react")})
 
-(defn- public-routes
+(defn public-routes
   [service]
   (compojure.core/routes
     (POST (path-prefix "/login") req (login req service))
     (POST (path-prefix "/signup") req (signup req service))))
 
-(defn- user-routes
+(defn user-routes
   [service]
   (compojure.core/routes
     (POST (path-prefix "/logout") req (logout req service))

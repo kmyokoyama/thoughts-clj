@@ -1,13 +1,13 @@
-(ns twitter-clj.adapter.rest.component
+(ns twitter-clj.adapter.http.component
   (:require [com.stuartsierra.component :as component]
             [org.httpkit.server :as server]
             [taoensso.timbre :as log]
-            [twitter-clj.adapter.rest.handler :refer [handler]]))
+            [twitter-clj.adapter.http.handler :refer [handler]]))
 
 (defrecord HttpServer [port http-server service]
   component/Lifecycle
   (start [this]
-    (log/info "Starting HTTP server at port" port)
+    (log/info "Starting HTTP server on port" port)
     (assoc this :http-server
                 (server/run-server (handler service) {:port port})))
 

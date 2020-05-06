@@ -1,4 +1,4 @@
-(ns twitter-clj.adapter.rest.util
+(ns twitter-clj.adapter.http.util
   (:require [buddy.sign.jwt :as jwt]
             [clojure.data.json :as json]
             [taoensso.timbre :as log]

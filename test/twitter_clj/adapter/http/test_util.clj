@@ -1,14 +1,14 @@
-(ns twitter-clj.adapter.rest.test-util
+(ns twitter-clj.adapter.http.test-util
   (:require [clojure.test :refer :all]
             [clj-http.client :as client]
             [clojure.data.json :as json]
-            [twitter-clj.adapter.rest.util :refer [path-prefix]]))
+            [twitter-clj.adapter.http.util :refer [path-prefix]]))
 
 ;; REST API.
 
 ;; Wrappers for requests.
 
-(def unexceptional-status #(or (<= 200 % 299) (<= 400 % 401)))
+(def ^:private unexceptional-status #(or (<= 200 % 299) (<= 400 % 401)))
 
 (defn get
   ([url token]

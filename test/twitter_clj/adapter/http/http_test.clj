@@ -1,4 +1,4 @@
-(ns twitter-clj.adapter.rest.rest-test
+(ns twitter-clj.adapter.http.http-test
   (:require [clojure.test :refer :all]
             [com.stuartsierra.component :as component]
             [twitter-clj.application.test-util :refer :all]
@@ -8,12 +8,12 @@
                                                             load-schema]]
             [twitter-clj.application.config :refer [datomic-uri http-port]]
             [twitter-clj.application.service :refer [make-service]]
-            [twitter-clj.adapter.rest.component :refer [make-http-controller]]
-            [twitter-clj.adapter.rest.test-util :refer :all]))
+            [twitter-clj.adapter.http.component :refer [make-http-controller]]
+            [twitter-clj.adapter.http.test-util :refer :all]))
 
-(def ^:const url (str "http://localhost:" http-port))
+(def ^:private ^:const url (str "http://localhost:" http-port))
 
-(def resource (partial resource-path url))
+(def ^:private resource (partial resource-path url))
 
 (defn- test-system-map
   []
