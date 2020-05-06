@@ -2,9 +2,8 @@
   (:require [clojure.test :refer :all]
             [com.stuartsierra.component :as component]
             [twitter-clj.application.test-util :refer :all]
-            [twitter-clj.adapter.repository.datomic :refer [create-database
-                                                            delete-database
-                                                            make-datomic-storage
+            [twitter-clj.adapter.repository.datomic :refer [delete-database
+                                                            make-datomic-repository
                                                             load-schema]]
             [twitter-clj.application.config :refer [datomic-uri http-port]]
             [twitter-clj.application.service :refer [make-service]]
@@ -18,7 +17,7 @@
 (defn- test-system-map
   []
   (component/system-map
-    :repository (make-datomic-storage datomic-uri)
+    :repository (make-datomic-repository datomic-uri)
     :service (component/using
                (make-service)
                [:repository])
@@ -28,7 +27,6 @@
 
 (defn- start-test-system
   []
-  (create-database datomic-uri)
   (let [sys (component/start (test-system-map))
         conn (get-in sys [:repository :conn])]
     (load-schema conn "schema.edn")

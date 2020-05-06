@@ -18,9 +18,9 @@
 
 ;; Driven-side.
 
-(defrecord InMemoryStorage [users tweets likes retweets
-                            join-tweet-likes join-tweet-replies join-tweet-retweets
-                            passwords sessions]
+(defrecord InMemoryRepository [users tweets likes retweets
+                               join-tweet-likes join-tweet-replies join-tweet-retweets
+                               passwords sessions]
   component/Lifecycle
   (start [this]
     (log/info "Starting in-memory database")
@@ -109,14 +109,14 @@
          (map :id)
          (map (fn [session-id] (swap! sessions dissoc session-id))))))
 
-(defn make-in-mem-storage                                   ;; Constructor.
+(defn make-in-mem-repository                                ;; Constructor.
   []
-  (map->InMemoryStorage {:passwords           (atom {})
-                         :sessions            (atom {})
-                         :users               (atom {})
-                         :tweets              (atom {})
-                         :retweets            (atom {})
-                         :likes               (atom {})
-                         :join-tweet-likes    (atom {})
-                         :join-tweet-replies  (atom {})
-                         :join-tweet-retweets (atom {})}))
+  (map->InMemoryRepository {:passwords           (atom {})
+                            :sessions            (atom {})
+                            :users               (atom {})
+                            :tweets              (atom {})
+                            :retweets            (atom {})
+                            :likes               (atom {})
+                            :join-tweet-likes    (atom {})
+                            :join-tweet-replies  (atom {})
+                            :join-tweet-retweets (atom {})}))

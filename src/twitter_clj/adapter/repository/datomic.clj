@@ -8,10 +8,6 @@
   (:import [java.util Date UUID]
            [java.time ZonedDateTime ZoneId]))
 
-(defn create-database
-  [uri]
-  (d/create-database uri))
-
 (defn delete-database
   [uri]
   (d/delete-database uri))
@@ -219,17 +215,19 @@
      :session/user       [:user/id user-uuid]
      :session/created-at created-at-inst}))
 
-(defrecord DatomicStorage [uri conn]
+(defrecord DatomicRepository [uri conn]
   component/Lifecycle
   (start
     [this]
-    (log/info "Starting Datomic storage")
-    (let [connection (d/connect uri)]
-      (assoc this :conn connection)))
+    (log/info "Starting Datomic repository")
+    (if (d/create-database uri)
+      (log/info "Creating database")
+      (log/info "Database already exists"))
+    (assoc this :conn (d/connect uri)))
 
   (stop
     [_this]
-    (log/info "Stopping Datomic storage"))
+    (log/info "Stopping Datomic repository"))
 
   repository/Repository
   (update-tweet!
@@ -383,6 +381,6 @@
          (map (fn [uuid] [:db/retractEntity [:session/id uuid]]))
          (do-transaction conn))))
 
-(defn make-datomic-storage
+(defn make-datomic-repository
   [uri]
-  (map->DatomicStorage {:uri uri}))
+  (map->DatomicRepository {:uri uri}))

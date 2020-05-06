@@ -3,7 +3,7 @@
             [ring.middleware.defaults :refer :all]
             [taoensso.timbre :as log]
             [twitter-clj.adapter.http.component :refer [make-http-controller]]
-            [twitter-clj.adapter.repository.datomic :refer [make-datomic-storage]]
+            [twitter-clj.adapter.repository.datomic :refer [make-datomic-repository]]
             [twitter-clj.application.config :refer [datomic-uri init-system! http-port]]
             [twitter-clj.application.service :refer [make-service]])
   (:gen-class))
@@ -11,7 +11,7 @@
 (defn- system-map
   []
   (component/system-map
-    :repository (make-datomic-storage datomic-uri)
+    :repository (make-datomic-repository datomic-uri)
     :service (component/using
                (make-service)
                [:repository])

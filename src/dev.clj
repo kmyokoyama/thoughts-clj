@@ -1,9 +1,8 @@
 (ns dev
   (:require [datomic.api :as d]
             [com.stuartsierra.component :as component]
-            [twitter-clj.adapter.repository.datomic :refer [create-database
-                                                            delete-database
-                                                            make-datomic-storage
+            [twitter-clj.adapter.repository.datomic :refer [delete-database
+                                                            make-datomic-repository
                                                             load-schema]]
             [twitter-clj.application.service :refer [make-service]]))
 
@@ -22,7 +21,7 @@
 (defn dev-system-map
   [config]
   (component/system-map
-    :repository (make-datomic-storage (:db-uri config))
+    :repository (make-datomic-repository (:db-uri config))
     :service (component/using
                (make-service)
                [:repository])))
@@ -32,7 +31,6 @@
    (start-dev-system dev-config))
 
   ([config]
-   (create-database (:db-uri config))
    (let [sys (component/start (dev-system-map config))
          conn (get-in sys [:repository :conn])]
      (load-schema conn "schema.edn")
