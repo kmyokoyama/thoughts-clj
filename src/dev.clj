@@ -1,6 +1,6 @@
 (ns dev
   (:require [clojure.java.io :as io]
-            [datomic.client.api :as d]
+            [datomic.api :as d]
             [com.stuartsierra.component :as component]
             [twitter-clj.adapter.repository.datomic :refer [make-datomic-storage]]
             [twitter-clj.application.service :refer [make-service]]))
@@ -18,6 +18,7 @@
 
 (defn start-system-dev
   ([]
+   (d/create-database "datomic:mem://hello")
    (start-system-dev {}))
 
   ([config-dev]

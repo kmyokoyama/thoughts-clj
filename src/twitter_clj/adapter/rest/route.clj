@@ -10,7 +10,7 @@
   [service]
   (compojure.core/routes
     (POST (path-prefix "/login") req (login req service))
-    (POST (path-prefix "/user") req (add-user req service))))
+    (POST (path-prefix "/signup") req (signup req service))))
 
 (defn user-routes
   [service]

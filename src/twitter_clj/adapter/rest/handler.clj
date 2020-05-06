@@ -32,7 +32,7 @@
     (service/logout service user-id)
     (ok-with-success {:status "logged out"})))
 
-(defn add-user
+(defn signup
   [req service]
   (let [{:keys [name email username password]} (:body req)]
     (let [user (service/add-user service name email username password)
