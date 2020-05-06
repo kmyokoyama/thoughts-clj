@@ -1,4 +1,6 @@
-{twitter-clj.application.config/http-port 3000
+{twitter-clj.application.config/http-host "127.0.0.1"
+ twitter-clj.application.config/http-port 3000
  twitter-clj.application.config/http-api-version "v1"
  twitter-clj.application.config/http-api-path-prefix "api"
- twitter-clj.application.config/http-api-jws-secret "123"}
+ twitter-clj.application.config/http-api-jws-secret "123"
+ twitter-clj.application.config/datomic-uri "datomic:mem://hello"}

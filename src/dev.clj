@@ -1,59 +1,58 @@
 (ns dev
-  (:require [clojure.java.io :as io]
-            [datomic.api :as d]
+  (:require [datomic.api :as d]
             [com.stuartsierra.component :as component]
-            [twitter-clj.adapter.repository.datomic :refer [make-datomic-storage]]
+            [twitter-clj.adapter.repository.datomic :refer [delete-database
+                                                            make-datomic-repository
+                                                            load-schema]]
             [twitter-clj.application.service :refer [make-service]]))
 
-;; Component.
+;; To remember:
+
+;(require '[twitter-clj.application.core :as core])
+;(require '[twitter-clj.application.port.repository :refer :all])
+;(def sys (start-dev-system))
+;(def conn (get-conn sys))
+;(def db (get-db sys))
+;(def repository (get-in sys [:repository]))
+
+(def dev-config {:db-uri "datomic:mem://hello"})
 
 ;; System without API (or any driver-side).
-(defn system-dev
-  [_config-dev]
+(defn dev-system-map
+  [config]
   (component/system-map
-    :repository (make-datomic-storage)
+    :repository (make-datomic-repository (:db-uri config))
     :service (component/using
                (make-service)
                [:repository])))
 
-(defn start-system-dev
+(defn start-dev-system
   ([]
-   (d/create-database "datomic:mem://hello")
-   (start-system-dev {}))
+   (start-dev-system dev-config))
 
-  ([config-dev]
-   (let [s (component/start (system-dev config-dev))
-         c (get-in s [:repository :conn])
-         d (d/db c)]
-     (def sys (atom nil))
-     (def conn (atom nil))
-     (def db (atom nil))
-     (reset! sys s)
-     (reset! conn c)
-     (reset! db d))))
+  ([config]
+   (let [sys (component/start (dev-system-map config))
+         conn (get-in sys [:repository :conn])]
+     (load-schema conn "schema.edn")
+     sys)))
 
-(defn reload
-  []
-  (reset! conn (get-in @sys [:repository :conn]))
-  (reset! db (d/db @conn)))
+(defn stop-dev-system
+  [sys]
+  (delete-database (:db-uri dev-config))
+  (component/stop sys))
 
-;; Util.
+(defn get-conn
+  [sys]
+  (get-in sys [:repository :conn]))
 
-(defn load-schema
-  ([]
-   (load-schema @conn "schema.edn"))
-
-  ([conn resource]
-   (let [m (-> resource io/resource slurp read-string)]
-     (doseq [v (vals m)]
-       (doseq [tx v]
-         (println tx)
-         (d/transact conn {:tx-data tx}))))))
+(defn get-db
+  [sys]
+  (-> sys (get-conn) (d/db)))
 
 (defn find-by-eid
-  [eid]
+  [db eid]
   (d/q '[:find ?attr ?v
          :in $ ?eid
          :where
          [?eid ?a ?v]
-         [?a :db/ident ?attr]] @db eid))
+         [?a :db/ident ?attr]] db eid))

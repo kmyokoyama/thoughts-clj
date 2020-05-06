@@ -1,47 +1,47 @@
-(ns twitter-clj.adapter.rest.rest-test
+(ns twitter-clj.adapter.http.http-test
   (:require [clojure.test :refer :all]
             [com.stuartsierra.component :as component]
-            [datomic.api :as d]
-            [twitter-clj.application.config :refer [system-config]]
             [twitter-clj.application.test-util :refer :all]
-            [twitter-clj.adapter.repository.datomic :refer [make-datomic-storage load-schema]]
+            [twitter-clj.adapter.repository.datomic :refer [delete-database
+                                                            make-datomic-repository
+                                                            load-schema]]
+            [twitter-clj.application.config :refer [datomic-uri http-host http-port]]
             [twitter-clj.application.service :refer [make-service]]
-            [twitter-clj.adapter.rest.component :refer [make-http-controller]]
-            [twitter-clj.adapter.rest.test-util :refer :all]))
+            [twitter-clj.adapter.http.component :refer [make-http-controller]]
+            [twitter-clj.adapter.http.test-util :refer :all]))
 
-(def ^:const port (get-in system-config [:http :port]))
-(def ^:const url (str "http://localhost:" port))
+(def ^:private ^:const url (str "http://" http-host ":" http-port))
 
-(def resource (partial resource-path url))
+(def ^:private resource (partial resource-path url))
 
-(defn- test-system
-  [system-config]
+(defn- test-system-map
+  []
   (component/system-map
-    :repository (make-datomic-storage)
+    :repository (make-datomic-repository datomic-uri)
     :service (component/using
                (make-service)
                [:repository])
     :controller (component/using
-                  (make-http-controller (:http system-config))
+                  (make-http-controller http-host http-port)
                   [:service])))
 
-(defn- start-test-system!
-  [system-config]
-  (d/create-database "datomic:mem://hello")
-  (let [system (component/start (test-system system-config))]
-    (load-schema (get-in system [:repository :conn]) "schema.edn")
-    system))
+(defn- start-test-system
+  []
+  (let [sys (component/start (test-system-map))
+        conn (get-in sys [:repository :conn])]
+    (load-schema conn "schema.edn")
+    sys))
 
-(defn- stop-test-system! [system]
-  (d/delete-database "datomic:mem://hello")
+(defn- stop-test-system [system]
+  (delete-database datomic-uri)
   (component/stop system))
 
-(use-fixtures :once (fn [f]
-                      (let [system (start-test-system! system-config)]
+(use-fixtures :each (fn [f]
+                      (let [sys (start-test-system)]
                         (f)
-                        (stop-test-system! system))))
+                        (stop-test-system sys))))
 
-(defn- signup-and-login                                ;; TODO: Move it.
+(defn- signup-and-login                                     ;; TODO: Move it.
   ([]
    (let [user (random-user)
          password (:password user)
