@@ -223,7 +223,12 @@
     (if (d/create-database uri)
       (log/info "Creating database")
       (log/info "Database already exists"))
-    (assoc this :conn (d/connect uri)))
+    (let [conn (d/connect uri)]
+      (if (clojure.string/starts-with? uri "datomic:mem")
+        (do
+          (log/info "Loading schema into database")
+          (load-schema conn "schema.edn")))
+      (assoc this :conn conn)))
 
   (stop
     [_this]

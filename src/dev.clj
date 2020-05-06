@@ -1,6 +1,7 @@
 (ns dev
   (:require [datomic.api :as d]
             [com.stuartsierra.component :as component]
+            [twitter-clj.application.config :refer [datomic-uri]]
             [twitter-clj.adapter.repository.datomic :refer [delete-database
                                                             make-datomic-repository
                                                             load-schema]]
@@ -15,30 +16,25 @@
 ;(def db (get-db sys))
 ;(def repository (get-in sys [:repository]))
 
-(def dev-config {:db-uri "datomic:mem://hello"})
-
 ;; System without API (or any driver-side).
 (defn dev-system-map
-  [config]
+  []
   (component/system-map
-    :repository (make-datomic-repository (:db-uri config))
+    :repository (make-datomic-repository datomic-uri)
     :service (component/using
                (make-service)
                [:repository])))
 
 (defn start-dev-system
-  ([]
-   (start-dev-system dev-config))
-
-  ([config]
-   (let [sys (component/start (dev-system-map config))
-         conn (get-in sys [:repository :conn])]
-     (load-schema conn "schema.edn")
-     sys)))
+  []
+  (let [sys (component/start (dev-system-map))
+        conn (get-in sys [:repository :conn])]
+    (load-schema conn "schema.edn")
+    sys))
 
 (defn stop-dev-system
   [sys]
-  (delete-database (:db-uri dev-config))
+  (delete-database datomic-uri)
   (component/stop sys))
 
 (defn get-conn

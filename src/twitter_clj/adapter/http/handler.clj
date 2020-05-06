@@ -186,7 +186,8 @@
     (try
       (handler request)
       (catch Exception e
-        (log/debug e)
+        (log/debug (.getMessage e))
+        (.printStackTrace e)
         (ok-with-failure {:type "unknown error" :cause (.getMessage e)})))))
 
 ;; Routes.
