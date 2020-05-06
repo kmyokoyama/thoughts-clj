@@ -5,12 +5,12 @@
             [twitter-clj.adapter.repository.datomic :refer [delete-database
                                                             make-datomic-repository
                                                             load-schema]]
-            [twitter-clj.application.config :refer [datomic-uri http-port]]
+            [twitter-clj.application.config :refer [datomic-uri http-host http-port]]
             [twitter-clj.application.service :refer [make-service]]
             [twitter-clj.adapter.http.component :refer [make-http-controller]]
             [twitter-clj.adapter.http.test-util :refer :all]))
 
-(def ^:private ^:const url (str "http://localhost:" http-port))
+(def ^:private ^:const url (str "http://" http-host ":" http-port))
 
 (def ^:private resource (partial resource-path url))
 
@@ -22,7 +22,7 @@
                (make-service)
                [:repository])
     :controller (component/using
-                  (make-http-controller http-port)
+                  (make-http-controller http-host http-port)
                   [:service])))
 
 (defn- start-test-system

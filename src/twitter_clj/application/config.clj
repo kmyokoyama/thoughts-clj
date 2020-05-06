@@ -2,6 +2,7 @@
   (:require [outpace.config :refer [defconfig]]
             [taoensso.timbre :as log]))
 
+(defconfig http-host)
 (defconfig http-port)
 (defconfig http-api-version)
 (defconfig http-api-path-prefix)

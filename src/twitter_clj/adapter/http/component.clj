@@ -4,12 +4,12 @@
             [taoensso.timbre :as log]
             [twitter-clj.adapter.http.handler :refer [handler]]))
 
-(defrecord HttpServer [port http-server service]
+(defrecord HttpServer [host port http-server service]
   component/Lifecycle
   (start [this]
-    (log/info "Starting HTTP server on port" port)
+    (log/info "Starting HTTP server on" (str "http://" host ":" port))
     (assoc this :http-server
-                (server/run-server (handler service) {:port port})))
+                (server/run-server (handler service) {:ip host :port port})))
 
   (stop [this]
     (log/info "Stopping HTTP server" port)
@@ -18,5 +18,5 @@
       this)))
 
 (defn make-http-controller ;; Constructor.
-  [port]
-  (map->HttpServer {:port port}))
+  [host port]
+  (map->HttpServer {:host host :port port}))
