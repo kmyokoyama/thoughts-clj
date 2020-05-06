@@ -1,5 +1,5 @@
 (ns twitter-clj.adapter.repository.datomic
-  (:require [datomic.client.api :as d]
+  (:require [datomic.api :as d]
             [com.stuartsierra.component :as component]
             [taoensso.timbre :as log]
             [twitter-clj.application.core :refer :all]
@@ -8,22 +8,18 @@
   (:import [java.util Date UUID]
            [java.time ZonedDateTime ZoneId]))
 
-(def cfg {:server-type        :peer-server
-          :access-key         "myaccesskey"
-          :secret             "mysecret"
-          :endpoint           "localhost:8998"
-          :validate-hostnames false})
+(def db-uri "datomic:mem://hello")
 
 (defn load-schema
   [conn resource]
   (let [m (-> resource io/resource slurp read-string)]
     (doseq [v (vals m)]
       (doseq [tx v]
-        (d/transact conn {:tx-data tx})))))
+        (d/transact conn tx)))))
 
 (defn do-transaction
   [conn tx]
-  (d/transact conn {:tx-data tx}))
+  (d/transact conn tx))
 
 (def tweet-rules '[[(get-tweet-rule ?id ?user-id ?text ?created-at ?likes ?retweets ?replies)
                     [?t :tweet/id ?id]
@@ -222,7 +218,7 @@
   (start
     [this]
     (log/info "Starting Datomic storage")
-    (let [connection (d/connect (d/client cfg) {:db-name "hello"})]
+    (let [connection (d/connect db-uri)]
       (assoc this :conn connection)))
 
   (stop
