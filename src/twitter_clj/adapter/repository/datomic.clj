@@ -8,7 +8,13 @@
   (:import [java.util Date UUID]
            [java.time ZonedDateTime ZoneId]))
 
-(def db-uri "datomic:mem://hello")
+(defn create-database
+  [uri]
+  (d/create-database uri))
+
+(defn delete-database
+  [uri]
+  (d/delete-database uri))
 
 (defn load-schema
   [conn resource]
@@ -213,12 +219,12 @@
      :session/user       [:user/id user-uuid]
      :session/created-at created-at-inst}))
 
-(defrecord DatomicStorage [conn]
+(defrecord DatomicStorage [conn uri]
   component/Lifecycle
   (start
     [this]
     (log/info "Starting Datomic storage")
-    (let [connection (d/connect db-uri)]
+    (let [connection (d/connect uri)]
       (assoc this :conn connection)))
 
   (stop
@@ -378,5 +384,5 @@
          (do-transaction conn))))
 
 (defn make-datomic-storage
-  []
-  (->DatomicStorage {}))
+  [uri]
+  (map->DatomicStorage {:uri uri}))

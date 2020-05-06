@@ -4,20 +4,24 @@
             [datomic.api :as d]
             [twitter-clj.application.config :refer [system-config]]
             [twitter-clj.application.test-util :refer :all]
-            [twitter-clj.adapter.repository.datomic :refer [make-datomic-storage load-schema]]
+            [twitter-clj.adapter.repository.datomic :refer [create-database
+                                                            delete-database
+                                                            make-datomic-storage
+                                                            load-schema]]
             [twitter-clj.application.service :refer [make-service]]
             [twitter-clj.adapter.rest.component :refer [make-http-controller]]
             [twitter-clj.adapter.rest.test-util :refer :all]))
 
 (def ^:const port (get-in system-config [:http :port]))
 (def ^:const url (str "http://localhost:" port))
+(def ^:const db-uri "datomic:mem://hello")
 
 (def resource (partial resource-path url))
 
 (defn- test-system
   [system-config]
   (component/system-map
-    :repository (make-datomic-storage)
+    :repository (make-datomic-storage db-uri)
     :service (component/using
                (make-service)
                [:repository])
@@ -25,23 +29,24 @@
                   (make-http-controller (:http system-config))
                   [:service])))
 
-(defn- start-test-system!
+(defn- start-test-system
   [system-config]
-  (d/create-database "datomic:mem://hello")
-  (let [system (component/start (test-system system-config))]
-    (load-schema (get-in system [:repository :conn]) "schema.edn")
+  (create-database db-uri)
+  (let [system (component/start (test-system system-config))
+        conn (get-in system [:repository :conn])]
+    (load-schema conn "schema.edn")
     system))
 
-(defn- stop-test-system! [system]
-  (d/delete-database "datomic:mem://hello")
+(defn- stop-test-system [system]
+  (delete-database db-uri)
   (component/stop system))
 
 (use-fixtures :once (fn [f]
-                      (let [system (start-test-system! system-config)]
+                      (let [sys (start-test-system system-config)]
                         (f)
-                        (stop-test-system! system))))
+                        (stop-test-system sys))))
 
-(defn- signup-and-login                                ;; TODO: Move it.
+(defn- signup-and-login                                     ;; TODO: Move it.
   ([]
    (let [user (random-user)
          password (:password user)
