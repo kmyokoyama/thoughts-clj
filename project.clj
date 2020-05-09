@@ -9,7 +9,8 @@
                                   [clj-http "3.10.0"]
                                   [midje "1.9.9"]
                                   [faker "0.2.2"]]
-                   :plugins [[lein-midje "3.2.1"]]
+                   :plugins [[lein-midje "3.2.1"]
+                             [lein-auto "0.1.3"]]
                    :jvm-opts ["-Dconfig.edn=resources/dev-config.edn"]}}
   :dependencies [[buddy/buddy-auth "2.2.0"]
                  [buddy/buddy-hashers "1.4.0"]
