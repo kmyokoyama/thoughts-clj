@@ -192,21 +192,21 @@
 
 ;; Routes.
 
-(def ^:private jws-backend (backends/jws {:secret http-api-jws-secret
+(def ^:private jws-backend (backends/jws {:secret     http-api-jws-secret
                                           :token-name "Bearer"
-                                          :options {:alg :hs512}}))
+                                          :options    {:alg :hs512}}))
 
-(def ^:private routes-map {:get-tweet-by-id (path-prefix "/tweet/:tweet-id")
-                           :get-tweets-by-user-id (path-prefix "/user/:user-id/tweets")
-                           :get-user-by-id (path-prefix "/user/:user-id")
-                           :get-replies-by-tweet-id (path-prefix "/tweet/:tweet-id/replies")
+(def ^:private routes-map {:get-tweet-by-id          (path-prefix "/tweet/:tweet-id")
+                           :get-tweets-by-user-id    (path-prefix "/user/:user-id/tweets")
+                           :get-user-by-id           (path-prefix "/user/:user-id")
+                           :get-replies-by-tweet-id  (path-prefix "/tweet/:tweet-id/replies")
                            :get-retweets-by-tweet-id (path-prefix "/tweet/:tweet-id/retweets")
-                           :get-retweet-by-id (path-prefix "/retweet/:retweet-id")
-                           :add-tweet (path-prefix "/tweet")
-                           :add-reply (path-prefix "/tweet/:tweet-id/reply")
-                           :add-retweet (path-prefix "/tweet/:tweet-id/retweet")
+                           :get-retweet-by-id        (path-prefix "/retweet/:retweet-id")
+                           :add-tweet                (path-prefix "/tweet")
+                           :add-reply                (path-prefix "/tweet/:tweet-id/reply")
+                           :add-retweet              (path-prefix "/tweet/:tweet-id/retweet")
                            :add-retweet-with-comment (path-prefix "/tweet/:tweet-id/retweet-comment")
-                           :tweet-react (path-prefix "/tweet/:tweet-id/react")})
+                           :tweet-react              (path-prefix "/tweet/:tweet-id/react")})
 
 (defn public-routes
   [service]

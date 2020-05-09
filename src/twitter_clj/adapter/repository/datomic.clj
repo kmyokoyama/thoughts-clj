@@ -276,15 +276,15 @@
       (let [mc (map-uuid criteria #{:id :user-id})
             params (keys mc)
             params-val (vals mc)]
-        (as-> (apply (partial d/q
-                              (make-query fetch-tweets-q params)
-                              db
-                              tweet-rules)
-                     params-val) results
-              (map (fn [result] (apply ->Tweet result)) results)
-              (map (fn [result] (update result :publish-date inst->ZonedDateTime)) results)
-              (map (fn [result] (update result :id str)) results)
-              (map (fn [result] (update result :user-id str)) results)))))
+        (->> (apply (partial d/q
+                             (make-query fetch-tweets-q params)
+                             db
+                             tweet-rules)
+                    params-val)
+             (map (fn [result] (apply ->Tweet result)))
+             (map (fn [result] (update result :publish-date inst->ZonedDateTime)))
+             (map (fn [result] (update result :id str)))
+             (map (fn [result] (update result :user-id str)))))))
 
   (fetch-users!
     [_ criteria]
@@ -292,13 +292,13 @@
       (let [mc (map-uuid criteria #{:id})
             params (keys mc)
             params-val (vals mc)]
-        (as-> (apply (partial d/q
-                              (make-query fetch-users-q params)
-                              db
-                              user-rules)
-                     params-val) results
-              (map (fn [result] (apply ->User result)) results)
-              (map (fn [result] (update result :id str)) results)))))
+        (->> (apply (partial d/q
+                             (make-query fetch-users-q params)
+                             db
+                             user-rules)
+                    params-val)
+             (map (fn [result] (apply ->User result)))
+             (map (fn [result] (update result :id str)))))))
 
   (fetch-likes!
     [_ criteria]
@@ -306,15 +306,15 @@
       (let [mc (map-uuid criteria #{:id :user-id :source-tweet-id})
             params (keys mc)
             params-val (vals mc)]
-        (as-> (apply (partial d/q
-                              (make-query fetch-likes-q params)
-                              db
-                              like-rules)
-                     params-val) results
-              (map (fn [result] (apply ->TweetLike result)) results)
-              (map (fn [result] (update result :id str)) results)
-              (map (fn [result] (update result :user-id str)) results)
-              (map (fn [result] (update result :source-tweet-id str)) results)))))
+        (->> (apply (partial d/q
+                             (make-query fetch-likes-q params)
+                             db
+                             like-rules)
+                    params-val)
+             (map (fn [result] (apply ->TweetLike result)))
+             (map (fn [result] (update result :id str)))
+             (map (fn [result] (update result :user-id str)))
+             (map (fn [result] (update result :source-tweet-id str)))))))
 
   (fetch-replies!
     [_ criteria]
@@ -322,15 +322,15 @@
       (let [mc (map-uuid criteria #{:id :user-id :source-tweet-id})
             params (keys mc)
             params-val (vals mc)]
-        (as-> (apply (partial d/q
-                              (make-query fetch-replies-q params)
-                              db
-                              reply-rules)
-                     params-val) results
-              (map (fn [result] (apply ->Tweet result)) results)
-              (map (fn [result] (update result :publish-date inst->ZonedDateTime)) results)
-              (map (fn [result] (update result :id str)) results)
-              (map (fn [result] (update result :user-id str)) results)))))
+        (->> (apply (partial d/q
+                             (make-query fetch-replies-q params)
+                             db
+                             reply-rules)
+                    params-val)
+             (map (fn [result] (apply ->Tweet result)))
+             (map (fn [result] (update result :publish-date inst->ZonedDateTime)))
+             (map (fn [result] (update result :id str)))
+             (map (fn [result] (update result :user-id str)))))))
 
   (fetch-retweets!
     [_ criteria]
@@ -338,15 +338,15 @@
       (let [mc (map-uuid criteria #{:id :user-id :source-tweet-id})
             params (keys mc)
             params-val (vals mc)]
-        (as-> (apply (partial d/q
-                              (make-query fetch-retweets-q params)
-                              db
-                              retweet-rules)
-                     params-val) results
-              (map (fn [result] (apply ->Retweet result)) results)
-              (map (fn [result] (update result :id str)) results)
-              (map (fn [result] (update result :user-id str)) results)
-              (map (fn [result] (update result :source-tweet-id str)) results)))))
+        (->> (apply (partial d/q
+                             (make-query fetch-retweets-q params)
+                             db
+                             retweet-rules)
+                    params-val)
+             (map (fn [result] (apply ->Retweet result)))
+             (map (fn [result] (update result :id str)))
+             (map (fn [result] (update result :user-id str)))
+             (map (fn [result] (update result :source-tweet-id str)))))))
 
   (fetch-password!
     [_ user-id]
@@ -360,15 +360,15 @@
       (let [mc (map-uuid criteria #{:id :user-id :source-tweet-id})
             params (keys mc)
             params-val (vals mc)]
-        (as-> (apply (partial d/q
-                              (make-query fetch-session-q params)
-                              db
-                              retweet-rules)
-                     params-val) results
-              (map (fn [result] (apply ->Session result)) results)
-              (map (fn [result] (update result :id str)) results)
-              (map (fn [result] (update result :user-id str)) results)
-              (map (fn [result] (update result :created-at inst->ZonedDateTime)) results)))))
+        (->> (apply (partial d/q
+                             (make-query fetch-session-q params)
+                             db
+                             retweet-rules)
+                    params-val)
+             (map (fn [result] (apply ->Session result)))
+             (map (fn [result] (update result :id str)))
+             (map (fn [result] (update result :user-id str)))
+             (map (fn [result] (update result :created-at inst->ZonedDateTime)))))))
 
   (remove-like!
     [this criteria]
