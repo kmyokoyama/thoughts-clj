@@ -1,4 +1,4 @@
-# twitter-clj [![GitHub](https://img.shields.io/github/license/kmyokoyama/twitter-clj?color=green)](https://choosealicense.com/licenses/mit/)
+# twitter-clj [![GitHub](https://img.shields.io/badge/docs-apiary-brightgreen)](https://twitterclj.docs.apiary.io/#) [![GitHub](https://img.shields.io/github/license/kmyokoyama/twitter-clj?color=green)](https://choosealicense.com/licenses/mit/)
 
 Twitter-clone API for experimentation with Clojure.
 
