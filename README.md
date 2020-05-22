@@ -16,13 +16,11 @@ If you have any suggestions, feel free to open an issue!
 
 For development (ironically, its main use case), we don't even need a running instance of Datomic, since the API uses an in-memory Datomic database.
 
-To run the API:
+You can start the API by simply running:
 
 ```bash
 $ lein run
 ```
-
-Configuration is specified at `resources/dev-config.edn`.
 
 To run tests:
 
@@ -30,9 +28,17 @@ To run tests:
 $ lein test
 ```
 
+Configuration is specified at `resources/dev-config.edn`.
+
 ## API
 
 [Check out the current API documentation available on Apiary](https://twitterclj.docs.apiary.io/#).
+
+## Features
+
+* Basic Twitter API (signup, login, logout, tweet, retweet, like and unlike).
+* HATEOAS makes it easy to follow related resources.
+* JWS authentication and authorization.
 
 ## License
 
