@@ -332,7 +332,7 @@
     (let [{:keys [token]} (signup-and-login)
           tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)
           retweet-id (-> (post-and-parse (resource (str "tweet/" tweet-id "/retweet")) token {}) :result :id)
-          {:keys [response body result]} (get-and-parse (resource (str "tweet/retweets/" retweet-id)) token)]
+          {:keys [response body result]} (get-and-parse (resource (str "retweet/" retweet-id)) token)]
       (is (= 200 (:status response)))                       ;; HTTP 200 OK.
       (is (= "success" (:status body)))
       (is (= retweet-id (:id result)))

@@ -1,6 +1,6 @@
 # twitter-clj
 
-Twitter-based API for experimentation with Clojure.
+Twitter-clone API for experimentation with Clojure.
 
 This is a toy project intended to be used as a platform for learning and experimenting with Clojure. It is like a canvas where I can try language features, libraries and tools related to back end web development with Clojure.
 
@@ -32,7 +32,7 @@ Configuration is specified at `resources/dev-config.edn`.
 
 ## API
 
-[Check out the current API documentation available on Apiary](https://twitterclj.docs.apiary.io/#).
+[Check out the current API documentation on Apiary](https://twitterclj.docs.apiary.io/#).
 
 ## Features
 

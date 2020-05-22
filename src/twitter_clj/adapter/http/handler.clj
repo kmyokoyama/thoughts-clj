@@ -210,7 +210,7 @@
     (GET (path-prefix "/tweet/:tweet-id") req (get-tweet-by-id req service))
     (GET (path-prefix "/tweet/:tweet-id/replies") req (get-replies-by-tweet-id req service))
     (GET (path-prefix "/tweet/:tweet-id/retweets") req (get-retweets-by-tweet-id req service))
-    (GET (path-prefix "/tweet/retweets/:retweet-id") req (get-retweet-by-id req service))
+    (GET (path-prefix "/retweet/:retweet-id") req (get-retweet-by-id req service))
     (POST (path-prefix "/tweet") req (add-tweet req service))
     (POST (path-prefix "/tweet/:tweet-id/reply") req (add-reply req service))
     (POST (path-prefix "/tweet/:tweet-id/retweet") req (add-retweet req service))
