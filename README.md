@@ -30,6 +30,10 @@ To run tests:
 $ lein test
 ```
 
+## API
+
+[Check out the current API documentation available on Apiary](https://twitterclj.docs.apiary.io/#).
+
 ## License
 
 [The MIT License (MIT)](https://choosealicense.com/licenses/mit/)

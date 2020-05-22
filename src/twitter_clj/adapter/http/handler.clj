@@ -121,37 +121,23 @@
     (log/info "Get replies of tweet" (f-id source-tweet-id))
     (ok-with-success (map (partial add-links :reply req source-tweet-id) replies))))
 
-(defn- like-tweet
-  [req service user-id tweet-id]
-  (log/info "Like tweet" (f-id tweet-id))
-  (try
+(defn like
+  [req service]
+  (let [user-id (get-user-id req)
+        tweet-id (get-parameter req :tweet-id)]
+    (log/info "Like tweet" (f-id tweet-id))
     (->> (service/like service user-id tweet-id)
          (add-links :tweet req)
          (ok-with-success))))
 
-(defn- unlike-tweet
-  [req service user-id tweet-id]
-  (log/info "Unlike tweet" (f-id tweet-id))
-  (->> (service/unlike service user-id tweet-id)
-       (add-links :tweet req)
-       (ok-with-success)))
-
-(defn tweet-react
+(defn unlike
   [req service]
   (let [user-id (get-user-id req)
-        tweet-id (get-parameter req :tweet-id)
-        reaction (keyword (get-from-body req :reaction))]
-    ;; TODO: Maybe we could refactor it.
-    (cond
-      (nil? tweet-id) (ok-with-failure {:cause     "missing parameter"
-                                        :parameter "tweet-id"})
-      (nil? user-id) (ok-with-failure {:cause     "missing parameter"
-                                       :parameter "user-id"})
-      :default (case reaction
-                 :like (like-tweet req service user-id tweet-id)
-                 :unlike (unlike-tweet req service user-id tweet-id)
-                 (ok-with-failure {:cause     "missing parameter"
-                                   :parameter "reaction"})))))
+        tweet-id (get-parameter req :tweet-id)]
+    (log/info "Unlike tweet" (f-id tweet-id))
+    (->> (service/unlike service user-id tweet-id)
+         (add-links :tweet req)
+         (ok-with-success))))
 
 ;; Exception-handling functions.
 
@@ -206,7 +192,8 @@
                            :add-reply                (path-prefix "/tweet/:tweet-id/reply")
                            :add-retweet              (path-prefix "/tweet/:tweet-id/retweet")
                            :add-retweet-with-comment (path-prefix "/tweet/:tweet-id/retweet-comment")
-                           :tweet-react              (path-prefix "/tweet/:tweet-id/react")})
+                           :like                     (path-prefix "/tweet/:tweet-id/like")
+                           :unlike                   (path-prefix "/tweet/:tweet-id/unlike")})
 
 (defn public-routes
   [service]
@@ -223,12 +210,13 @@
     (GET (path-prefix "/tweet/:tweet-id") req (get-tweet-by-id req service))
     (GET (path-prefix "/tweet/:tweet-id/replies") req (get-replies-by-tweet-id req service))
     (GET (path-prefix "/tweet/:tweet-id/retweets") req (get-retweets-by-tweet-id req service))
-    (GET (path-prefix "/retweet/:retweet-id") req (get-retweet-by-id req service))
+    (GET (path-prefix "/tweet/retweets/:retweet-id") req (get-retweet-by-id req service))
     (POST (path-prefix "/tweet") req (add-tweet req service))
     (POST (path-prefix "/tweet/:tweet-id/reply") req (add-reply req service))
     (POST (path-prefix "/tweet/:tweet-id/retweet") req (add-retweet req service))
     (POST (path-prefix "/tweet/:tweet-id/retweet-comment") req (add-retweet-with-comment req service))
-    (POST (path-prefix "/tweet/:tweet-id/react") req (tweet-react req service))))
+    (POST (path-prefix "/tweet/:tweet-id/like") req (like req service))
+    (POST (path-prefix "/tweet/:tweet-id/unlike") req (unlike req service))))
 
 (defn handler
   [service]

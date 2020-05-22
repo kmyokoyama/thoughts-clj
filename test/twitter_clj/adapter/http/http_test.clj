@@ -211,9 +211,9 @@
   (testing "Like an existing tweet"
     (let [{:keys [token]} (signup-and-login)
           tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)
-          {:keys [response body result]} (post-and-parse (resource (str "tweet/" tweet-id "/react"))
+          {:keys [response body result]} (post-and-parse (resource (str "tweet/" tweet-id "/like"))
                                                          token
-                                                         {:reaction "like"})]
+                                                         {})]
       (is (= 200 (:status response)))                       ;; HTTP 200 OK.
       (is (= "success" (:status body)))
       (is (= tweet-id (:id result)))
@@ -223,10 +223,10 @@
   (testing "Like an existing tweet twice does not have any effect"
     (let [{:keys [user-id token]} (signup-and-login)
           tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)]
-      (post (resource (str "tweet/" tweet-id "/react")) token {:reaction "like" :user-id user-id})
-      (let [{:keys [response body result]} (post-and-parse (resource (str "tweet/" tweet-id "/react"))
+      (post (resource (str "tweet/" tweet-id "/like")) token {})
+      (let [{:keys [response body result]} (post-and-parse (resource (str "tweet/" tweet-id "/like"))
                                                            token
-                                                           {:reaction "like"})]
+                                                           {})]
         (is (= 400 (:status response)))                     ;; HTTP 400 Bad Request.
         (is (= "failure" (:status body)))
         (is (= "invalid action" (:type result)))
@@ -238,23 +238,23 @@
   (testing "Like a missing tweet returns failure"
     (let [{:keys [user-id token]} (signup-and-login)
           tweet-id (random-uuid)
-          {:keys [response body result]} (post-and-parse (resource (str "tweet/" tweet-id "/react"))
+          {:keys [response body result]} (post-and-parse (resource (str "tweet/" tweet-id "/like"))
                                                          token
-                                                         {:reaction "like"})]
+                                                         {})]
       (is (= 400 (:status response)))                       ;; HTTP 400 Bad Request.
       (is (= "failure" (:status body)))
       (is (= "resource not found" (:type result)))
       (is (= "tweet" (:subject result)))
       (is (= (str tweet-id) (get-in result [:context :tweet-id]))))))
 
-(deftest unlike-tweet-with-positive-likes
+(deftest unlike-tweet
   (testing "Unlike an existing tweet with positive likes"
     (let [{:keys [user-id token]} (signup-and-login)
           tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)]
-      (post (resource (str "tweet/" tweet-id "/react")) token {:reaction "like" :user-id user-id})
-      (let [{:keys [response body result]} (post-and-parse (resource (str "tweet/" tweet-id "/react"))
+      (post (resource (str "tweet/" tweet-id "/like")) token {})
+      (let [{:keys [response body result]} (post-and-parse (resource (str "tweet/" tweet-id "/unlike"))
                                                            token
-                                                           {:reaction "unlike"})]
+                                                           {})]
         (is (= 200 (:status response)))                     ;; HTTP 200 OK.
         (is (= "success" (:status body)))
         (is (= tweet-id (:id result)))
@@ -264,9 +264,9 @@
   (testing "Unlike an existing tweet with positive likes"
     (let [{:keys [user-id token]} (signup-and-login)
           tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)
-          {:keys [response body result]} (post-and-parse (resource (str "tweet/" tweet-id "/react"))
+          {:keys [response body result]} (post-and-parse (resource (str "tweet/" tweet-id "/unlike"))
                                                          token
-                                                         {:reaction "unlike"})]
+                                                         {})]
       (is (= 400 (:status response)))                       ;; HTTP 400 Bad Request.
       (is (= "failure" (:status body)))
       (is (= "invalid action" (:type result)))
@@ -279,10 +279,10 @@
     (let [{:keys [token]} (signup-and-login)
           {other-user-id :user-id other-token :token} (signup-and-login)
           tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)]
-      (post (resource (str "tweet/" tweet-id "/react")) token {:reaction "like"})
-      (let [{:keys [response body result]} (post-and-parse (resource (str "tweet/" tweet-id "/react"))
+      (post (resource (str "tweet/" tweet-id "/like")) token {})
+      (let [{:keys [response body result]} (post-and-parse (resource (str "tweet/" tweet-id "/unlike"))
                                                            other-token
-                                                           {:reaction "unlike"})]
+                                                           {})]
         (is (= 400 (:status response)))                     ;; HTTP 400 Bad Request.
         (is (= "failure" (:status body)))
         (is (= "invalid action" (:type result)))
@@ -294,9 +294,9 @@
   (testing "Unlike a missing tweet returns failure"
     (let [{:keys [token]} (signup-and-login)
           tweet-id (random-uuid)
-          {:keys [response body result]} (post-and-parse (resource (str "tweet/" tweet-id "/react"))
+          {:keys [response body result]} (post-and-parse (resource (str "tweet/" tweet-id "/unlike"))
                                                          token
-                                                         {:reaction "like"})]
+                                                         {})]
       (is (= 400 (:status response)))                       ;; HTTP 400 Bad Request.
       (is (= "failure" (:status body)))
       (is (= "resource not found" (:type result)))
@@ -327,6 +327,17 @@
       (is (= "tweet" (:subject result)))
       (is (= (str tweet-id) (get-in result [:context :tweet-id]))))))
 
+(deftest get-retweet-by-id
+  (testing "Get retweets from tweet not retweeted yet returns an empty list"
+    (let [{:keys [token]} (signup-and-login)
+          tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)
+          retweet-id (-> (post-and-parse (resource (str "tweet/" tweet-id "/retweet")) token {}) :result :id)
+          {:keys [response body result]} (get-and-parse (resource (str "tweet/retweets/" retweet-id)) token)]
+      (is (= 200 (:status response)))                       ;; HTTP 200 OK.
+      (is (= "success" (:status body)))
+      (is (= retweet-id (:id result)))
+      (is (= tweet-id (:source-tweet-id result))))))
+
 (deftest get-empty-retweets
   (testing "Get retweets from tweet not retweeted yet returns an empty list"
     (let [{:keys [token]} (signup-and-login)
@@ -340,8 +351,8 @@
   (testing "Get retweets from a tweet already retweeted returns all replies"
     (let [{:keys [user-id token]} (signup-and-login)
           tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet user-id)) :result :id)]
-      (dotimes [_ 5] (post (resource (str "tweet/" tweet-id "/retweet")) token {:user-id user-id}))
-      (dotimes [_ 5] (post (resource (str "tweet/" tweet-id "/retweet-comment")) token {:user-id user-id :comment (random-text)}))
+      (dotimes [_ 5] (post (resource (str "tweet/" tweet-id "/retweet")) token {}))
+      (dotimes [_ 5] (post (resource (str "tweet/" tweet-id "/retweet-comment")) token {:comment (random-text)}))
       (let [{:keys [response body result]} (get-and-parse (resource (str "tweet/" tweet-id "/retweets")) token)]
         (is (= 200 (:status response)))                     ;; HTTP 200 OK.
         (is (= "success" (:status body)))
