@@ -57,14 +57,13 @@
 
 ;; Tests.
 
-(deftest add-single-user
-  (testing "Add a single user"
+(deftest signup
+  (testing "Sign up with a single user"
     (let [response (post (resource "signup") (random-user))]
       (is (= "success" (:status (get-body response))))
-      (is (= 201 (:status response))))))                    ;; HTTP 201 Created.
+      (is (= 201 (:status response)))))                     ;; HTTP 201 Created.
 
-(deftest add-duplicate-user-email
-  (testing "Add a single user with duplicate user email returns a failure"
+  (testing "Sign up with duplicate email returns a failure"
     (let [first-user (random-user)
           first-user-email (:email first-user)]
       (post (resource "signup") first-user)
@@ -74,10 +73,9 @@
         (is (= 400 (:status response)))                     ;; HTTP 400 Bad Request.
         (is (= "user" (:subject result)))
         (is (= "email" (get-in result [:context :attribute])))
-        (is (= (clojure.string/lower-case first-user-email) (get-in result [:context :email])))))))
+        (is (= (clojure.string/lower-case first-user-email) (get-in result [:context :email]))))))
 
-(deftest add-duplicate-username
-  (testing "Add a single user with duplicate username returns a failure"
+  (testing "Sign up with duplicate username returns a failure"
     (let [first-user (random-user)
           first-username (:username first-user)]
       (post (resource "signup") first-user)
@@ -89,17 +87,16 @@
         (is (= "username" (get-in result [:context :attribute])))
         (is (= (clojure.string/lower-case first-username) (get-in result [:context :username])))))))
 
-(deftest login-with-existing-user
-  (testing "Login returns successfully when user exists"
+(deftest login
+  (testing "Login returns success when user exists"
     (let [user (random-user)
           password (:password user)
           user-id (-> (post-and-parse (resource "signup") user) :result :id)
           {:keys [response body result]} (post-and-parse (resource "login") {:user-id user-id :password password})]
       (is (= "success" (:status body)))
       (is (= 200 (:status response)))                       ;; HTTP 200 OK.
-      (is (and (string? (:token result)) ((complement clojure.string/blank?) (:token result)))))))
+      (is (and (string? (:token result)) ((complement clojure.string/blank?) (:token result))))))
 
-(deftest login-with-existing-user-twice
   (testing "Login fails when user is already logged in"
     (let [user-id (random-uuid)
           password (random-password)]
@@ -107,9 +104,8 @@
       (let [{:keys [response body result]} (post-and-parse (resource "login") {:user-id user-id :password password})]
         (is (= "failure" (:status body)))
         (is (= 400 (:status response)))                     ;; HTTP 400 Bad Request.
-        (is ((complement contains?) result :token))))))
+        (is ((complement contains?) result :token)))))
 
-(deftest login-with-missing-user
   (testing "Login fails when user does not exist"
     (let [user-id (random-uuid)
           password (random-password)
@@ -118,20 +114,19 @@
       (is (= 400 (:status response)))                       ;; HTTP 400 Bad Request.
       (is ((complement contains?) result :token)))))
 
-(deftest logout-with-logged-user
-  (testing "Logout returns successfully when user is already logged in"
+(deftest logout
+  (testing "Logout returns success when user is already logged in"
     (let [{:keys [token]} (signup-and-login)
           {:keys [response body]} (post-and-parse (resource "logout") token {})]
       (is (= "success" (:status body)))
-      (is (= 200 (:status response))))))
-
-(deftest logout-with-logged-out-user
+      (is (= 200 (:status response)))))
+  
   (testing "Logout fails when user is not logged in yet"
     (let [{:keys [response body]} (post-and-parse (resource "logout") nil {})]
       (is (= "failure" (:status body)))
       (is (= 401 (:status response))))))                    ;; HTTP 401 Unauthorized.
 
-(deftest add-single-tweet
+(deftest tweet
   (testing "Add a single tweet"
     (let [{:keys [user-id token]} (signup-and-login)
           text (random-text)
@@ -151,9 +146,8 @@
       (is (= "success" (:status body)))
       (is (= 200 (:status response)))                       ;; HTTP 200 OK.
       (is (= 2 (count result)))
-      (is (= #{first-tweet-id second-tweet-id} (into #{} (map :id result)))))))
-
-(deftest get-empty-tweets
+      (is (= #{first-tweet-id second-tweet-id} (into #{} (map :id result))))))
+  
   (testing "Returns no tweet if user has not tweet yet"
     (let [{:keys [user-id token]} (signup-and-login)]
       ;; No tweet.
@@ -171,9 +165,8 @@
       (is (= 200 (:status response)))                       ;; HTTP 200 OK.
       (is (= (let [expected (select-keys expected-user attributes)]
                (zipmap (keys expected) (map clojure.string/lower-case (vals expected))))
-             (select-keys result attributes))))))
-
-(deftest get-user-by-missing-id
+             (select-keys result attributes)))))
+  
   (testing "Get a missing user returns failure"
     (let [{:keys [token]} (signup-and-login)
           user-id (random-uuid)
@@ -194,9 +187,8 @@
       (is (= 200 (:status response)))                       ;; HTTP 200 OK.
       (is (= user-id (:user-id result)))
       (is (= (:text expected-tweet) (:text result)))
-      (is (every? zero? (vals (select-keys expected-tweet zeroed-attributes)))))))
-
-(deftest get-tweet-by-missing-id
+      (is (every? zero? (vals (select-keys expected-tweet zeroed-attributes))))))
+  
   (testing "Get a missing tweet returns failure"
     (let [{:keys [token]} (signup-and-login)
           tweet-id (random-uuid)
@@ -207,7 +199,7 @@
       (is (= "tweet" (:subject result)))
       (is (= (str tweet-id) (get-in result [:context :tweet-id]))))))
 
-(deftest like-tweet
+(deftest like
   (testing "Like an existing tweet"
     (let [{:keys [token]} (signup-and-login)
           tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)
@@ -217,10 +209,9 @@
       (is (= 200 (:status response)))                       ;; HTTP 200 OK.
       (is (= "success" (:status body)))
       (is (= tweet-id (:id result)))
-      (is (= 1 (:likes result))))))
-
-(deftest like-tweet-twice
-  (testing "Like an existing tweet twice does not have any effect"
+      (is (= 1 (:likes result)))))
+  
+  (testing "Like the same tweet twice does not have any effect"
     (let [{:keys [user-id token]} (signup-and-login)
           tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)]
       (post (resource (str "tweet/" tweet-id "/like")) token {})
@@ -232,9 +223,8 @@
         (is (= "invalid action" (:type result)))
         (is (= "like" (:subject result)))
         (is (= (str tweet-id) (get-in result [:context :tweet-id])))
-        (is (= (str user-id) (get-in result [:context :user-id])))))))
-
-(deftest like-tweet-by-missing-id
+        (is (= (str user-id) (get-in result [:context :user-id]))))))
+  
   (testing "Like a missing tweet returns failure"
     (let [{:keys [user-id token]} (signup-and-login)
           tweet-id (random-uuid)
@@ -247,8 +237,8 @@
       (is (= "tweet" (:subject result)))
       (is (= (str tweet-id) (get-in result [:context :tweet-id]))))))
 
-(deftest unlike-tweet
-  (testing "Unlike an existing tweet with positive likes"
+(deftest unlike
+  (testing "Unlike an existing tweet previously liked"
     (let [{:keys [user-id token]} (signup-and-login)
           tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)]
       (post (resource (str "tweet/" tweet-id "/like")) token {})
@@ -258,10 +248,9 @@
         (is (= 200 (:status response)))                     ;; HTTP 200 OK.
         (is (= "success" (:status body)))
         (is (= tweet-id (:id result)))
-        (is (= 0 (:likes result)))))))
-
-(deftest unlike-tweet-with-zero-likes
-  (testing "Unlike an existing tweet with positive likes"
+        (is (= 0 (:likes result))))))
+  
+  (testing "Unlike an existing tweet not previously liked"
     (let [{:keys [user-id token]} (signup-and-login)
           tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)
           {:keys [response body result]} (post-and-parse (resource (str "tweet/" tweet-id "/unlike"))
@@ -272,9 +261,8 @@
       (is (= "invalid action" (:type result)))
       (is (= "unlike" (:subject result)))
       (is (= (str tweet-id) (get-in result [:context :tweet-id])))
-      (is (= (str user-id) (get-in result [:context :user-id]))))))
-
-(deftest unlike-tweet-with-another-user
+      (is (= (str user-id) (get-in result [:context :user-id])))))
+  
   (testing "Unlike an existing tweet with another user does not have any effect"
     (let [{:keys [token]} (signup-and-login)
           {other-user-id :user-id other-token :token} (signup-and-login)
@@ -288,9 +276,8 @@
         (is (= "invalid action" (:type result)))
         (is (= "unlike" (:subject result)))
         (is (= (str tweet-id) (get-in result [:context :tweet-id])))
-        (is (= (str other-user-id) (get-in result [:context :user-id])))))))
-
-(deftest unlike-tweet-with-missing-id
+        (is (= (str other-user-id) (get-in result [:context :user-id]))))))
+  
   (testing "Unlike a missing tweet returns failure"
     (let [{:keys [token]} (signup-and-login)
           tweet-id (random-uuid)
@@ -304,7 +291,7 @@
       (is (= (str tweet-id) (get-in result [:context :tweet-id]))))))
 
 (deftest add-reply
-  (testing "Add new reply to existing tweet returns successfully"
+  (testing "Add new reply to existing tweet returns success"
     (let [{:keys [user-id token]} (signup-and-login)
           tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)
           reply-text (random-text)
@@ -313,9 +300,8 @@
       (is (= 201 (:status response)))                       ;; HTTP 201 Created.
       (is (= user-id (:user-id result)))
       (is (= reply-text (:text result)))
-      (is (= 0 (:likes result) (:retweets result) (:replies result))))))
-
-(deftest add-reply-to-missing-tweet
+      (is (= 0 (:likes result) (:retweets result) (:replies result)))))
+  
   (testing "Add new reply to missing tweet fails"
     (let [{:keys [token]} (signup-and-login)
           tweet-id (random-uuid)
@@ -338,15 +324,6 @@
       (is (= retweet-id (:id result)))
       (is (= tweet-id (:source-tweet-id result))))))
 
-(deftest get-empty-retweets
-  (testing "Get retweets from tweet not retweeted yet returns an empty list"
-    (let [{:keys [token]} (signup-and-login)
-          tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)
-          {:keys [response body result]} (get-and-parse (resource (str "tweet/" tweet-id "/retweets")) token)]
-      (is (= 200 (:status response)))                       ;; HTTP 200 OK.
-      (is (= "success" (:status body)))
-      (is (empty? result)))))
-
 (deftest get-retweets
   (testing "Get retweets from a tweet already retweeted returns all replies"
     (let [{:keys [user-id token]} (signup-and-login)
@@ -356,13 +333,12 @@
       (let [{:keys [response body result]} (get-and-parse (resource (str "tweet/" tweet-id "/retweets")) token)]
         (is (= 200 (:status response)))                     ;; HTTP 200 OK.
         (is (= "success" (:status body)))
-        (is (= 10 (count result)))))))
+        (is (= 10 (count result))))))
 
-(deftest get-empty-replies
-  (testing "Get replies from tweet not replied yet returns an empty list"
+  (testing "Get retweets from tweet not retweeted yet returns an empty list"
     (let [{:keys [token]} (signup-and-login)
           tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)
-          {:keys [response body result]} (get-and-parse (resource (str "tweet/" tweet-id "/replies")) token)]
+          {:keys [response body result]} (get-and-parse (resource (str "tweet/" tweet-id "/retweets")) token)]
       (is (= 200 (:status response)))                       ;; HTTP 200 OK.
       (is (= "success" (:status body)))
       (is (empty? result)))))
@@ -375,4 +351,12 @@
       (let [{:keys [response body result]} (get-and-parse (resource (str "tweet/" tweet-id "/replies")) token)]
         (is (= 200 (:status response)))                     ;; HTTP 200 OK.
         (is (= "success" (:status body)))
-        (is (= 5 (count result)))))))
+        (is (= 5 (count result))))))
+
+  (testing "Get replies from tweet not replied yet returns an empty list"
+    (let [{:keys [token]} (signup-and-login)
+          tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)
+          {:keys [response body result]} (get-and-parse (resource (str "tweet/" tweet-id "/replies")) token)]
+      (is (= 200 (:status response)))                       ;; HTTP 200 OK.
+      (is (= "success" (:status body)))
+      (is (empty? result)))))
