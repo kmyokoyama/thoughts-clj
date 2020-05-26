@@ -1,12 +1,12 @@
 {
 	"info": {
 		"_postman_id": "2dd94dcc-f1b5-462a-ac8a-fbaab8d36ab0",
-		"name": "twitter",
+		"name": "twitter-clj",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 		{
-			"name": "Create user",
+			"name": "Sign up",
 			"event": [
 				{
 					"listen": "test",
@@ -24,8 +24,8 @@
 							"});",
 							"",
 							"pm.test(\"Test response body\", function () {",
-							"    ",
-							"    ",
+							"",
+							"",
 							"    pm.expect(body[\"status\"]).to.equal(\"success\");",
 							"    pm.expect(result[\"active\"]).to.equal(true);",
 							"    pm.expect(result[\"name\"]).to.be.a(\"string\");",
@@ -60,7 +60,7 @@
 					}
 				},
 				"url": {
-					"raw": "{{scheme}}://{{url}}:{{port}}/{{path_prefix}}/user",
+					"raw": "{{scheme}}://{{url}}:{{port}}/{{path_prefix}}/signup",
 					"protocol": "{{scheme}}",
 					"host": [
 						"{{url}}"
@@ -68,7 +68,7 @@
 					"port": "{{port}}",
 					"path": [
 						"{{path_prefix}}",
-						"user"
+						"signup"
 					]
 				}
 			},
@@ -194,6 +194,196 @@
 						"{{path_prefix}}",
 						"user",
 						"{{created_user_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get following",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "0bc01c7c-591c-424d-bf79-4f2d25a94ba8",
+						"exec": [
+							"var body = pm.response.json();",
+							"var result = body[\"result\"];",
+							"",
+							"pm.test(\"Test response metadata\", function () {",
+							"    pm.expect(pm.response.code).to.equal(200);",
+							"    pm.response.to.be.json;",
+							"});",
+							"",
+							"pm.test(\"Test response body\", function () {",
+							"    pm.expect(result).to.be.an(\"array\");",
+							"    pm.expect(body[\"status\"]).to.equal(\"success\");",
+							"",
+							"    var user_followers = result.map(function(r) {",
+							"        return r[\"followers\"];",
+							"    });",
+							"    ",
+							"    pm.expect(user_followers.every(function(f) { return f >= 1; })).to.be.true;",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{scheme}}://{{url}}:{{port}}/{{path_prefix}}/user/{{created_user_id}}/following",
+					"protocol": "{{scheme}}",
+					"host": [
+						"{{url}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"{{path_prefix}}",
+						"user",
+						"{{created_user_id}}",
+						"following"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get followers",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "4482a746-d089-4d7d-a4a2-c58063ce813f",
+						"exec": [
+							"var body = pm.response.json();",
+							"var result = body[\"result\"];",
+							"",
+							"pm.test(\"Test response metadata\", function () {",
+							"    pm.expect(pm.response.code).to.equal(200);",
+							"    pm.response.to.be.json;",
+							"});",
+							"",
+							"pm.test(\"Test response body\", function () {",
+							"    pm.expect(result).to.be.an(\"array\");",
+							"    pm.expect(body[\"status\"]).to.equal(\"success\");",
+							"",
+							"    var user_following = result.map(function(r) {",
+							"        return r[\"following\"];",
+							"    });",
+							"    ",
+							"    pm.expect(user_following.every(function(f) { return f >= 1; })).to.be.true;",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{scheme}}://{{url}}:{{port}}/{{path_prefix}}/user/{{created_user_id}}/followers",
+					"protocol": "{{scheme}}",
+					"host": [
+						"{{url}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"{{path_prefix}}",
+						"user",
+						"{{created_user_id}}",
+						"followers"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Follow",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "6d6a8a34-e042-45c1-b31c-ecf9a697125c",
+						"exec": [
+							"var body = pm.response.json();",
+							"var result = body[\"result\"];",
+							"",
+							"if (pm.response.code == 200) {",
+							"    pm.test(\"Test response body\", function () {",
+							"        pm.expect(body[\"status\"]).to.equal(\"success\");",
+							"        pm.expect(result[\"active\"]).to.equal(true);",
+							"        pm.expect(result[\"name\"]).to.be.a(\"string\");",
+							"        pm.expect(result[\"email\"]).to.be.a(\"string\");",
+							"        pm.expect(result[\"username\"]).to.be.a(\"string\");",
+							"        pm.expect(result[\"followers\"]).to.be.at.least(1);",
+							"    })",
+							"}",
+							"",
+							"if (pm.response.code == 400) {",
+							"    pm.test(\"Test response body\", function () {",
+							"        pm.expect(body[\"status\"]).to.equal(\"failure\");",
+							"        pm.expect(result[\"type\"]).to.equal(\"invalid action\");",
+							"        pm.expect(result[\"subject\"]).to.equal(\"follow\");",
+							"        pm.expect(result[\"cause\"]).to.equal(\"you cannot follow yourself\");",
+							"    })",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{scheme}}://{{url}}:{{port}}/{{path_prefix}}/user/{{created_user_id}}/follow",
+					"protocol": "{{scheme}}",
+					"host": [
+						"{{url}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"{{path_prefix}}",
+						"user",
+						"{{created_user_id}}",
+						"follow"
 					]
 				}
 			},
@@ -412,7 +602,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n\t\"reaction\": \"like\",\n\t\"user-id\": \"{{created_user_id}}\"\n}",
+					"raw": "",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -420,7 +610,7 @@
 					}
 				},
 				"url": {
-					"raw": "{{scheme}}://{{url}}:{{port}}/{{path_prefix}}/tweet/{{created_tweet_id}}/react",
+					"raw": "{{scheme}}://{{url}}:{{port}}/{{path_prefix}}/tweet/{{created_tweet_id}}/like",
 					"protocol": "{{scheme}}",
 					"host": [
 						"{{url}}"
@@ -430,7 +620,7 @@
 						"{{path_prefix}}",
 						"tweet",
 						"{{created_tweet_id}}",
-						"react"
+						"like"
 					]
 				}
 			},
@@ -467,7 +657,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n\t\"reaction\": \"unlike\",\n\t\"user-id\": \"{{created_user_id}}\"\n}",
+					"raw": "",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -475,7 +665,7 @@
 					}
 				},
 				"url": {
-					"raw": "{{scheme}}://{{url}}:{{port}}/{{path_prefix}}/tweet/{{created_tweet_id}}/react",
+					"raw": "{{scheme}}://{{url}}:{{port}}/{{path_prefix}}/tweet/{{created_tweet_id}}/unlike",
 					"protocol": "{{scheme}}",
 					"host": [
 						"{{url}}"
@@ -485,7 +675,7 @@
 						"{{path_prefix}}",
 						"tweet",
 						"{{created_tweet_id}}",
-						"react"
+						"unlike"
 					]
 				}
 			},
@@ -525,7 +715,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n\t\"user-id\": \"{{created_user_id}}\",\n\t\"text\": \"{{$randomLoremLines}}\"\n}",
+					"raw": "{\n\t\"text\": \"{{$randomLoremLines}}\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -584,7 +774,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n\t\"user-id\": \"{{created_user_id}}\"\n}",
+					"raw": "",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -643,7 +833,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n\t\"user-id\": \"{{created_user_id}}\",\n\t\"comment\": \"{{$randomLoremSentence}}\"\n}",
+					"raw": "{\n\t\"comment\": \"{{$randomLoremSentence}}\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"

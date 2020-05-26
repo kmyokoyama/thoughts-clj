@@ -3,7 +3,7 @@
   (:import (java.util UUID)
            (java.time ZonedDateTime)))
 
-(defrecord User [id active name email username])
+(defrecord User [id active name email username following followers])
 (defrecord Tweet [id user-id text publish-date likes retweets replies])
 (defrecord Retweet [id user-id has-comment comment publish-date source-tweet-id])
 (defrecord TweetLike [id created-at user-id source-tweet-id])
@@ -65,4 +65,12 @@
 
 (defn new-user
   [name email username]
-  (->User (str (UUID/randomUUID)) true name email username))
+  (->User (str (UUID/randomUUID)) true name email username 0 0))
+
+(defn follow
+  [follower followed]
+  (vector (update follower :following inc) (update followed :followers inc)))
+
+(defn unfollow
+  [follower followed]
+  (vector (update follower :following dec) (update followed :followers dec)))

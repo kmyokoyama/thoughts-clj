@@ -22,7 +22,16 @@
     :db/index       true}
    {:db/ident       :user/password
     :db/valueType   :db.type/string
-    :db/cardinality :db.cardinality/one}]]
+    :db/cardinality :db.cardinality/one}
+   {:db/ident       :user/following
+    :db/valueType   :db.type/long
+    :db/cardinality :db.cardinality/one}
+   {:db/ident       :user/followers
+    :db/valueType   :db.type/long
+    :db/cardinality :db.cardinality/one}
+   {:db/ident       :user/follow
+    :db/valueType   :db.type/ref
+    :db/cardinality :db.cardinality/many}]]
 
  :tweet
  [[{:db/ident       :tweet/id

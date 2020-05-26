@@ -9,12 +9,25 @@
 
 ;; To remember:
 
-;(require '[twitter-clj.application.core :as core])
-;(require '[twitter-clj.application.port.repository :refer :all])
 ;(def sys (start-dev-system))
 ;(def conn (get-conn sys))
 ;(def db (get-db sys))
 ;(def repository (get-in sys [:repository]))
+;(require '[twitter-clj.application.core :as core])
+;(require '[twitter-clj.application.port.repository :refer :all])
+;(require '[twitter-clj.adapter.repository.datomic :as datomic])
+;(def first-user (core/new-user "First User" "first.user@gmail.com" "first.user"))
+;(def second-user (core/new-user "second User" "second.user@gmail.com" "second.user"))
+;(def third-user (core/new-user "third User" "third.user@gmail.com" "third.user"))
+;(def first-uuid (:id first-user))
+;(def second-uuid (:id second-user))
+;(def third-uuid (:id third-user))
+;(update-user! repository first-user)
+;(update-user! repository second-user)
+;(update-user! repository third-user)
+;(update-follow! repository first-user second-user)
+;(update-follow! repository first-user third-user)
+;(update-follow! repository second-user first-user)
 
 ;; System without API (or any driver-side).
 (defn dev-system-map

@@ -74,6 +74,20 @@
     (log/info "Get tweets from user" (f-id user-id))
     (ok-with-success (map (partial add-links :tweet req) tweets))))
 
+(defn get-user-following
+  [req service]
+  (let [user-id (get-parameter req :user-id)
+        following (service/get-following service user-id)]
+    (log/info "Get list of following of user" (f-id user-id))
+    (ok-with-success (map (partial add-links :user req) following))))
+
+(defn get-user-followers
+  [req service]
+  (let [user-id (get-parameter req :user-id)
+        followers (service/get-followers service user-id)]
+    (log/info "Get list of followers of user" (f-id user-id))
+    (ok-with-success (map (partial add-links :user req) followers))))
+
 (defn add-reply
   [req service]
   (let [user-id (get-user-id req)
@@ -128,6 +142,24 @@
     (log/info "Like tweet" (f-id tweet-id))
     (->> (service/like service user-id tweet-id)
          (add-links :tweet req)
+         (ok-with-success))))
+
+(defn follow
+  [req service]
+  (let [user-id (get-user-id req)
+        followed-id (get-parameter req :user-id)]
+    (log/info "User" (f-id user-id) "follows User" (f-id followed-id))
+    (->> (service/follow service user-id followed-id)
+         (add-links :user req)
+         (ok-with-success))))
+
+(defn unfollow
+  [req service]
+  (let [user-id (get-user-id req)
+        followed-id (get-parameter req :user-id)]
+    (log/info "User" (f-id user-id) "unfollows User" (f-id followed-id))
+    (->> (service/unfollow service user-id followed-id)
+         (add-links :user req)
          (ok-with-success))))
 
 (defn unlike
@@ -185,6 +217,8 @@
 (def ^:private routes-map {:get-tweet-by-id          (path-prefix "/tweet/:tweet-id")
                            :get-tweets-by-user-id    (path-prefix "/user/:user-id/tweets")
                            :get-user-by-id           (path-prefix "/user/:user-id")
+                           :get-user-following       (path-prefix "/user/:user-id/following")
+                           :get-user-followers       (path-prefix "/user/:user-id/followers")
                            :get-replies-by-tweet-id  (path-prefix "/tweet/:tweet-id/replies")
                            :get-retweets-by-tweet-id (path-prefix "/tweet/:tweet-id/retweets")
                            :get-retweet-by-id        (path-prefix "/retweet/:retweet-id")
@@ -193,7 +227,9 @@
                            :add-retweet              (path-prefix "/tweet/:tweet-id/retweet")
                            :add-retweet-with-comment (path-prefix "/tweet/:tweet-id/retweet-comment")
                            :like                     (path-prefix "/tweet/:tweet-id/like")
-                           :unlike                   (path-prefix "/tweet/:tweet-id/unlike")})
+                           :unlike                   (path-prefix "/tweet/:tweet-id/unlike")
+                           :follow                   (path-prefix "/user/:user-id/follow")
+                           :unfollow                 (path-prefix "/user/:user-id/unfollow")})
 
 (defn public-routes
   [service]
@@ -207,10 +243,14 @@
     (POST (path-prefix "/logout") req (logout req service))
     (GET (path-prefix "/user/:user-id") req (get-user-by-id req service))
     (GET (path-prefix "/user/:user-id/tweets") req (get-tweets-by-user req service))
+    (GET (path-prefix "/user/:user-id/following") req (get-user-following req service))
+    (GET (path-prefix "/user/:user-id/followers") req (get-user-followers req service))
     (GET (path-prefix "/tweet/:tweet-id") req (get-tweet-by-id req service))
     (GET (path-prefix "/tweet/:tweet-id/replies") req (get-replies-by-tweet-id req service))
     (GET (path-prefix "/tweet/:tweet-id/retweets") req (get-retweets-by-tweet-id req service))
     (GET (path-prefix "/retweet/:retweet-id") req (get-retweet-by-id req service))
+    (POST (path-prefix "/user/:user-id/follow") req (follow req service))
+    (POST (path-prefix "/user/:user-id/unfollow") req (unfollow req service))
     (POST (path-prefix "/tweet") req (add-tweet req service))
     (POST (path-prefix "/tweet/:tweet-id/reply") req (add-reply req service))
     (POST (path-prefix "/tweet/:tweet-id/retweet") req (add-retweet req service))
@@ -226,7 +266,7 @@
             (wrap-authenticated service)
             (wrap-authentication jws-backend)))
       (wrap-service-exception)
-      (wrap-default-exception)
+      ;(wrap-default-exception)
       (wrap-json-body {:keywords? true :bigdecimals? true})
       (wrap-defaults api-defaults)))
 
@@ -258,8 +298,10 @@
 (defmethod add-links :user
   [_ req tweet]
   (let [{:keys [id]} tweet]
-    (make-links-map (get-host req) tweet {:self   [:get-user-by-id {:user-id id}]
-                                          :tweets [:get-tweets-by-user-id {:user-id id}]})))
+    (make-links-map (get-host req) tweet {:self      [:get-user-by-id {:user-id id}]
+                                          :tweets    [:get-tweets-by-user-id {:user-id id}]
+                                          :following [:get-user-following {:user-id id}]
+                                          :followers [:get-user-followers {:user-id id}]})))
 
 (defmethod add-links :tweet
   [_ req tweet]

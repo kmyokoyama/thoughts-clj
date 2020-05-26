@@ -4,6 +4,7 @@
             [taoensso.timbre :as log]
             [twitter-clj.adapter.http.component :refer [make-http-controller]]
             [twitter-clj.adapter.repository.datomic :refer [make-datomic-repository]]
+            [twitter-clj.adapter.repository.in-mem :refer [make-in-mem-repository]]
             [twitter-clj.application.config :refer [datomic-uri init-system! http-host http-port]]
             [twitter-clj.application.service :refer [make-service]])
   (:gen-class))

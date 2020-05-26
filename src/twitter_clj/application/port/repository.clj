@@ -8,6 +8,7 @@
   (update-reply! [this source-tweet-id reply])
   (update-retweet! [this retweet])
   (update-session! [this session])
+  (update-follow! [this follower followed])
 
   (fetch-password! [this user-id])
   (fetch-users! [this criteria])
@@ -16,6 +17,9 @@
   (fetch-replies! [this criteria])
   (fetch-retweets! [this criteria])
   (fetch-sessions! [this criteria])
+  (fetch-following! [this follower-id])
+  (fetch-followers! [this followed-id])
 
   (remove-like! [this criteria])
+  (remove-follow! [this follower-id followed-id])
   (remove-session! [this criteria]))

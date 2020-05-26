@@ -14,13 +14,14 @@
   (reset! (:join-tweet-likes repository) {})
   (reset! (:join-tweet-replies repository) {})
   (reset! (:join-tweet-retweets repository) {})
+  (reset! (:following repository) {})
   repository)
 
 ;; Driven-side.
 
 (defrecord InMemoryRepository [users tweets likes retweets
                                join-tweet-likes join-tweet-replies join-tweet-retweets
-                               passwords sessions]
+                               passwords sessions following]
   component/Lifecycle
   (start [this]
     (log/info "Starting in-memory database")
@@ -68,6 +69,10 @@
     (swap! join-tweet-retweets update (:source-tweet-id retweet) (fn [retweet-ids] (conj (vec retweet-ids) retweet-id)))
     retweet)
 
+  (update-follow!
+    [_ {follower-id :id} {followed-id :id}]
+    (swap! following update follower-id (fn [following-ids] (conj (set following-ids) followed-id))))
+
   (fetch-password!
     [_ user-id]
     (get @passwords user-id))
@@ -97,11 +102,29 @@
     [_ criteria]
     (filter (fn [e] (= criteria (select-keys e (keys criteria)))) (vals @retweets)))
 
+  (fetch-following!
+    [_ follower-id]
+    (->> (get @following follower-id [])
+         (map (fn [followed-id] (get @users followed-id)))))
+
+  (fetch-followers!
+    [_ followed-id]
+    (->> (reduce-kv (fn [followers follower-id followed-ids]
+                      (if (contains? followed-ids followed-id)
+                        (conj followers follower-id)
+                        followers))
+                    [] @following)
+         (map (fn [follower-id] (get @users follower-id)))))
+
   (remove-like!
     [_ criteria]
     (->> (filter (fn [e] (= criteria (select-keys e (keys criteria)))) (vals @likes))
          (map :id)
          (map (fn [like-id] (swap! likes dissoc like-id)))))
+
+  (remove-follow!
+    [_ {follower-id :id} {followed-id :id}]
+    (swap! following update follower-id (fn [following-ids] (disj (set following-ids) followed-id))))
 
   (remove-session!
     [_ criteria]
@@ -119,4 +142,5 @@
                             :likes               (atom {})
                             :join-tweet-likes    (atom {})
                             :join-tweet-replies  (atom {})
-                            :join-tweet-retweets (atom {})}))
+                            :join-tweet-retweets (atom {})
+                            :following           (atom {})}))

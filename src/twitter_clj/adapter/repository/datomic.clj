@@ -23,6 +23,43 @@
   [conn tx]
   (d/transact conn tx))
 
+(defn query
+  [db find in where rules params]
+  (let [q (vec (concat [:find] find
+                       [:in] in
+                       [:where] where))]
+    (apply (partial d/q
+                    q
+                    db
+                    rules)
+           params)))
+
+(defn- map-if
+  "Applies f to each value of m if p, a function of key and value, is truthy."
+  [m p f]
+  (into {} (map (fn [[k v]] (if (p k v) [k (f v)] [k v])) m)))
+
+(defn- map-uuid
+  "Converts each value of m into an UUID if the respective key is in the set ks."
+  [m ks]
+  (map-if m (fn [k _v] (k ks)) (fn [v] (UUID/fromString v))))
+
+(defn- inst->ZonedDateTime
+  "Converts from java.time.Instant to java.time.ZonedDateTime."
+  [inst]
+  (ZonedDateTime/ofInstant (.toInstant inst) (ZoneId/systemDefault)))
+
+(defn- ZonedDateTime->inst
+  "Converts from java.time.ZonedDateTime to java.util.Date (#inst)"
+  [zdt]
+  (Date/from (.toInstant zdt)))
+
+(defn- v
+  "Transforms a keyword k into a Datomic query variable symbol, e.g.,
+  (v :user-id) => ?user-id"
+  [k]
+  (symbol (str "?" (name k))))
+
 (def ^:private tweet-rules '[[(get-tweet-rule ?id ?user-id ?text ?created-at ?likes ?retweets ?replies)
                               [?t :tweet/id ?id]
                               [?t :tweet/created-at ?created-at]
@@ -33,12 +70,36 @@
                               [?t :tweet/user ?u]
                               [?u :user/id ?user-id]]])
 
-(def ^:private user-rules '[[(get-user-rule ?id ?active ?name ?email ?username)
+(def ^:private user-rules '[[(get-user-rule ?id ?active ?name ?email ?username ?following ?followers)
                              [?t :user/id ?id]
                              [?t :user/active ?active]
                              [?t :user/name ?name]
                              [?t :user/email ?email]
-                             [?t :user/username ?username]]])
+                             [?t :user/username ?username]
+                             [?t :user/following ?following]
+                             [?t :user/followers ?followers]]])
+
+(def ^:private following-rules '[[(get-following-rule ?follower-id ?followed-id ?active ?name ?email ?username ?following ?followers)
+                                  [?r :user/id ?follower-id]
+                                  [?r :user/follow ?d]
+                                  [?d :user/id ?followed-id]
+                                  [?d :user/active ?active]
+                                  [?d :user/name ?name]
+                                  [?d :user/email ?email]
+                                  [?d :user/username ?username]
+                                  [?d :user/following ?following]
+                                  [?d :user/followers ?followers]]])
+
+(def ^:private followers-rules '[[(get-followers-rule ?followed-id ?follower-id ?active ?name ?email ?username ?following ?followers)
+                                  [?d :user/id ?followed-id]
+                                  [?r :user/follow ?d]
+                                  [?r :user/id ?follower-id]
+                                  [?r :user/active ?active]
+                                  [?r :user/name ?name]
+                                  [?r :user/email ?email]
+                                  [?r :user/username ?username]
+                                  [?r :user/following ?following]
+                                  [?r :user/followers ?followers]]])
 
 (def ^:private like-rules '[[(get-like-rule ?id ?created-at ?user-id ?source-tweet-id)
                              [?l :like/id ?id]
@@ -71,83 +132,6 @@
                                 [?rt :retweet/source-tweet ?s]
                                 [?s :tweet/id ?source-tweet-id]]])
 
-(def ^:private fetch-tweets-q
-  "[:find ?id ?user-id ?text ?created-at ?likes ?retweets ?replies
-    :in $ % <params>
-    :where
-    (get-tweet-rule ?id ?user-id ?text ?created-at ?likes ?retweets ?replies)])")
-
-(def ^:private fetch-users-q
-  "[:find ?id ?active ?name ?email ?username
-    :in $ % <params>
-    :where
-    (get-user-rule ?id ?active ?name ?email ?username)]")
-
-(def ^:private fetch-likes-q
-  "[:find ?id ?created-at ?user-id ?source-tweet-id
-    :in $ % <params>
-    :where
-    (get-like-rule ?id ?created-at ?user-id ?source-tweet-id)]")
-
-(def ^:private fetch-replies-q
-  "[:find ?id ?user-id ?text ?created-at ?likes ?retweets ?replies
-    :in $ % <params>
-    :where
-    (get-reply-rule ?id ?user-id ?text ?created-at ?likes ?retweets ?replies ?source-tweet-id)])")
-
-(def ^:private fetch-retweets-q
-  "[:find ?id ?user-id ?has-comment ?comment ?created-at ?source-tweet-id
-    :in $ % <params>
-    :where
-    (get-retweet-rule ?id ?user-id ?has-comment ?comment ?created-at ?source-tweet-id)]")
-
-(def ^:private fetch-password-q
-  "[:find ?password
-    :in $ % ?user-id
-    :where
-    [?u :user/id ?user-id]
-    [?u :user/password ?password]]")
-
-(def ^:private fetch-session-q
-  "[:find ?id ?user-id ?created-at
-    :in $ % <params>
-    :where
-    [?s :session/user ?u]
-    [?u :user/id ?user-id]
-    [?s :session/id ?id]
-    [?s :session/created-at ?created-at]]")
-
-(defn- v
-  "Transforms a keyword k into a Datomic query variable symbol, e.g.,
-  (v :user-id) => ?user-id"
-  [k]
-  (symbol (str "?" (name k))))
-
-(defn- make-query
-  "Makes a query by replacing the token '<params>' in q with a list of keyword params."
-  [q params]
-  (read-string (clojure.string/replace q #"<params>" (clojure.string/join " " (map v params)))))
-
-(defn- map-if
-  "Applies f to each value of m if p, a function of key and value, is truthy."
-  [m p f]
-  (into {} (map (fn [[k v]] (if (p k v) [k (f v)] [k v])) m)))
-
-(defn- map-uuid
-  "Converts each value of m into an UUID if the respective key is in the set ks."
-  [m ks]
-  (map-if m (fn [k _v] (k ks)) (fn [v] (UUID/fromString v))))
-
-(defn- inst->ZonedDateTime
-  "Converts from java.time.Instant to java.time.ZonedDateTime."
-  [inst]
-  (ZonedDateTime/ofInstant (.toInstant inst) (ZoneId/systemDefault)))
-
-(defn- ZonedDateTime->inst
-  "Converts from java.time.ZonedDateTime to java.util.Date (#inst)"
-  [zdt]
-  (Date/from (.toInstant zdt)))
-
 (defn- make-tweet
   [{:keys [id user-id text publish-date likes retweets replies]}]
   (let [uuid (UUID/fromString id)
@@ -162,13 +146,15 @@
             :user       [:user/id user-uuid]}))
 
 (defn- make-user
-  [{:keys [id active name email username]}]
+  [{:keys [id active name email username following followers]}]
   (let [uuid (UUID/fromString id)]
-    #:user{:id       uuid
-           :active   active
-           :name     name
-           :email    email
-           :username username}))
+    #:user{:id        uuid
+           :active    active
+           :name      name
+           :email     email
+           :username  username
+           :following following
+           :followers followers}))
 
 (defn- make-like
   [{:keys [id created-at user-id source-tweet-id]}]
@@ -214,6 +200,13 @@
     {:session/id         session-uuid
      :session/user       [:user/id user-uuid]
      :session/created-at created-at-inst}))
+
+(defn make-follow
+  [follower-id followed-id]
+  (let [follower-uuid (UUID/fromString follower-id)
+        followed-uuid (UUID/fromString followed-id)]
+    {:db/id       [:user/id follower-uuid]
+     :user/follow #{[:user/id followed-uuid]}}))
 
 (defrecord DatomicRepository [uri conn]
   component/Lifecycle
@@ -270,16 +263,23 @@
     (do-transaction conn [(make-session session)])
     session)
 
+  (update-follow!
+    [_ follower followed]
+    (let [follower-id (:id follower)
+          followed-id (:id followed)]
+      (do-transaction conn [(make-follow follower-id followed-id)])))
+
   (fetch-tweets!
     [_ criteria]
     (let [db (d/db conn)]
       (let [mc (map-uuid criteria #{:id :user-id})
             params (keys mc)
             params-val (vals mc)]
-        (->> (apply (partial d/q
-                             (make-query fetch-tweets-q params)
-                             db
-                             tweet-rules)
+        (->> (query db
+                    '(?id ?user-id ?text ?created-at ?likes ?retweets ?replies)
+                    (concat '($ %) (map v params))
+                    '((get-tweet-rule ?id ?user-id ?text ?created-at ?likes ?retweets ?replies))
+                    tweet-rules
                     params-val)
              (map (fn [result] (apply ->Tweet result)))
              (map (fn [result] (update result :publish-date inst->ZonedDateTime)))
@@ -292,11 +292,38 @@
       (let [mc (map-uuid criteria #{:id})
             params (keys mc)
             params-val (vals mc)]
-        (->> (apply (partial d/q
-                             (make-query fetch-users-q params)
-                             db
-                             user-rules)
+        (->> (query db
+                    '(?id ?active ?name ?email ?username ?following ?followers)
+                    (concat '($ %) (map v params))
+                    '((get-user-rule ?id ?active ?name ?email ?username ?following ?followers))
+                    user-rules
                     params-val)
+             (map (fn [result] (apply ->User result)))
+             (map (fn [result] (update result :id str)))))))
+
+  (fetch-following!
+    [_ follower-id]
+    (let [db (d/db conn)]
+      (let [follower-uuid (UUID/fromString follower-id)]
+        (->> (d/q '[:find ?followed-id ?active ?name ?email ?username ?following ?followers
+                    :in $ % ?follower-id
+                    :where (get-following-rule ?follower-id ?followed-id ?active ?name ?email ?username ?following ?followers)]
+                  db
+                  following-rules
+                  follower-uuid)
+             (map (fn [result] (apply ->User result)))
+             (map (fn [result] (update result :id str)))))))
+
+  (fetch-followers!
+    [_ followed-id]
+    (let [db (d/db conn)]
+      (let [followed-uuid (UUID/fromString followed-id)]
+        (->> (d/q '[:find ?follower-id ?active ?name ?email ?username ?following ?followers
+                    :in $ % ?followed-id
+                    :where (get-followers-rule ?followed-id ?follower-id ?active ?name ?email ?username ?following ?followers)]
+                  db
+                  followers-rules
+                  followed-uuid)
              (map (fn [result] (apply ->User result)))
              (map (fn [result] (update result :id str)))))))
 
@@ -306,10 +333,11 @@
       (let [mc (map-uuid criteria #{:id :user-id :source-tweet-id})
             params (keys mc)
             params-val (vals mc)]
-        (->> (apply (partial d/q
-                             (make-query fetch-likes-q params)
-                             db
-                             like-rules)
+        (->> (query db
+                    '(?id ?created-at ?user-id ?source-tweet-id)
+                    (concat '($ %) (map v params))
+                    '((get-like-rule ?id ?created-at ?user-id ?source-tweet-id))
+                    like-rules
                     params-val)
              (map (fn [result] (apply ->TweetLike result)))
              (map (fn [result] (update result :id str)))
@@ -322,10 +350,11 @@
       (let [mc (map-uuid criteria #{:id :user-id :source-tweet-id})
             params (keys mc)
             params-val (vals mc)]
-        (->> (apply (partial d/q
-                             (make-query fetch-replies-q params)
-                             db
-                             reply-rules)
+        (->> (query db
+                    '(?id ?user-id ?text ?created-at ?likes ?retweets ?replies)
+                    (concat '($ %) (map v params))
+                    '((get-reply-rule ?id ?user-id ?text ?created-at ?likes ?retweets ?replies ?source-tweet-id))
+                    reply-rules
                     params-val)
              (map (fn [result] (apply ->Tweet result)))
              (map (fn [result] (update result :publish-date inst->ZonedDateTime)))
@@ -338,10 +367,11 @@
       (let [mc (map-uuid criteria #{:id :user-id :source-tweet-id})
             params (keys mc)
             params-val (vals mc)]
-        (->> (apply (partial d/q
-                             (make-query fetch-retweets-q params)
-                             db
-                             retweet-rules)
+        (->> (query db
+                    '(?id ?user-id ?has-comment ?comment ?created-at ?source-tweet-id)
+                    (concat '($ %) (map v params))
+                    '((get-retweet-rule ?id ?user-id ?has-comment ?comment ?created-at ?source-tweet-id))
+                    retweet-rules
                     params-val)
              (map (fn [result] (apply ->Retweet result)))
              (map (fn [result] (update result :id str)))
@@ -352,7 +382,14 @@
     [_ user-id]
     (let [db (d/db conn)]
       (let [user-uuid (UUID/fromString user-id)]
-        (ffirst (d/q fetch-password-q db retweet-rules user-uuid)))))
+        (ffirst (d/q '[:find ?password
+                       :in $ % ?user-id
+                       :where
+                       [?u :user/id ?user-id]
+                       [?u :user/password ?password]]
+                     db
+                     retweet-rules
+                     user-uuid)))))
 
   (fetch-sessions!
     [_ criteria]
@@ -360,10 +397,14 @@
       (let [mc (map-uuid criteria #{:id :user-id :source-tweet-id})
             params (keys mc)
             params-val (vals mc)]
-        (->> (apply (partial d/q
-                             (make-query fetch-session-q params)
-                             db
-                             retweet-rules)
+        (->> (query db
+                    '(?id ?user-id ?created-at)
+                    (concat '($ %) (map v params))
+                    '([?s :session/user ?u]
+                      [?u :user/id ?user-id]
+                      [?s :session/id ?id]
+                      [?s :session/created-at ?created-at])
+                    retweet-rules
                     params-val)
              (map (fn [result] (apply ->Session result)))
              (map (fn [result] (update result :id str)))
@@ -377,6 +418,12 @@
          (map (fn [id] (UUID/fromString id)))
          (map (fn [uuid] [:db/retractEntity [:like/id uuid]]))
          (do-transaction conn)))
+
+  (remove-follow!
+    [_ follower followed]
+    (let [follower-uuid (UUID/fromString (:id follower))
+          followed-uuid (UUID/fromString (:id followed))]
+      (do-transaction conn [[:db/retract [:user/id follower-uuid] :user/follow [:user/id followed-uuid]]])))
 
   (remove-session!
     [this criteria]

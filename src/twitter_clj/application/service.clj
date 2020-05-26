@@ -14,7 +14,7 @@
     (log/info "Stopping application service")
     this))
 
-(defn make-service ;; Constructor.
+(defn make-service                                          ;; Constructor.
   []
   (map->Service {}))
 
@@ -22,10 +22,10 @@
 
 (defn- throw-missing-user!
   [user-id]
-  (throw (ex-info (str "User [" user-id "] not found")
+  (throw (ex-info (str "User [ID: " user-id "] not found")
                   {:type    :resource-not-found
                    :subject :user
-                   :cause   (str "user with ID " user-id " not found")
+                   :cause   (str "user with ID '" user-id "' not found")
                    :context {:user-id user-id}})))
 
 (defn- throw-missing-tweet!
@@ -33,7 +33,7 @@
   (throw (ex-info (str "Tweet [ID: " tweet-id "] not found")
                   {:type    :resource-not-found
                    :subject :tweet
-                   :cause   (str "tweet with ID " tweet-id " not found")
+                   :cause   (str "tweet with ID '" tweet-id "' not found")
                    :context {:tweet-id tweet-id}})))
 
 (defn- throw-missing-retweet!
@@ -41,7 +41,7 @@
   (throw (ex-info (str "Retweet [ID: " tweet-id "] not found")
                   {:type    :resource-not-found
                    :subject :retweet
-                   :cause   (str "retweet with ID " tweet-id " not found")
+                   :cause   (str "retweet with ID '" tweet-id "' not found")
                    :context {:retweet-id tweet-id}})))
 
 (defn- throw-duplicate-user-email!
@@ -62,7 +62,7 @@
 
 (defn- throw-invalid-like!
   [tweet-id user-id]
-  (throw (ex-info (str "Tweet [ID: " tweet-id "] already liked by user with ID" user-id)
+  (throw (ex-info (str "User [ID: " user-id "] already likes Tweet [ID: " tweet-id "]")
                   {:type    :invalid-action
                    :subject :like
                    :cause   "you cannot like the same tweet more than once"
@@ -70,15 +70,47 @@
 
 (defn- throw-invalid-unlike!
   [tweet-id user-id]
-  (throw (ex-info (str "Tweet [ID: " tweet-id "] has not been liked by user with ID yet " user-id)
+  (throw (ex-info (str "Tweet [ID: " tweet-id "] has not been liked by User [ID: " user-id "] yet")
                   {:type    :invalid-action
                    :subject :unlike
-                   :cause   "you cannot unlike a tweet before like it"
+                   :cause   "you cannot unlike a tweet you do not like yet"
                    :context {:tweet-id tweet-id :user-id user-id}})))
+
+(defn- throw-invalid-follow!
+  [cause follower-id followed-id]
+  (case cause
+    :follow-yourself (throw (ex-info (str "User [ID: " follower-id "] cannot be followed by him/herself")
+                                     {:type    :invalid-action
+                                      :subject :follow
+                                      :cause   "you cannot follow yourself"
+                                      :context {:follower-id follower-id :followed-id follower-id}}))
+    :already-following (throw (ex-info (str "User [ID: " follower-id "] already follows User [ID: " followed-id "]")
+                                       {:type    :invalid-action
+                                        :subject :follow
+                                        :cause   "you cannot follow the same user more than once"
+                                        :context {:follower-id follower-id :followed-id followed-id}}))))
+
+(defn- throw-invalid-unfollow!
+  [cause follower-id followed-id]
+  (case cause
+    :unfollow-yourself (throw (ex-info (str "User [ID: " follower-id "] cannot be unfollowed by her/himself")
+                                       {:type    :invalid-action
+                                        :subject :unfollow
+                                        :cause   "you cannot unfollow yourself"
+                                        :context {:follower-id follower-id :followed-id follower-id}}))
+    :not-following-yet (throw (ex-info (str "User [ID: " follower-id "] does not follow User [ID: " followed-id "] yet")
+                                       {:type    :invalid-action
+                                        :subject :unfollow
+                                        :cause   "you cannot unfollow an user you do not follow yet"
+                                        :context {:follower-id follower-id :followed-id followed-id}}))))
 
 ;; Public functions.
 
 ;; We can make it part of a protocol.
+
+(defn- following?
+  [service follower-id followed-id]
+  (some #(= followed-id (:id %)) (repository/fetch-following! (:repository service) follower-id)))
 
 (defn new-user?
   [service email]
@@ -203,8 +235,56 @@
 (defn unlike
   [service user-id tweet-id]
   (if-let [tweet (first (repository/fetch-tweets! (:repository service) {:id tweet-id}))]
-    (if-not (empty? (repository/fetch-likes! (:repository service)  {:user-id user-id :source-tweet-id tweet-id}))
+    (if-not (empty? (repository/fetch-likes! (:repository service) {:user-id user-id :source-tweet-id tweet-id}))
       (do (repository/remove-like! (:repository service) {:user-id user-id :source-tweet-id tweet-id})
           (repository/update-tweet! (:repository service) (core/unlike tweet)))
       (throw-invalid-unlike! tweet-id user-id))
     (throw-missing-tweet! tweet-id)))
+
+(defn follow
+  [service follower-id followed-id]
+  (if (user-exists? service follower-id)
+    (if (user-exists? service followed-id)
+      (if-not (= follower-id followed-id)
+        (if-not (following? service follower-id followed-id)
+          (let [follower (first (repository/fetch-users! (:repository service) {:id follower-id}))
+                followed (first (repository/fetch-users! (:repository service) {:id followed-id}))
+                [updated-follower updated-followed] (core/follow follower followed)]
+            (do (repository/update-user! (:repository service) updated-follower)
+                (repository/update-user! (:repository service) updated-followed)
+                (repository/update-follow! (:repository service) updated-follower updated-followed)
+                updated-followed))
+          (throw-invalid-follow! :already-following follower-id followed-id))
+        (throw-invalid-follow! :follow-yourself follower-id followed-id))
+      (throw-missing-user! followed-id))
+    (throw-missing-user! follower-id)))
+
+(defn unfollow
+  [service follower-id followed-id]
+  (if (user-exists? service follower-id)
+    (if (user-exists? service followed-id)
+      (if-not (= follower-id followed-id)
+        (if (following? service follower-id followed-id)
+          (let [follower (first (repository/fetch-users! (:repository service) {:id follower-id}))
+                followed (first (repository/fetch-users! (:repository service) {:id followed-id}))
+                [updated-follower updated-followed] (core/unfollow follower followed)]
+            (do (repository/update-user! (:repository service) updated-follower)
+                (repository/update-user! (:repository service) updated-followed)
+                (repository/remove-follow! (:repository service) updated-follower updated-followed)
+                updated-followed))
+          (throw-invalid-unfollow! :not-following-yet follower-id followed-id))
+        (throw-invalid-unfollow! :unfollow-yourself follower-id followed-id))
+      (throw-missing-user! followed-id))
+    (throw-missing-user! follower-id)))
+
+(defn get-following
+  [service follower-id]
+  (if (user-exists? service follower-id)
+    (repository/fetch-following! (:repository service) follower-id)
+    (throw-missing-user! follower-id)))
+
+(defn get-followers
+  [service followed-id]
+  (if (user-exists? service followed-id)
+    (repository/fetch-followers! (:repository service) followed-id)
+    (throw-missing-user! followed-id)))
