@@ -509,6 +509,8 @@
           (post (resource (str "user/" second-user-id "/follow")) first-user-token {})
           (post (resource (str "user/" third-user-id "/follow")) first-user-token {})
 
-          (let [result (-> (get-and-parse (resource "feed") first-user-token {}) :result)]
+          (let [{:keys [response body result]} (get-and-parse (resource "feed") first-user-token {})]
+            (is (= 200 (:status response)))                 ;; HTTP 200 OK.
+            (is (= "success" (:status body)))
             (is (= 10 (count result)))
             (is (->> result (map :publish-date) (map str->EpochSecond) (apply >=)))))))))

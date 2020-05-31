@@ -44,6 +44,7 @@ Configuration is specified at `resources/dev-config.edn`.
     * Retweet (with and without comment);
     * Like/unlike a tweet;
     * Follow/unfollow another user.
+    * Retrieve feed (timeline).
 * HATEOAS makes it easy to follow related resources.
 * JWS authentication and authorization.
 

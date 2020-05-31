@@ -13,24 +13,24 @@
 
 (defn get
   ([url token]
-   (client/get url {:oauth-token token
+   (client/get url {:oauth-token          token
                     :unexceptional-status unexceptional-status}))
 
   ([url token params]
-   (client/get url {:query-params params
-                    :oauth-token token
+   (client/get url {:query-params         params
+                    :oauth-token          token
                     :unexceptional-status unexceptional-status})))
 
 (defn post
   ([url body]
-   (client/post url {:content-type :json
-                     :form-params body
+   (client/post url {:content-type         :json
+                     :form-params          body
                      :unexceptional-status unexceptional-status}))
 
   ([url token body]
-   (client/post url {:content-type :json
-                     :form-params body
-                     :oauth-token token
+   (client/post url {:content-type         :json
+                     :form-params          body
+                     :oauth-token          token
                      :unexceptional-status unexceptional-status})))
 
 ;; API responses manipulation.
