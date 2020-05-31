@@ -144,6 +144,15 @@
          (add-links :tweet req)
          (ok-with-success))))
 
+(defn unlike
+  [req service]
+  (let [user-id (get-user-id req)
+        tweet-id (get-parameter req :tweet-id)]
+    (log/info "Unlike tweet" (f-id tweet-id))
+    (->> (service/unlike service user-id tweet-id)
+         (add-links :tweet req)
+         (ok-with-success))))
+
 (defn follow
   [req service]
   (let [user-id (get-user-id req)
@@ -162,14 +171,12 @@
          (add-links :user req)
          (ok-with-success))))
 
-(defn unlike
+(defn feed
   [req service]
   (let [user-id (get-user-id req)
-        tweet-id (get-parameter req :tweet-id)]
-    (log/info "Unlike tweet" (f-id tweet-id))
-    (->> (service/unlike service user-id tweet-id)
-         (add-links :tweet req)
-         (ok-with-success))))
+        tweets (service/get-feed service user-id 100)]
+    (log/info "Get feed of user" (f-id user-id))
+    (ok-with-success (map (partial add-links :tweet req) tweets))))
 
 ;; Exception-handling functions.
 
@@ -229,7 +236,8 @@
                            :like                     (path-prefix "/tweet/:tweet-id/like")
                            :unlike                   (path-prefix "/tweet/:tweet-id/unlike")
                            :follow                   (path-prefix "/user/:user-id/follow")
-                           :unfollow                 (path-prefix "/user/:user-id/unfollow")})
+                           :unfollow                 (path-prefix "/user/:user-id/unfollow")
+                           :feed                     (path-prefix "/feed")})
 
 (defn public-routes
   [service]
@@ -256,7 +264,8 @@
     (POST (path-prefix "/tweet/:tweet-id/retweet") req (add-retweet req service))
     (POST (path-prefix "/tweet/:tweet-id/retweet-comment") req (add-retweet-with-comment req service))
     (POST (path-prefix "/tweet/:tweet-id/like") req (like req service))
-    (POST (path-prefix "/tweet/:tweet-id/unlike") req (unlike req service))))
+    (POST (path-prefix "/tweet/:tweet-id/unlike") req (unlike req service))
+    (GET (path-prefix "/feed") req (feed req service))))
 
 (defn handler
   [service]

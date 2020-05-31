@@ -9,6 +9,10 @@
 (defrecord TweetLike [id created-at user-id source-tweet-id])
 (defrecord Session [id user-id created-at]) ;; TODO: Remove it from here.
 
+(defn sort-by-date
+  [coll]
+  (sort-by :publish-date #(compare %2 %1) coll))
+
 (defn new-session
   [user-id]
   (->Session (str (UUID/randomUUID)) user-id (ZonedDateTime/now)))

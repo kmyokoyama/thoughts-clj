@@ -288,3 +288,18 @@
   (if (user-exists? service followed-id)
     (repository/fetch-followers! (:repository service) followed-id)
     (throw-missing-user! followed-id)))
+
+(defn get-feed
+  [service user-id limit]
+  (if (user-exists? service user-id)
+    (let [following (repository/fetch-following! (:repository service) user-id)]
+      (->> following
+           (map :id)
+           (map (fn [user-id] {:user-id user-id}))
+           (map (fn [user-id-criteria] (repository/fetch-tweets! (:repository service) user-id-criteria)))
+           (map (fn [user-tweets] (core/sort-by-date user-tweets)))
+           (map (fn [sorted-user-tweets] (take 10 sorted-user-tweets)))
+           (flatten)
+           (core/sort-by-date)
+           (take limit)))
+    (throw-missing-user! user-id)))

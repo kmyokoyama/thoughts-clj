@@ -2,7 +2,8 @@
   (:require [clojure.test :refer :all]
             [clj-http.client :as client]
             [clojure.data.json :as json]
-            [twitter-clj.adapter.http.util :refer [path-prefix]]))
+            [twitter-clj.adapter.http.util :refer [path-prefix]])
+  (:import (java.time ZonedDateTime)))
 
 ;; REST API.
 
@@ -53,3 +54,12 @@
 (defn resource-path
   [url path]
   (str url (path-prefix path)))
+
+;; Datetime manipulation.
+
+(defn str->EpochSecond
+  [date]
+  (-> date
+      (ZonedDateTime/parse)
+      (. toInstant)
+      (. getEpochSecond)))

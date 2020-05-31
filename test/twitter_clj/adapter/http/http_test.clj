@@ -9,7 +9,9 @@
             [twitter-clj.application.config :refer [datomic-uri http-host http-port]]
             [twitter-clj.application.service :refer [make-service]]
             [twitter-clj.adapter.http.component :refer [make-http-controller]]
-            [twitter-clj.adapter.http.test-util :refer :all]))
+            [twitter-clj.adapter.http.test-util :refer :all])
+  (:import (java.time ZonedDateTime)
+           (java.util Date)))
 
 (def ^:private ^:const url (str "http://" http-host ":" http-port))
 
@@ -51,23 +53,29 @@
                         (f)
                         (stop-test-system-with-datomic sys))))
 
-(defn- signup-and-login                                     ;; TODO: Move it.
+(defn signup
+  [user]
+  (let [password (:password user)
+        user-id (-> (post-and-parse (resource "signup") user) :result :id)]
+    {:user-id user-id :password password}))
+
+(defn login
+  [{:keys [user-id password]}]
+  (let [token (-> (post-and-parse (resource "login") {:user-id user-id :password password}) :result :token)]
+    {:user-id user-id :token token}))
+
+(defn signup-and-login
   ([]
-   (let [user (random-user)
-         password (:password user)
-         user-id (-> (post-and-parse (resource "signup") user) :result :id)
-         token (-> (post-and-parse (resource "login") {:user-id user-id :password password}) :result :token)]
-     {:user-id user-id :token token}))
+   (signup-and-login (random-user)))
 
   ([user]
-   (let [password (:password user)
-         user-id (-> (post-and-parse (resource "signup") user) :result :id)
-         token (-> (post-and-parse (resource "login") {:user-id user-id :password password}) :result :token)]
-     {:user-id user-id :token token})))
+   (-> user
+       (signup)
+       (login))))
 
 ;; Tests.
 
-(deftest signup
+(deftest test-signup
   (testing "Sign up with a single user"
     (let [response (post (resource "signup") (random-user))]
       (is (= "success" (:status (get-body response))))
@@ -97,11 +105,11 @@
         (is (= "username" (get-in result [:context :attribute])))
         (is (= (clojure.string/lower-case first-username) (get-in result [:context :username])))))))
 
-(deftest login
+(deftest test-login
   (testing "Login returns success when user exists"
     (let [user (random-user)
           password (:password user)
-          user-id (-> (post-and-parse (resource "signup") user) :result :id)
+          user-id (-> (signup user) :user-id)
           {:keys [response body result]} (post-and-parse (resource "login") {:user-id user-id :password password})]
       (is (= "success" (:status body)))
       (is (= 200 (:status response)))                       ;; HTTP 200 OK.
@@ -136,7 +144,7 @@
       (is (= "failure" (:status body)))
       (is (= 401 (:status response))))))                    ;; HTTP 401 Unauthorized.
 
-(deftest tweet
+(deftest test-tweet
   (testing "Add a single tweet"
     (let [{:keys [user-id token]} (signup-and-login)
           text (random-text)
@@ -147,7 +155,7 @@
       (is (= text (:text result)))
       (is (= 0 (:likes result) (:retweets result) (:replies result))))))
 
-(deftest get-tweets-from-user
+(deftest test-get-tweets-from-user
   (testing "Get two tweets from the same user"
     (let [{:keys [user-id token]} (signup-and-login)
           first-tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)
@@ -166,7 +174,7 @@
         (is (= 200 (:status response)))                     ;; HTTP 200 OK.
         (is (empty? result))))))
 
-(deftest get-user-by-id
+(deftest test-get-user-by-id
   (testing "Get an existing user returns successfully"
     (let [expected-user (random-user)
           {:keys [user-id token]} (signup-and-login expected-user)
@@ -187,7 +195,7 @@
       (is (= "user" (:subject result)))
       (is (= (str user-id) (get-in result [:context :user-id]))))))
 
-(deftest get-tweet-by-id
+(deftest test-get-tweet-by-id
   (testing "Get an existing tweet returns successfully"
     (let [{:keys [user-id token]} (signup-and-login)
           expected-tweet (random-tweet)
@@ -209,7 +217,7 @@
       (is (= "tweet" (:subject result)))
       (is (= (str tweet-id) (get-in result [:context :tweet-id]))))))
 
-(deftest like
+(deftest test-like
   (testing "Like an existing tweet"
     (let [{:keys [token]} (signup-and-login)
           tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)
@@ -247,7 +255,7 @@
       (is (= "tweet" (:subject result)))
       (is (= (str tweet-id) (get-in result [:context :tweet-id]))))))
 
-(deftest unlike
+(deftest test-unlike
   (testing "Unlike an existing tweet previously liked"
     (let [{:keys [user-id token]} (signup-and-login)
           tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)]
@@ -300,7 +308,7 @@
       (is (= "tweet" (:subject result)))
       (is (= (str tweet-id) (get-in result [:context :tweet-id]))))))
 
-(deftest add-reply
+(deftest test-add-reply
   (testing "Add new reply to existing tweet returns success"
     (let [{:keys [user-id token]} (signup-and-login)
           tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)
@@ -323,7 +331,7 @@
       (is (= "tweet" (:subject result)))
       (is (= (str tweet-id) (get-in result [:context :tweet-id]))))))
 
-(deftest get-retweet-by-id
+(deftest test-get-retweet-by-id
   (testing "Get retweets from tweet not retweeted yet returns an empty list"
     (let [{:keys [token]} (signup-and-login)
           tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)
@@ -334,7 +342,7 @@
       (is (= retweet-id (:id result)))
       (is (= tweet-id (:source-tweet-id result))))))
 
-(deftest get-retweets
+(deftest test-get-retweets
   (testing "Get retweets from a tweet already retweeted returns all replies"
     (let [{:keys [user-id token]} (signup-and-login)
           tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet user-id)) :result :id)]
@@ -353,7 +361,7 @@
       (is (= "success" (:status body)))
       (is (empty? result)))))
 
-(deftest get-replies
+(deftest test-get-replies
   (testing "Get retweets from a tweet already retweeted returns all replies"
     (let [{:keys [user-id token]} (signup-and-login)
           tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)]
@@ -371,7 +379,7 @@
       (is (= "success" (:status body)))
       (is (empty? result)))))
 
-(deftest follow
+(deftest test-follow
   (testing "User follows another user"
     (let [{follower-id :user-id follower-token :token} (signup-and-login)
           {followed-id :user-id} (signup-and-login)
@@ -405,7 +413,7 @@
       (is (= (str user-id) (get-in result [:context :follower-id])))
       (is (= (str followed-id) (get-in result [:context :followed-id]))))))
 
-(deftest unfollow
+(deftest test-unfollow
   (testing "User unfollows an user she/he follows"
     (let [{follower-id :user-id follower-token :token} (signup-and-login)
           {followed-id :user-id} (signup-and-login)
@@ -452,7 +460,7 @@
       (is (= (str user-id) (get-in result [:context :follower-id])))
       (is (= (str followed-id) (get-in result [:context :followed-id]))))))
 
-(deftest get-user-following
+(deftest test-get-user-following
   (testing "Get following list of an user"
     (let [{follower-id :user-id follower-token :token} (signup-and-login)
           {followed-id :user-id} (signup-and-login)
@@ -469,9 +477,9 @@
       (is (= "success" (:status body)))
       (is (empty? result)))))
 
-(deftest get-user-followers
+(deftest test-get-user-followers
   (testing "Get followers list of an user"
-    (let [{follower-id :user-id follower-token :token} (signup-and-login)
+    (let [{follower-token :token} (signup-and-login)
           {followed-id :user-id} (signup-and-login)
           _ (post-and-parse (resource (str "user/" followed-id "/follow")) follower-token {})
           {:keys [response body result]} (get-and-parse (resource (str "user/" followed-id "/followers")) follower-token {})]
@@ -485,3 +493,22 @@
       (is (= 200 (:status response)))                       ;; HTTP 200 OK.
       (is (= "success" (:status body)))
       (is (empty? result)))))
+
+(deftest test-get-feed
+  (testing "Get feed of an user returns most recent tweets"
+    (let [{first-user-id :user-id first-user-password :password} (signup (random-user))
+          {second-user-id :user-id second-user-password :password} (signup (random-user))
+          {third-user-id :user-id third-user-password :password} (signup (random-user))
+          second-user-token (-> (login {:user-id second-user-id :password second-user-password}) :token)]
+      (dotimes [_ 5] (post (resource "tweet") second-user-token (random-tweet)))
+
+      (let [third-user-token (-> (login {:user-id third-user-id :password third-user-password}) :token)]
+        (dotimes [_ 5] (post (resource "tweet") third-user-token (random-tweet)))
+
+        (let [first-user-token (-> (login {:user-id first-user-id :password first-user-password}) :token)]
+          (post (resource (str "user/" second-user-id "/follow")) first-user-token {})
+          (post (resource (str "user/" third-user-id "/follow")) first-user-token {})
+
+          (let [result (-> (get-and-parse (resource "feed") first-user-token {}) :result)]
+            (is (= 10 (count result)))
+            (is (->> result (map :publish-date) (map str->EpochSecond) (apply >=)))))))))
