@@ -16,6 +16,7 @@
 ;(require '[twitter-clj.application.core :as core])
 ;(require '[twitter-clj.application.port.repository :refer :all])
 ;(require '[twitter-clj.adapter.repository.datomic :as datomic])
+;(require '[taoensso.carmine :as car :refer [wcar])
 ;(def first-user (core/new-user "First User" "first.user@gmail.com" "first.user"))
 ;(def second-user (core/new-user "second User" "second.user@gmail.com" "second.user"))
 ;(def third-user (core/new-user "third User" "third.user@gmail.com" "third.user"))
@@ -28,6 +29,8 @@
 ;(update-follow! repository first-user second-user)
 ;(update-follow! repository first-user third-user)
 ;(update-follow! repository second-user first-user)
+;(def redis-conn {:pool {} :uri "redis://localhost:6379"})
+;(wcar redis-conn (car/ping))
 
 ;; System without API (or any driver-side).
 (defn dev-system-map

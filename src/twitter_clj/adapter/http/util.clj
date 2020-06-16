@@ -32,6 +32,10 @@
   [req]
   (get-in req [:identity :user-id]))
 
+(defn get-session-id
+  [req]
+  (get-in req [:identity :session-id]))
+
 (def ^:const status-success
   {:status "success"})
 
@@ -62,7 +66,6 @@
 (def unauthorized-response (partial json-response 401))
 
 (def ok-with-success (comp ok-response to-json add-success-result))
-(def ok-with-failure (comp ok-response to-json add-failure-result))
 (def created (comp created-response to-json add-success-result))
 (def bad-request (comp bad-request-response to-json add-failure-result))
 (defn unauthorized
@@ -71,10 +74,13 @@
       (add-failure-result)
       (to-json)
       (unauthorized-response)))
+(defn internal-server-error
+  []
+  {:status 501 :headers {"Content-Type" "text/plain"}})
 
 (defn new-token
-  [secret user-id role]
-  (jwt/sign {:user-id user-id :role role} secret {:alg :hs512}))
+  [secret user-id role session-id]
+  (jwt/sign {:user-id user-id :role role :session-id session-id} secret {:alg :hs512}))
 
 (def create-token (partial new-token http-api-jws-secret))
 
@@ -122,3 +128,19 @@
 (defn log-failure
   [& args]
   (log/warn (clojure.string/join " " (cons "Failure -" args))))
+
+(defn str-exception
+  "The first line is the exception's message and the next lines are the stacktrace with leading two spaces."
+  [e]
+  (str (.getMessage e) "\n" (apply str (cons "  " (interpose "\n  " (.getStackTrace e))))))
+
+(defn schema-error-context
+  [schema-error]
+  (let [supplied (:value schema-error)
+        error-fields (:error schema-error)]
+    (reduce (fn [acc k]
+              (if (k supplied)
+                (assoc acc k (str (k supplied) " (wrong type)"))
+                (assoc acc k "(missing)")))
+            {}
+            (keys error-fields))))

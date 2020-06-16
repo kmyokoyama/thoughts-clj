@@ -21,7 +21,7 @@
 
 (defrecord InMemoryRepository [users tweets likes retweets
                                join-tweet-likes join-tweet-replies join-tweet-retweets
-                               passwords sessions following]
+                               passwords sessions following hashtags]
   component/Lifecycle
   (start [this]
     (log/info "Starting in-memory database")
@@ -37,10 +37,10 @@
     (swap! passwords assoc user-id password)
     user-id)
 
-  (update-session!
-    [_ {session-id :id :as session}]
-    (swap! sessions assoc session-id session)
-    session)
+  ;(update-session!
+  ;  [_ {session-id :id :as session}]
+  ;  (swap! sessions assoc session-id session)
+  ;  session)
 
   (update-user!
     [_ {user-id :id :as user}]
@@ -48,8 +48,10 @@
     user)
 
   (update-tweet!
-    [_ {tweet-id :id :as tweet}]
+    [_ {tweet-id :id :as tweet} tags]
     (swap! tweets assoc tweet-id tweet)
+    (doseq [tag tags]
+      (swap! hashtags update tag (fn [tweet-ids] (conj (vec tweet-ids) tweet-id))))
     tweet)
 
   (update-like!
@@ -59,14 +61,16 @@
     like)
 
   (update-reply!
-    [_ source-tweet-id {reply-id :id :as reply}]
+    [this source-tweet-id {reply-id :id :as reply} tags]
     (swap! join-tweet-replies update source-tweet-id (fn [reply-ids] (conj (vec reply-ids) reply-id)))
+    (repository/update-tweet! this reply tags)
     reply)
 
   (update-retweet!
-    [_ {retweet-id :id :as retweet}]
+    [_ {retweet-id :id :as retweet} tags]
     (swap! retweets assoc retweet-id retweet)
     (swap! join-tweet-retweets update (:source-tweet-id retweet) (fn [retweet-ids] (conj (vec retweet-ids) retweet-id)))
+    (swap! hashtags retweet-id tags)
     retweet)
 
   (update-follow!
@@ -77,9 +81,9 @@
     [_ user-id]
     (get @passwords user-id))
 
-  (fetch-sessions!
-    [_ criteria]
-    (filter (fn [e] (= criteria (select-keys e (keys criteria)))) (vals @sessions)))
+  ;(fetch-sessions!
+  ;  [_ criteria]
+  ;  (filter (fn [e] (= criteria (select-keys e (keys criteria)))) (vals @sessions)))
 
   (fetch-users!
     [_ criteria]
@@ -87,7 +91,10 @@
 
   (fetch-tweets!
     [_ criteria]
-    (filter (fn [e] (= criteria (select-keys e (keys criteria)))) (vals @tweets)))
+    (if (= :hashtag (key (first criteria)))
+      (->> (get @hashtags (val (first criteria)) [])
+          (map (fn [tweet-id] (get @tweets tweet-id))))
+      (filter (fn [e] (= criteria (select-keys e (keys criteria)))) (vals @tweets))))
 
   (fetch-likes!
     [_ criteria]
@@ -124,13 +131,13 @@
 
   (remove-follow!
     [_ {follower-id :id} {followed-id :id}]
-    (swap! following update follower-id (fn [following-ids] (disj (set following-ids) followed-id))))
+    (swap! following update follower-id (fn [following-ids] (disj (set following-ids) followed-id)))))
 
-  (remove-session!
-    [_ criteria]
-    (->> (filter (fn [e] (= criteria (select-keys e (keys criteria)))) (vals @sessions))
-         (map :id)
-         (map (fn [session-id] (swap! sessions dissoc session-id))))))
+;(remove-session!
+;  [_ criteria]
+;  (->> (filter (fn [e] (= criteria (select-keys e (keys criteria)))) (vals @sessions))
+;       (map :id)
+;       (map (fn [session-id] (swap! sessions dissoc session-id))))))
 
 (defn make-in-mem-repository                                ;; Constructor.
   []
@@ -143,4 +150,5 @@
                             :join-tweet-likes    (atom {})
                             :join-tweet-replies  (atom {})
                             :join-tweet-retweets (atom {})
-                            :following           (atom {})}))
+                            :following           (atom {})
+                            :hashtags            (atom {})}))

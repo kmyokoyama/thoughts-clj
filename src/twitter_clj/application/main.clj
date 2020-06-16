@@ -5,7 +5,9 @@
             [twitter-clj.adapter.http.component :refer [make-http-controller]]
             [twitter-clj.adapter.repository.datomic :refer [make-datomic-repository]]
             [twitter-clj.adapter.repository.in-mem :refer [make-in-mem-repository]]
-            [twitter-clj.application.config :refer [datomic-uri init-system! http-host http-port]]
+            [twitter-clj.adapter.cache.in-mem :refer [make-in-mem-cache]]
+            [twitter-clj.adapter.cache.redis :refer [make-redis-cache]]
+            [twitter-clj.application.config :refer [datomic-uri redis-uri init-system! http-host http-port]]
             [twitter-clj.application.service :refer [make-service]])
   (:gen-class))
 
@@ -13,9 +15,10 @@
   []
   (component/system-map
     :repository (make-datomic-repository datomic-uri)
+    :cache (make-redis-cache redis-uri)
     :service (component/using
                (make-service)
-               [:repository])
+               [:repository :cache])
     :controller (component/using
                   (make-http-controller http-host http-port)
                   [:service])))

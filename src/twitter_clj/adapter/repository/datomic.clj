@@ -60,13 +60,14 @@
   [k]
   (symbol (str "?" (name k))))
 
-(def ^:private tweet-rules '[[(get-tweet-rule ?id ?user-id ?text ?created-at ?likes ?retweets ?replies)
+(def ^:private tweet-rules '[[(get-tweet-rule ?id ?user-id ?text ?created-at ?likes ?retweets ?replies ?hashtag)
                               [?t :tweet/id ?id]
                               [?t :tweet/created-at ?created-at]
                               [?t :tweet/text ?text]
                               [?t :tweet/likes ?likes]
                               [?t :tweet/retweets ?retweets]
                               [?t :tweet/replies ?replies]
+                              [?t :tweet/hashtags ?hashtag]
                               [?t :tweet/user ?u]
                               [?u :user/id ?user-id]]])
 
@@ -133,7 +134,7 @@
                                 [?s :tweet/id ?source-tweet-id]]])
 
 (defn- make-tweet
-  [{:keys [id user-id text publish-date likes retweets replies]}]
+  [{:keys [id user-id text publish-date likes retweets replies]} hashtags]
   (let [uuid (UUID/fromString id)
         created-at (ZonedDateTime->inst publish-date)
         user-uuid (UUID/fromString user-id)]
@@ -143,7 +144,8 @@
             :likes      likes
             :retweets   retweets
             :replies    replies
-            :user       [:user/id user-uuid]}))
+            :user       [:user/id user-uuid]
+            :hashtags   (set hashtags)}))
 
 (defn- make-user
   [{:keys [id active name email username following followers]}]
@@ -168,13 +170,13 @@
            :source-tweet [:tweet/id source-tweet-uuid]}))
 
 (defn- make-reply
-  [source-tweet-id reply]
+  [source-tweet-id reply hashtags]
   (let [source-tweet-uuid (UUID/fromString source-tweet-id)]
-    (-> (make-tweet reply)
+    (-> (make-tweet reply hashtags)
         (assoc :reply/source-tweet [:tweet/id source-tweet-uuid]))))
 
 (defn- make-retweet
-  [{:keys [id user-id has-comment comment publish-date source-tweet-id]}]
+  [{:keys [id user-id has-comment comment publish-date source-tweet-id]} hashtags]
   (let [uuid (UUID/fromString id)
         created-at (ZonedDateTime->inst publish-date)
         user-uuid (UUID/fromString user-id)
@@ -182,9 +184,10 @@
     #:retweet{:id           uuid
               :user         [:user/id user-uuid]
               :has-comment  has-comment
-              :comment      (if-not has-comment "" comment) ;; TODO: Fix it. Perhaps we need to rethink the retweet model.
+              :comment      (if has-comment comment "") ;; TODO: Fix it. Perhaps we need to rethink the retweet model.
               :created-at   created-at
-              :source-tweet [:tweet/id source-tweet-uuid]}))
+              :source-tweet [:tweet/id source-tweet-uuid]
+              :hashtags     hashtags}))
 
 (defn- make-password
   [user-id password]
@@ -229,8 +232,8 @@
 
   repository/Repository
   (update-tweet!
-    [_ tweet]
-    (do-transaction conn [(make-tweet tweet)])
+    [_ tweet hashtags]
+    (do-transaction conn [(make-tweet tweet hashtags)])
     tweet)
 
   (update-user!
@@ -244,13 +247,13 @@
     like)
 
   (update-reply!
-    [_ source-tweet-id reply]
-    (do-transaction conn [(make-reply source-tweet-id reply)])
+    [_ source-tweet-id reply hashtags]
+    (do-transaction conn [(make-reply source-tweet-id reply hashtags)])
     reply)
 
   (update-retweet!
-    [_ retweet]
-    (do-transaction conn [(make-retweet retweet)])
+    [_ retweet hashtags]
+    (do-transaction conn [(make-retweet retweet hashtags)])
     retweet)
 
   (update-password!
@@ -258,10 +261,10 @@
     (do-transaction conn [(make-password user-id password)])
     user-id)
 
-  (update-session!
-    [_ session]
-    (do-transaction conn [(make-session session)])
-    session)
+  ;(update-session!
+  ;  [_ session]
+  ;  (do-transaction conn [(make-session session)])
+  ;  session)
 
   (update-follow!
     [_ follower followed]
@@ -278,7 +281,7 @@
         (->> (query db
                     '(?id ?user-id ?text ?created-at ?likes ?retweets ?replies)
                     (concat '($ %) (map v params))
-                    '((get-tweet-rule ?id ?user-id ?text ?created-at ?likes ?retweets ?replies))
+                    '((get-tweet-rule ?id ?user-id ?text ?created-at ?likes ?retweets ?replies ?hashtag))
                     tweet-rules
                     params-val)
              (map (fn [result] (apply ->Tweet result)))
@@ -391,25 +394,25 @@
                      retweet-rules
                      user-uuid)))))
 
-  (fetch-sessions!
-    [_ criteria]
-    (let [db (d/db conn)]
-      (let [mc (map-uuid criteria #{:id :user-id :source-tweet-id})
-            params (keys mc)
-            params-val (vals mc)]
-        (->> (query db
-                    '(?id ?user-id ?created-at)
-                    (concat '($ %) (map v params))
-                    '([?s :session/user ?u]
-                      [?u :user/id ?user-id]
-                      [?s :session/id ?id]
-                      [?s :session/created-at ?created-at])
-                    retweet-rules
-                    params-val)
-             (map (fn [result] (apply ->Session result)))
-             (map (fn [result] (update result :id str)))
-             (map (fn [result] (update result :user-id str)))
-             (map (fn [result] (update result :created-at inst->ZonedDateTime)))))))
+  ;(fetch-sessions!
+  ;  [_ criteria]
+  ;  (let [db (d/db conn)]
+  ;    (let [mc (map-uuid criteria #{:id :user-id :source-tweet-id})
+  ;          params (keys mc)
+  ;          params-val (vals mc)]
+  ;      (->> (query db
+  ;                  '(?id ?user-id ?created-at)
+  ;                  (concat '($ %) (map v params))
+  ;                  '([?s :session/user ?u]
+  ;                    [?u :user/id ?user-id]
+  ;                    [?s :session/id ?id]
+  ;                    [?s :session/created-at ?created-at])
+  ;                  retweet-rules
+  ;                  params-val)
+  ;           (map (fn [result] (apply ->Session result)))
+  ;           (map (fn [result] (update result :id str)))
+  ;           (map (fn [result] (update result :user-id str)))
+  ;           (map (fn [result] (update result :created-at inst->ZonedDateTime)))))))
 
   (remove-like!
     [this criteria]
@@ -423,15 +426,15 @@
     [_ follower followed]
     (let [follower-uuid (UUID/fromString (:id follower))
           followed-uuid (UUID/fromString (:id followed))]
-      (do-transaction conn [[:db/retract [:user/id follower-uuid] :user/follow [:user/id followed-uuid]]])))
+      (do-transaction conn [[:db/retract [:user/id follower-uuid] :user/follow [:user/id followed-uuid]]]))))
 
-  (remove-session!
-    [this criteria]
-    (->> (repository/fetch-sessions! this criteria)
-         (map :id)
-         (map (fn [id] (UUID/fromString id)))
-         (map (fn [uuid] [:db/retractEntity [:session/id uuid]]))
-         (do-transaction conn))))
+;(remove-session!
+;  [this criteria]
+;  (->> (repository/fetch-sessions! this criteria)
+;       (map :id)
+;       (map (fn [id] (UUID/fromString id)))
+;       (map (fn [uuid] [:db/retractEntity [:session/id uuid]]))
+;       (do-transaction conn))))
 
 (defn make-datomic-repository
   [uri]

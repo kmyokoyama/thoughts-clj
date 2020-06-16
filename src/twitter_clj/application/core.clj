@@ -13,6 +13,31 @@
   [coll]
   (sort-by :publish-date #(compare %2 %1) coll))
 
+(defn selected-idx
+  [key-fn comp-fn coll]
+  (take 2 (reduce (fn [[curr-sel sel-idx curr-idx] val]
+                    (if (nil? curr-sel)
+                      [val curr-idx (inc curr-idx)]
+                      (if (nil? val)
+                        [curr-sel sel-idx (inc curr-idx)]
+                        (if (comp-fn (key-fn val) (key-fn curr-sel))
+                          [val curr-idx (inc curr-idx)]
+                          [curr-sel sel-idx (inc curr-idx)]))))
+                  [(first coll) 0 0]
+                  coll)))
+
+(defn merge-sorted
+  [key-fn comp-fn limit coll]
+  (loop [acc [] vs (vec coll) n 0]
+    (let [[curr idx] (selected-idx key-fn comp-fn (map first vs))]
+      (if (or (= n limit) (nil? curr))
+        acc
+        (recur (conj acc curr) (update vs idx rest) (inc n))))))
+
+(defn merge-by-date
+  [limit coll]
+  (merge-sorted :publish-date #(.isAfter %1 %2) limit coll))
+
 (defn new-session
   [user-id]
   (->Session (str (UUID/randomUUID)) user-id (ZonedDateTime/now)))
@@ -24,6 +49,10 @@
 (defn password-match?
   [password actual-password]
   (hashers/check password actual-password))
+
+(defn get-hashtags
+  [text]
+  (into [] (->> text (re-seq #"#\w+") (map #(subs % 1)))))
 
 ;; Tweet-related functions.
 

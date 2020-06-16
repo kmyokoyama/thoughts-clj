@@ -59,7 +59,10 @@
     :db/cardinality :db.cardinality/one}
    {:db/ident       :reply/source-tweet
     :db/valueType   :db.type/ref
-    :db/cardinality :db.cardinality/one}]]
+    :db/cardinality :db.cardinality/one}
+   {:db/ident       :tweet/hashtags
+    :db/valueType   :db.type/string
+    :db/cardinality :db.cardinality/many}]]
 
  :retweet
  [[{:db/ident       :retweet/id
@@ -81,7 +84,10 @@
     :db/cardinality :db.cardinality/one}
    {:db/ident       :retweet/source-tweet
     :db/valueType   :db.type/ref
-    :db/cardinality :db.cardinality/one}]]
+    :db/cardinality :db.cardinality/one}
+   {:db/ident       :retweet/hashtags
+    :db/valueType   :db.type/text
+    :db/cardinality :db.cardinality/many}]]
 
  :like
  [[{:db/ident       :like/id
