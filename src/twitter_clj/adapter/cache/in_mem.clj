@@ -6,10 +6,18 @@
 
 (defn- shutdown
   [cache]
+  (reset! (:sessions cache) {})
   (reset! (:feeds cache) {})
   cache)
 
-(defrecord InMemoryCache [feeds]
+(defn- session-ids-by-user-id
+  [sessions user-id]
+  (->> sessions
+       (vals)
+       (filter (fn [session] (= user-id (:user-id session))))
+       (map :id)))
+
+(defrecord InMemoryCache [sessions feeds]
   component/Lifecycle
   (start
     [cache]
@@ -22,6 +30,9 @@
     (shutdown cache))
 
   cache/Cache
+  (update-session! [_ session]
+    (swap! sessions assoc (:id session) session))
+
   (update-feed!
     [_ user-id feed ttl]
     (let [expiration (.plusSeconds (ZonedDateTime/now) ttl)]
@@ -35,8 +46,18 @@
         []
         (if (.isBefore (:expiration user-feed) (ZonedDateTime/now))
           (swap! feeds dissoc user-id)
-          (->> user-feed :feed (drop offset) (take limit)))))))
+          (->> user-feed :feed (drop offset) (take limit))))))
+
+  (remove-session! [_ criteria]
+    (case (key (first criteria))
+      :session-id (swap! sessions dissoc (val (first criteria)))
+      :user-id (swap! sessions (fn [sessions-map]
+                                 (let [user-id (val (first criteria))
+                                       session-ids (session-ids-by-user-id sessions-map user-id)]
+                                   (doseq [session-id session-ids]
+                                     (dissoc sessions-map session-id))))))))
 
 (defn make-in-mem-cache
   []
-  (map->InMemoryCache {:feeds (atom {})}))
+  (map->InMemoryCache {:sessions (atom {})
+                       :feeds (atom {})}))

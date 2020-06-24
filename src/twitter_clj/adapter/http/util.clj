@@ -44,7 +44,9 @@
 
 (defn add-success-result
   [result]
-  (assoc status-success :result result))
+  (cond-> status-success
+          (sequential? result) (assoc :total (count result))
+          true (assoc :result result)))
 
 (defn add-failure-result
   [result]

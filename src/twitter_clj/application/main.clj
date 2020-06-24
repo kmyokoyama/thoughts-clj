@@ -14,8 +14,8 @@
 (defn- system-map
   []
   (component/system-map
-    :repository (make-datomic-repository datomic-uri)
-    :cache (make-redis-cache redis-uri)
+    :repository (make-in-mem-repository)
+    :cache (make-in-mem-cache)
     :service (component/using
                (make-service)
                [:repository :cache])
