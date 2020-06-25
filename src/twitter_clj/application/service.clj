@@ -317,5 +317,4 @@
             (do (cache/update-feed! (:cache service) user-id feed 360)
                 (cache/fetch-feed! (:cache service) user-id limit offset))
             feed))))                                        ;; TTL of 5 minutes.
-
     (throw-missing-user! user-id)))

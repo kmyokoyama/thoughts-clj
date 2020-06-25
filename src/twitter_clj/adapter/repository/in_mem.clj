@@ -67,10 +67,9 @@
     reply)
 
   (update-retweet!
-    [_ {retweet-id :id :as retweet} tags]
+    [_ {retweet-id :id :as retweet} tags] ;; TODO: Consider hashtags for retweets.
     (swap! retweets assoc retweet-id retweet)
     (swap! join-tweet-retweets update (:source-tweet-id retweet) (fn [retweet-ids] (conj (vec retweet-ids) retweet-id)))
-    (swap! hashtags retweet-id tags)
     retweet)
 
   (update-follow!
