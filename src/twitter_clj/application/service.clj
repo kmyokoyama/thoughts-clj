@@ -190,7 +190,6 @@
       (let [reply (core/new-tweet user-id text)]
         (repository/update-tweet! (:repository service) (core/reply source-tweet) #{})
         (repository/update-reply! (:repository service) source-tweet-id reply (core/get-hashtags (:text reply))))
-      ;(repository/update-tweet! (:repository service) reply))
       (throw-missing-tweet! source-tweet-id))
     (throw-missing-user! user-id)))
 
