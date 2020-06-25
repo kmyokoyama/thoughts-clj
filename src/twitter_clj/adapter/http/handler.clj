@@ -214,7 +214,7 @@
      :context context}))
 
 (defn- wrap-authenticated
-  [handler service]
+  [handler]
   (fn [request]
     (if (authenticated? request)
       (handler request)
@@ -322,7 +322,7 @@
   (-> (compojure.core/routes
         (public-routes service)
         (-> (user-routes service)
-            (wrap-authenticated service)
+            (wrap-authenticated)
             (wrap-authentication jws-backend)))
       (wrap-service-exception)
       (wrap-schema-exception)

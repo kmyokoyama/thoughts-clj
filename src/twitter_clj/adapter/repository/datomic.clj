@@ -195,15 +195,6 @@
     {:db/id         [:user/id user-uuid]
      :user/password password}))
 
-(defn- make-session
-  [{:keys [:id :user-id :created-at]}]
-  (let [session-uuid (UUID/fromString id)
-        user-uuid (UUID/fromString user-id)
-        created-at-inst (ZonedDateTime->inst created-at)]
-    {:session/id         session-uuid
-     :session/user       [:user/id user-uuid]
-     :session/created-at created-at-inst}))
-
 (defn make-follow
   [follower-id followed-id]
   (let [follower-uuid (UUID/fromString follower-id)
@@ -230,64 +221,11 @@
     [_this]
     (log/info "Stopping Datomic repository"))
 
-  repository/Repository
-  (update-tweet!
-    [_ tweet hashtags]
-    (do-transaction conn [(make-tweet tweet hashtags)])
-    tweet)
-
+  repository/UserRepository
   (update-user!
     [_ user]
     (do-transaction conn [(make-user user)])
     user)
-
-  (update-like!
-    [_ like]
-    (do-transaction conn [(make-like like)])
-    like)
-
-  (update-reply!
-    [_ source-tweet-id reply hashtags]
-    (do-transaction conn [(make-reply source-tweet-id reply hashtags)])
-    reply)
-
-  (update-retweet!
-    [_ retweet hashtags]
-    (do-transaction conn [(make-retweet retweet hashtags)])
-    retweet)
-
-  (update-password!
-    [_ user-id password]
-    (do-transaction conn [(make-password user-id password)])
-    user-id)
-
-  ;(update-session!
-  ;  [_ session]
-  ;  (do-transaction conn [(make-session session)])
-  ;  session)
-
-  (update-follow!
-    [_ follower followed]
-    (let [follower-id (:id follower)
-          followed-id (:id followed)]
-      (do-transaction conn [(make-follow follower-id followed-id)])))
-
-  (fetch-tweets!
-    [_ criteria]
-    (let [db (d/db conn)]
-      (let [mc (map-uuid criteria #{:id :user-id})
-            params (keys mc)
-            params-val (vals mc)]
-        (->> (query db
-                    '(?id ?user-id ?text ?created-at ?likes ?retweets ?replies)
-                    (concat '($ %) (map v params))
-                    '((get-tweet-rule ?id ?user-id ?text ?created-at ?likes ?retweets ?replies ?hashtag))
-                    tweet-rules
-                    params-val)
-             (map (fn [result] (apply ->Tweet result)))
-             (map (fn [result] (update result :publish-date inst->ZonedDateTime)))
-             (map (fn [result] (update result :id str)))
-             (map (fn [result] (update result :user-id str)))))))
 
   (fetch-users!
     [_ criteria]
@@ -303,6 +241,30 @@
                     params-val)
              (map (fn [result] (apply ->User result)))
              (map (fn [result] (update result :id str)))))))
+
+  (update-password!
+    [_ user-id password]
+    (do-transaction conn [(make-password user-id password)])
+    user-id)
+
+  (fetch-password!
+    [_ user-id]
+    (let [db (d/db conn)]
+      (let [user-uuid (UUID/fromString user-id)]
+        (ffirst (d/q '[:find ?password
+                       :in $ % ?user-id
+                       :where
+                       [?u :user/id ?user-id]
+                       [?u :user/password ?password]]
+                     db
+                     retweet-rules
+                     user-uuid)))))
+
+  (update-follow!
+    [_ follower followed]
+    (let [follower-id (:id follower)
+          followed-id (:id followed)]
+      (do-transaction conn [(make-follow follower-id followed-id)])))
 
   (fetch-following!
     [_ follower-id]
@@ -330,6 +292,40 @@
              (map (fn [result] (apply ->User result)))
              (map (fn [result] (update result :id str)))))))
 
+  (remove-follow!
+    [_ follower followed]
+    (let [follower-uuid (UUID/fromString (:id follower))
+          followed-uuid (UUID/fromString (:id followed))]
+      (do-transaction conn [[:db/retract [:user/id follower-uuid] :user/follow [:user/id followed-uuid]]])))
+
+  repository/TweetRepository
+  (update-tweet!
+    [_ tweet hashtags]
+    (do-transaction conn [(make-tweet tweet hashtags)])
+    tweet)
+
+  (fetch-tweets!
+    [_ criteria]
+    (let [db (d/db conn)]
+      (let [mc (map-uuid criteria #{:id :user-id})
+            params (keys mc)
+            params-val (vals mc)]
+        (->> (query db
+                    '(?id ?user-id ?text ?created-at ?likes ?retweets ?replies)
+                    (concat '($ %) (map v params))
+                    '((get-tweet-rule ?id ?user-id ?text ?created-at ?likes ?retweets ?replies ?hashtag))
+                    tweet-rules
+                    params-val)
+             (map (fn [result] (apply ->Tweet result)))
+             (map (fn [result] (update result :publish-date inst->ZonedDateTime)))
+             (map (fn [result] (update result :id str)))
+             (map (fn [result] (update result :user-id str)))))))
+
+  (update-like!
+    [_ like]
+    (do-transaction conn [(make-like like)])
+    like)
+
   (fetch-likes!
     [_ criteria]
     (let [db (d/db conn)]
@@ -346,6 +342,19 @@
              (map (fn [result] (update result :id str)))
              (map (fn [result] (update result :user-id str)))
              (map (fn [result] (update result :source-tweet-id str)))))))
+
+  (remove-like!
+    [this criteria]
+    (->> (repository/fetch-likes! this criteria)
+         (map :id)
+         (map (fn [id] (UUID/fromString id)))
+         (map (fn [uuid] [:db/retractEntity [:like/id uuid]]))
+         (do-transaction conn)))
+
+  (update-reply!
+    [_ source-tweet-id reply hashtags]
+    (do-transaction conn [(make-reply source-tweet-id reply hashtags)])
+    reply)
 
   (fetch-replies!
     [_ criteria]
@@ -364,6 +373,11 @@
              (map (fn [result] (update result :id str)))
              (map (fn [result] (update result :user-id str)))))))
 
+  (update-retweet!
+    [_ retweet hashtags]
+    (do-transaction conn [(make-retweet retweet hashtags)])
+    retweet)
+
   (fetch-retweets!
     [_ criteria]
     (let [db (d/db conn)]
@@ -379,62 +393,7 @@
              (map (fn [result] (apply ->Retweet result)))
              (map (fn [result] (update result :id str)))
              (map (fn [result] (update result :user-id str)))
-             (map (fn [result] (update result :source-tweet-id str)))))))
-
-  (fetch-password!
-    [_ user-id]
-    (let [db (d/db conn)]
-      (let [user-uuid (UUID/fromString user-id)]
-        (ffirst (d/q '[:find ?password
-                       :in $ % ?user-id
-                       :where
-                       [?u :user/id ?user-id]
-                       [?u :user/password ?password]]
-                     db
-                     retweet-rules
-                     user-uuid)))))
-
-  ;(fetch-sessions!
-  ;  [_ criteria]
-  ;  (let [db (d/db conn)]
-  ;    (let [mc (map-uuid criteria #{:id :user-id :source-tweet-id})
-  ;          params (keys mc)
-  ;          params-val (vals mc)]
-  ;      (->> (query db
-  ;                  '(?id ?user-id ?created-at)
-  ;                  (concat '($ %) (map v params))
-  ;                  '([?s :session/user ?u]
-  ;                    [?u :user/id ?user-id]
-  ;                    [?s :session/id ?id]
-  ;                    [?s :session/created-at ?created-at])
-  ;                  retweet-rules
-  ;                  params-val)
-  ;           (map (fn [result] (apply ->Session result)))
-  ;           (map (fn [result] (update result :id str)))
-  ;           (map (fn [result] (update result :user-id str)))
-  ;           (map (fn [result] (update result :created-at inst->ZonedDateTime)))))))
-
-  (remove-like!
-    [this criteria]
-    (->> (repository/fetch-likes! this criteria)
-         (map :id)
-         (map (fn [id] (UUID/fromString id)))
-         (map (fn [uuid] [:db/retractEntity [:like/id uuid]]))
-         (do-transaction conn)))
-
-  (remove-follow!
-    [_ follower followed]
-    (let [follower-uuid (UUID/fromString (:id follower))
-          followed-uuid (UUID/fromString (:id followed))]
-      (do-transaction conn [[:db/retract [:user/id follower-uuid] :user/follow [:user/id followed-uuid]]]))))
-
-;(remove-session!
-;  [this criteria]
-;  (->> (repository/fetch-sessions! this criteria)
-;       (map :id)
-;       (map (fn [id] (UUID/fromString id)))
-;       (map (fn [uuid] [:db/retractEntity [:session/id uuid]]))
-;       (do-transaction conn))))
+             (map (fn [result] (update result :source-tweet-id str))))))))
 
 (defn make-datomic-repository
   [uri]
