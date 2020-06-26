@@ -146,3 +146,9 @@
                 (assoc acc k "(missing)")))
             {}
             (keys error-fields))))
+
+(defn str->int
+  [s]
+  (try
+    (Integer/parseInt s)
+    (catch NumberFormatException _ nil)))

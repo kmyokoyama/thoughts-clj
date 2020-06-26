@@ -23,7 +23,7 @@
   (let [{:keys [name email username password]} (:body req)]
     (let [user (service/create-user service name email username password)
           user-info (str "'" (:name user) "'" " @" (:username user) " [" (:email user) "]")]
-      (log/info "Create new user" user-info)
+      (log/info "Create new user" user-info (f-id (:id user)))
       (created (add-links :user req user)))))
 
 (defn login
@@ -57,8 +57,8 @@
 (defn feed
   [req service]
   (let [user-id (get-user-id req)
-        limit (Integer/parseInt (get-parameter req :limit))
-        offset (Integer/parseInt (get-parameter req :offset))]
+        limit (or (str->int (get-parameter req :limit)) 50)
+        offset (or (str->int (get-parameter req :offset)) 0)]
     (log/info "Get feed of user" (f-id user-id))
     (let [tweets (service/get-feed service user-id limit offset)]
       (ok-with-success (map (partial add-links :tweet req) tweets)))))

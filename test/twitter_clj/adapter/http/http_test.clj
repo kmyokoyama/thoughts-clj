@@ -7,11 +7,10 @@
                                                             make-datomic-repository
                                                             load-schema]]
             [twitter-clj.application.config :refer [datomic-uri http-host http-port]]
+            [twitter-clj.adapter.cache.in-mem :refer [make-in-mem-cache]]
             [twitter-clj.application.service :refer [make-service]]
             [twitter-clj.adapter.http.component :refer [make-http-controller]]
-            [twitter-clj.adapter.http.test-util :refer :all])
-  (:import (java.time ZonedDateTime)
-           (java.util Date)))
+            [twitter-clj.adapter.http.test-util :refer :all]))
 
 (def ^:private ^:const url (str "http://" http-host ":" http-port))
 
@@ -20,10 +19,11 @@
 (defn- test-system-map
   []
   (component/system-map
-    :repository (make-datomic-repository datomic-uri)
+    :repository (make-in-mem-repository)
+    :cache (make-in-mem-cache)
     :service (component/using
                (make-service)
-               [:repository])
+               [:repository :cache])
     :controller (component/using
                   (make-http-controller http-host http-port)
                   [:service])))
@@ -49,9 +49,9 @@
   (component/stop system))
 
 (use-fixtures :each (fn [f]
-                      (let [sys (start-test-system-with-datomic)]
+                      (let [sys (start-test-system-with-in-mem)]
                         (f)
-                        (stop-test-system-with-datomic sys))))
+                        (stop-test-system-with-in-mem sys))))
 
 (defn signup
   [user]
@@ -85,7 +85,7 @@
     (let [first-user (random-user)
           first-user-email (:email first-user)]
       (post (resource "signup") first-user)
-      (let [second-user {:name (random-fullname) :email first-user-email :username (random-username)}
+      (let [second-user {:name (random-fullname) :email first-user-email :username (random-username) :password (random-password)}
             {:keys [response body result]} (post-and-parse (resource "signup") second-user)]
         (is (= "failure" (:status body)))
         (is (= 400 (:status response)))                     ;; HTTP 400 Bad Request.
@@ -97,7 +97,7 @@
     (let [first-user (random-user)
           first-username (:username first-user)]
       (post (resource "signup") first-user)
-      (let [second-user {:name (random-fullname) :email (random-email) :username first-username}
+      (let [second-user {:name (random-fullname) :email (random-email) :username first-username :password (random-password)}
             {:keys [response body result]} (post-and-parse (resource "signup") second-user)]
         (is (= "failure" (:status body)))
         (is (= 400 (:status response)))                     ;; HTTP 400 Bad Request.
@@ -132,7 +132,7 @@
       (is (= 400 (:status response)))                       ;; HTTP 400 Bad Request.
       (is ((complement contains?) result :token)))))
 
-(deftest logout
+(deftest test-logout
   (testing "Logout returns success when user is already logged in"
     (let [{:keys [token]} (signup-and-login)
           {:keys [response body]} (post-and-parse (resource "logout") token {})]
@@ -163,7 +163,7 @@
           {:keys [response body result]} (get-and-parse (resource (str "user/" user-id "/tweets")) token)]
       (is (= "success" (:status body)))
       (is (= 200 (:status response)))                       ;; HTTP 200 OK.
-      (is (= 2 (count result)))
+      (is (= 2 (:total body) (count result)))
       (is (= #{first-tweet-id second-tweet-id} (into #{} (map :id result))))))
 
   (testing "Returns no tweet if user has not tweet yet"
@@ -172,6 +172,7 @@
       (let [{:keys [response body result]} (get-and-parse (resource (str "user/" user-id "/tweets")) token)]
         (is (= "success" (:status body)))
         (is (= 200 (:status response)))                     ;; HTTP 200 OK.
+        (is (= 0 (:total body) (count result)))
         (is (empty? result))))))
 
 (deftest test-get-user-by-id
@@ -351,7 +352,7 @@
       (let [{:keys [response body result]} (get-and-parse (resource (str "tweet/" tweet-id "/retweets")) token)]
         (is (= 200 (:status response)))                     ;; HTTP 200 OK.
         (is (= "success" (:status body)))
-        (is (= 10 (count result))))))
+        (is (= 10 (:total body) (count result))))))
 
   (testing "Get retweets from tweet not retweeted yet returns an empty list"
     (let [{:keys [token]} (signup-and-login)
@@ -363,13 +364,13 @@
 
 (deftest test-get-replies
   (testing "Get retweets from a tweet already retweeted returns all replies"
-    (let [{:keys [user-id token]} (signup-and-login)
+    (let [{:keys [token]} (signup-and-login)
           tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)]
-      (dotimes [_ 5] (post (resource (str "tweet/" tweet-id "/reply")) token {:user-id user-id :text (random-text)}))
+      (dotimes [_ 5] (post (resource (str "tweet/" tweet-id "/reply")) token {:text (random-text)}))
       (let [{:keys [response body result]} (get-and-parse (resource (str "tweet/" tweet-id "/replies")) token)]
         (is (= 200 (:status response)))                     ;; HTTP 200 OK.
         (is (= "success" (:status body)))
-        (is (= 5 (count result))))))
+        (is (= 5 (:total body) (count result))))))
 
   (testing "Get replies from tweet not replied yet returns an empty list"
     (let [{:keys [token]} (signup-and-login)
@@ -468,7 +469,7 @@
           {:keys [response body result]} (get-and-parse (resource (str "user/" follower-id "/following")) follower-token {})]
       (is (= 200 (:status response)))                       ;; HTTP 200 OK.
       (is (= "success" (:status body)))
-      (is (= 1 (count result)))))
+      (is (= 1 (:total body) (count result)))))
 
   (testing "Get following list of an user that does not follow anyone returns an empty list"
     (let [{:keys [user-id token]} (signup-and-login)
@@ -485,7 +486,7 @@
           {:keys [response body result]} (get-and-parse (resource (str "user/" followed-id "/followers")) follower-token {})]
       (is (= 200 (:status response)))                       ;; HTTP 200 OK.
       (is (= "success" (:status body)))
-      (is (= 1 (count result)))))
+      (is (= 1 (:total body) (count result)))))
 
   (testing "Get followers list of an user that is not followed by anyone returns an empty list"
     (let [{:keys [user-id token]} (signup-and-login)
@@ -512,5 +513,5 @@
           (let [{:keys [response body result]} (get-and-parse (resource "feed") first-user-token {})]
             (is (= 200 (:status response)))                 ;; HTTP 200 OK.
             (is (= "success" (:status body)))
-            (is (= 10 (count result)))
+            (is (= 10 (:total body) (count result)))
             (is (->> result (map :publish-date) (map str->EpochSecond) (apply >=)))))))))
