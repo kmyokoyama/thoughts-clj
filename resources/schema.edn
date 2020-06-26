@@ -86,7 +86,7 @@
     :db/valueType   :db.type/ref
     :db/cardinality :db.cardinality/one}
    {:db/ident       :retweet/hashtags
-    :db/valueType   :db.type/text
+    :db/valueType   :db.type/string
     :db/cardinality :db.cardinality/many}]]
 
  :like
