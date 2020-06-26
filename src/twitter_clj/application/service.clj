@@ -2,8 +2,26 @@
   (:require [com.stuartsierra.component :as component]
             [taoensso.timbre :as log]
             [twitter-clj.application.core :as core]
+            [twitter-clj.application.port.cache :as cache]
             [twitter-clj.application.port.repository :as repository]
-            [twitter-clj.application.port.cache :as cache]))
+            [twitter-clj.application.port.service :as service]))
+
+(declare throw-missing-user!)
+(declare throw-missing-tweet!)
+(declare throw-missing-retweet!)
+(declare throw-duplicate-user-email!)
+(declare throw-duplicate-username!)
+(declare throw-invalid-like!)
+(declare throw-invalid-unlike!)
+(declare throw-invalid-follow!)
+(declare throw-invalid-unfollow!)
+(declare following?)
+(declare build-feed)
+(declare map->Service)
+
+(defn make-service                                          ;; Constructor.
+  []
+  (map->Service {}))
 
 (defrecord Service [repository cache]
   component/Lifecycle
@@ -13,13 +31,205 @@
 
   (stop [this]
     (log/info "Stopping application service")
-    this))
+    this)
 
-(defn make-service                                          ;; Constructor.
-  []
-  (map->Service {}))
+  service/UserService
+  (login
+    [service user-id]
+    (let [session (core/new-session user-id)]
+      (cache/update-session! (:cache service) session)
+      (:id session)))
 
-;; Private functions.
+  (logout
+    [service session-id]
+    (cache/remove-session! (:cache service) {:session-id session-id}))
+
+  (logout-all
+    [service user-id]
+    (cache/remove-session! (:cache service) {:user-id user-id}))
+
+  (new-user?
+    [service email]
+    (empty? (repository/fetch-users! (:repository service) {:email email})))
+
+  (user-exists?
+    [service id]
+    (not (empty? (repository/fetch-users! (:repository service) {:id id}))))
+
+  (password-match?
+    [service user-id password]
+    (let [actual-password (repository/fetch-password! (:repository service) user-id)]
+      (core/password-match? password actual-password)))
+
+  (create-user
+    [service name email username password]
+    (let [lower-name (clojure.string/lower-case name)
+          lower-email (clojure.string/lower-case email)
+          lower-username (clojure.string/lower-case username)
+          user (core/new-user lower-name lower-email lower-username)]
+      (if (service/new-user? service email)
+        (if (empty? (repository/fetch-users! (:repository service) {:username username}))
+          (do (repository/update-user! (:repository service) user)
+              (repository/update-password! (:repository service) (:id user) (core/derive-password password))
+              user)
+          (throw-duplicate-username! username))
+        (throw-duplicate-user-email! email))))
+
+  (get-user-by-id
+    [service user-id]
+    (if-let [user (first (repository/fetch-users! (:repository service) {:id user-id}))]
+      user
+      (throw-missing-user! user-id)))
+
+  (follow
+    [service follower-id followed-id]
+    (if (service/user-exists? service follower-id)
+      (if (service/user-exists? service followed-id)
+        (if-not (= follower-id followed-id)
+          (if-not (following? service follower-id followed-id)
+            (let [follower (first (repository/fetch-users! (:repository service) {:id follower-id}))
+                  followed (first (repository/fetch-users! (:repository service) {:id followed-id}))
+                  [updated-follower updated-followed] (core/follow follower followed)]
+              (do (repository/update-user! (:repository service) updated-follower)
+                  (repository/update-user! (:repository service) updated-followed)
+                  (repository/update-follow! (:repository service) updated-follower updated-followed)
+                  updated-followed))
+            (throw-invalid-follow! :already-following follower-id followed-id))
+          (throw-invalid-follow! :follow-yourself follower-id followed-id))
+        (throw-missing-user! followed-id))
+      (throw-missing-user! follower-id)))
+
+  (unfollow
+    [service follower-id followed-id]
+    (if (service/user-exists? service follower-id)
+      (if (service/user-exists? service followed-id)
+        (if-not (= follower-id followed-id)
+          (if (following? service follower-id followed-id)
+            (let [follower (first (repository/fetch-users! (:repository service) {:id follower-id}))
+                  followed (first (repository/fetch-users! (:repository service) {:id followed-id}))
+                  [updated-follower updated-followed] (core/unfollow follower followed)]
+              (do (repository/update-user! (:repository service) updated-follower)
+                  (repository/update-user! (:repository service) updated-followed)
+                  (repository/remove-follow! (:repository service) updated-follower updated-followed)
+                  updated-followed))
+            (throw-invalid-unfollow! :not-following-yet follower-id followed-id))
+          (throw-invalid-unfollow! :unfollow-yourself follower-id followed-id))
+        (throw-missing-user! followed-id))
+      (throw-missing-user! follower-id)))
+
+  (get-following
+    [service follower-id]
+    (if (service/user-exists? service follower-id)
+      (repository/fetch-following! (:repository service) follower-id)
+      (throw-missing-user! follower-id)))
+
+  (get-followers
+    [service followed-id]
+    (if (service/user-exists? service followed-id)
+      (repository/fetch-followers! (:repository service) followed-id)
+      (throw-missing-user! followed-id)))
+
+  service/TweetService
+  (tweet
+    [service user-id text]
+    (let [tweet (core/new-tweet user-id text)]
+      (if (service/user-exists? service user-id)
+        (repository/update-tweet! (:repository service) tweet (core/get-hashtags (:text tweet)))
+        (throw-missing-user! user-id))))
+
+  (get-tweet-by-id
+    [service tweet-id]
+    (if-let [tweet (first (repository/fetch-tweets! (:repository service) {:id tweet-id}))]
+      tweet
+      (throw-missing-tweet! tweet-id)))
+
+  (get-tweets-by-user
+    [service user-id]
+    (if (service/user-exists? service user-id)
+      (repository/fetch-tweets! (:repository service) {:user-id user-id})
+      (throw-missing-user! user-id)))
+
+  (get-tweets-with-hashtag
+    [service hashtag]
+    (repository/fetch-tweets! (:repository service) {:hashtag hashtag}))
+
+  (reply
+    [service user-id text source-tweet-id]
+    (if (service/user-exists? service user-id)
+      (if-let [source-tweet (first (repository/fetch-tweets! (:repository service) {:id source-tweet-id}))]
+        (let [reply (core/new-tweet user-id text)]
+          (repository/update-tweet! (:repository service) (core/reply source-tweet) #{})
+          (repository/update-reply! (:repository service) source-tweet-id reply (core/get-hashtags (:text reply))))
+        (throw-missing-tweet! source-tweet-id))
+      (throw-missing-user! user-id)))
+
+  (get-replies-by-tweet-id
+    [service source-tweet-id]
+    (if-not (empty? (repository/fetch-tweets! (:repository service) {:id source-tweet-id}))
+      (repository/fetch-replies! (:repository service) {:source-tweet-id source-tweet-id})
+      (throw-missing-tweet! source-tweet-id)))
+
+  (retweet
+    [service user-id source-tweet-id]
+    (if (service/user-exists? service user-id)
+      (if-let [source-tweet (first (repository/fetch-tweets! (:repository service) {:id source-tweet-id}))]
+        (do (repository/update-tweet! (:repository service) (core/retweet source-tweet) #{})
+            (repository/update-retweet! (:repository service) (core/new-retweet user-id source-tweet-id) #{}))
+        (throw-missing-user! source-tweet-id))
+      (throw-missing-user! user-id)))
+
+  (retweet-with-comment
+    [service user-id comment source-tweet-id]
+    (if (service/user-exists? service user-id)
+      (if-let [source-tweet (first (repository/fetch-tweets! (:repository service) {:id source-tweet-id}))]
+        (do (repository/update-tweet! (:repository service) (core/retweet source-tweet) #{})
+            (repository/update-retweet! (:repository service) (core/new-retweet user-id source-tweet-id comment) (core/get-hashtags comment)))
+        (throw-missing-user! source-tweet-id))
+      (throw-missing-user! user-id)))
+
+  (get-retweet-by-id
+    [service retweet-id]
+    (if-let [retweet (first (repository/fetch-retweets! (:repository service) {:id retweet-id}))]
+      retweet
+      (throw-missing-retweet! retweet-id)))
+
+  (get-retweets-by-tweet-id
+    [service source-tweet-id]
+    (if-let [retweets (repository/fetch-retweets! (:repository service) {:source-tweet-id source-tweet-id})]
+      retweets
+      (throw-missing-tweet! source-tweet-id)))
+
+  (like
+    [service user-id tweet-id]
+    (if-let [tweet (first (repository/fetch-tweets! (:repository service) {:id tweet-id}))]
+      (if (empty? (repository/fetch-likes! (:repository service) {:user-id user-id :source-tweet-id tweet-id}))
+        (do (repository/update-like! (:repository service) (core/new-like user-id tweet-id))
+            (repository/update-tweet! (:repository service) (core/like tweet) #{}))
+        (throw-invalid-like! tweet-id user-id))
+      (throw-missing-tweet! tweet-id)))
+
+  (unlike
+    [service user-id tweet-id]
+    (if-let [tweet (first (repository/fetch-tweets! (:repository service) {:id tweet-id}))]
+      (if-not (empty? (repository/fetch-likes! (:repository service) {:user-id user-id :source-tweet-id tweet-id}))
+        (do (repository/remove-like! (:repository service) {:user-id user-id :source-tweet-id tweet-id})
+            (repository/update-tweet! (:repository service) (core/unlike tweet) #{}))
+        (throw-invalid-unlike! tweet-id user-id))
+      (throw-missing-tweet! tweet-id)))
+
+  (get-feed
+    [service user-id limit offset]
+    (if (service/user-exists? service user-id)
+      (let [feed-cache (cache/fetch-feed! (:cache service) user-id limit offset)]
+        (if-not (empty? feed-cache)
+          feed-cache
+          (let [following (repository/fetch-following! (:repository service) user-id)
+                feed (build-feed service following)]
+            (if-not (empty? feed)
+              (do (cache/update-feed! (:cache service) user-id feed 360)
+                  (cache/fetch-feed! (:cache service) user-id limit offset))
+              feed))))                                      ;; TTL of 5 minutes.
+      (throw-missing-user! user-id))))
 
 (defn- throw-missing-user!
   [user-id]
@@ -105,195 +315,9 @@
                                         :cause   "you cannot unfollow an user you do not follow yet"
                                         :context {:follower-id follower-id :followed-id followed-id}}))))
 
-;; Public functions.
-
-;; We can make it part of a protocol.
-
 (defn- following?
   [service follower-id followed-id]
   (some #(= followed-id (:id %)) (repository/fetch-following! (:repository service) follower-id)))
-
-(defn new-user?
-  [service email]
-  (empty? (repository/fetch-users! (:repository service) {:email email})))
-
-(defn user-exists?
-  [service id]
-  (not (empty? (repository/fetch-users! (:repository service) {:id id}))))
-
-(defn password-match?
-  [service user-id password]
-  (let [actual-password (repository/fetch-password! (:repository service) user-id)]
-    (core/password-match? password actual-password)))
-
-(defn login
-  [service user-id]
-  (let [session (core/new-session user-id)]
-    (cache/update-session! (:cache service) session)
-    (:id session)))
-
-(defn logout
-  [service session-id]
-  (cache/remove-session! (:cache service) {:session-id session-id}))
-
-(defn logout-all
-  [service user-id]
-  (cache/remove-session! (:cache service) {:user-id user-id}))
-
-(defn add-user
-  [service name email username password]
-  (let [lower-name (clojure.string/lower-case name)
-        lower-email (clojure.string/lower-case email)
-        lower-username (clojure.string/lower-case username)
-        user (core/new-user lower-name lower-email lower-username)]
-    (if (new-user? service email)
-      (if (empty? (repository/fetch-users! (:repository service) {:username username}))
-        (do (repository/update-user! (:repository service) user)
-            (repository/update-password! (:repository service) (:id user) (core/derive-password password))
-            user)
-        (throw-duplicate-username! username))
-      (throw-duplicate-user-email! email))))
-
-(defn get-user-by-id
-  [service user-id]
-  (if-let [user (first (repository/fetch-users! (:repository service) {:id user-id}))]
-    user
-    (throw-missing-user! user-id)))
-
-(defn add-tweet
-  [service user-id text]
-  (let [tweet (core/new-tweet user-id text)]
-    (if (user-exists? service user-id)
-      (repository/update-tweet! (:repository service) tweet (core/get-hashtags (:text tweet)))
-      (throw-missing-user! user-id))))
-
-(defn get-tweet-by-id
-  [service tweet-id]
-  (if-let [tweet (first (repository/fetch-tweets! (:repository service) {:id tweet-id}))]
-    tweet
-    (throw-missing-tweet! tweet-id)))
-
-(defn get-tweets-with-hashtag
-  [service hashtag]
-  (repository/fetch-tweets! (:repository service) {:hashtag hashtag}))
-
-(defn get-tweets-by-user
-  [service user-id]
-  (if (user-exists? service user-id)
-    (repository/fetch-tweets! (:repository service) {:user-id user-id})
-    (throw-missing-user! user-id)))
-
-(defn add-reply
-  [service user-id text source-tweet-id]
-  (if (user-exists? service user-id)
-    (if-let [source-tweet (first (repository/fetch-tweets! (:repository service) {:id source-tweet-id}))]
-      (let [reply (core/new-tweet user-id text)]
-        (repository/update-tweet! (:repository service) (core/reply source-tweet) #{})
-        (repository/update-reply! (:repository service) source-tweet-id reply (core/get-hashtags (:text reply))))
-      (throw-missing-tweet! source-tweet-id))
-    (throw-missing-user! user-id)))
-
-(defn get-replies-by-tweet-id
-  [service source-tweet-id]
-  (if-not (empty? (repository/fetch-tweets! (:repository service) {:id source-tweet-id}))
-    (repository/fetch-replies! (:repository service) {:source-tweet-id source-tweet-id})
-    (throw-missing-tweet! source-tweet-id)))
-
-(defn retweet
-  [service user-id source-tweet-id]
-  (if (user-exists? service user-id)
-    (if-let [source-tweet (first (repository/fetch-tweets! (:repository service) {:id source-tweet-id}))]
-      (do (repository/update-tweet! (:repository service) (core/retweet source-tweet) #{})
-          (repository/update-retweet! (:repository service) (core/new-retweet user-id source-tweet-id) #{}))
-      (throw-missing-user! source-tweet-id))
-    (throw-missing-user! user-id)))
-
-(defn retweet-with-comment
-  [service user-id comment source-tweet-id]
-  (if (user-exists? service user-id)
-    (if-let [source-tweet (first (repository/fetch-tweets! (:repository service) {:id source-tweet-id}))]
-      (do (repository/update-tweet! (:repository service) (core/retweet source-tweet) #{})
-          (repository/update-retweet! (:repository service) (core/new-retweet user-id source-tweet-id comment) (core/get-hashtags comment)))
-      (throw-missing-user! source-tweet-id))
-    (throw-missing-user! user-id)))
-
-(defn get-retweet-by-id
-  [service retweet-id]
-  (if-let [retweet (first (repository/fetch-retweets! (:repository service) {:id retweet-id}))]
-    retweet
-    (throw-missing-retweet! retweet-id)))
-
-(defn get-retweets-by-tweet-id
-  [service source-tweet-id]
-  (if-let [retweets (repository/fetch-retweets! (:repository service) {:source-tweet-id source-tweet-id})]
-    retweets
-    (throw-missing-tweet! source-tweet-id)))
-
-(defn like
-  [service user-id tweet-id]
-  (if-let [tweet (first (repository/fetch-tweets! (:repository service) {:id tweet-id}))]
-    (if (empty? (repository/fetch-likes! (:repository service) {:user-id user-id :source-tweet-id tweet-id}))
-      (do (repository/update-like! (:repository service) (core/new-like user-id tweet-id))
-          (repository/update-tweet! (:repository service) (core/like tweet) #{}))
-      (throw-invalid-like! tweet-id user-id))
-    (throw-missing-tweet! tweet-id)))
-
-(defn unlike
-  [service user-id tweet-id]
-  (if-let [tweet (first (repository/fetch-tweets! (:repository service) {:id tweet-id}))]
-    (if-not (empty? (repository/fetch-likes! (:repository service) {:user-id user-id :source-tweet-id tweet-id}))
-      (do (repository/remove-like! (:repository service) {:user-id user-id :source-tweet-id tweet-id})
-          (repository/update-tweet! (:repository service) (core/unlike tweet) #{}))
-      (throw-invalid-unlike! tweet-id user-id))
-    (throw-missing-tweet! tweet-id)))
-
-(defn follow
-  [service follower-id followed-id]
-  (if (user-exists? service follower-id)
-    (if (user-exists? service followed-id)
-      (if-not (= follower-id followed-id)
-        (if-not (following? service follower-id followed-id)
-          (let [follower (first (repository/fetch-users! (:repository service) {:id follower-id}))
-                followed (first (repository/fetch-users! (:repository service) {:id followed-id}))
-                [updated-follower updated-followed] (core/follow follower followed)]
-            (do (repository/update-user! (:repository service) updated-follower)
-                (repository/update-user! (:repository service) updated-followed)
-                (repository/update-follow! (:repository service) updated-follower updated-followed)
-                updated-followed))
-          (throw-invalid-follow! :already-following follower-id followed-id))
-        (throw-invalid-follow! :follow-yourself follower-id followed-id))
-      (throw-missing-user! followed-id))
-    (throw-missing-user! follower-id)))
-
-(defn unfollow
-  [service follower-id followed-id]
-  (if (user-exists? service follower-id)
-    (if (user-exists? service followed-id)
-      (if-not (= follower-id followed-id)
-        (if (following? service follower-id followed-id)
-          (let [follower (first (repository/fetch-users! (:repository service) {:id follower-id}))
-                followed (first (repository/fetch-users! (:repository service) {:id followed-id}))
-                [updated-follower updated-followed] (core/unfollow follower followed)]
-            (do (repository/update-user! (:repository service) updated-follower)
-                (repository/update-user! (:repository service) updated-followed)
-                (repository/remove-follow! (:repository service) updated-follower updated-followed)
-                updated-followed))
-          (throw-invalid-unfollow! :not-following-yet follower-id followed-id))
-        (throw-invalid-unfollow! :unfollow-yourself follower-id followed-id))
-      (throw-missing-user! followed-id))
-    (throw-missing-user! follower-id)))
-
-(defn get-following
-  [service follower-id]
-  (if (user-exists? service follower-id)
-    (repository/fetch-following! (:repository service) follower-id)
-    (throw-missing-user! follower-id)))
-
-(defn get-followers
-  [service followed-id]
-  (if (user-exists? service followed-id)
-    (repository/fetch-followers! (:repository service) followed-id)
-    (throw-missing-user! followed-id)))
 
 (defn- build-feed
   [service following]
@@ -303,17 +327,3 @@
        (map (fn [user-id-criteria] (repository/fetch-tweets! (:repository service) user-id-criteria)))
        (map (fn [user-tweets] (core/sort-by-date user-tweets)))
        (core/merge-by-date 100)))
-
-(defn get-feed
-  [service user-id limit offset]
-  (if (user-exists? service user-id)
-    (let [feed-cache (cache/fetch-feed! (:cache service) user-id limit offset)]
-      (if-not (empty? feed-cache)
-        feed-cache
-        (let [following (repository/fetch-following! (:repository service) user-id)
-              feed (build-feed service following)]
-          (if-not (empty? feed)
-            (do (cache/update-feed! (:cache service) user-id feed 360)
-                (cache/fetch-feed! (:cache service) user-id limit offset))
-            feed))))                                        ;; TTL of 5 minutes.
-    (throw-missing-user! user-id)))

@@ -7,7 +7,7 @@
             [schema.core :as s]
             [taoensso.timbre :as log]
             [twitter-clj.application.config :refer [http-api-jws-secret]]
-            [twitter-clj.application.service :as service]
+            [twitter-clj.application.port.service :as service]
             [twitter-clj.adapter.http.util :refer :all]
             [twitter-clj.schema.http :refer :all]
             [ring.middleware.defaults :refer [wrap-defaults api-defaults]]
@@ -21,9 +21,9 @@
   [req service]
   (s/validate SignupRequest (:body req))
   (let [{:keys [name email username password]} (:body req)]
-    (let [user (service/add-user service name email username password)
+    (let [user (service/create-user service name email username password)
           user-info (str "'" (:name user) "'" " @" (:username user) " [" (:email user) "]")]
-      (log/info "Add user" user-info)
+      (log/info "Create new user" user-info)
       (created (add-links :user req user)))))
 
 (defn login
@@ -43,14 +43,14 @@
   [req service]
   (let [session-id (get-session-id req)
         user-id (get-user-id req)]
-    (log/info "Logout user" (f-id user-id) "from session" (f-id session-id))
+    (log/info "Logout of user" (f-id user-id) "from session" (f-id session-id))
     (service/logout service session-id)
     (ok-with-success {:status "logged out"})))
 
 (defn logout-all
   [req service]
   (let [user-id (get-user-id req)]
-    (log/info "Logout user" (f-id user-id) "from all sessions")
+    (log/info "Logout of user" (f-id user-id) "from all sessions")
     (service/logout-all service user-id)
     (ok-with-success {:status "logged out from all sessions"})))
 
@@ -144,41 +144,41 @@
          (add-links :user req)
          (ok-with-success))))
 
-(defn add-tweet
+(defn tweet
   [req service]
   (s/validate CreateTweetRequest (:body req))
   (let [user-id (get-user-id req)
         text (get-from-body req :text)
-        tweet (service/add-tweet service user-id text)]
-    (log/info "Add tweet" (f tweet) "from user" (f-id user-id))
+        tweet (service/tweet service user-id text)]
+    (log/info "Create new tweet" (f tweet) "of user" (f-id user-id))
     (created (add-links :tweet req tweet))))
 
-(defn add-reply
+(defn reply
   [req service]
   (s/validate ReplyRequest (:body req))
   (let [user-id (get-user-id req)
         source-tweet-id (get-parameter req :tweet-id)
         text (get-from-body req :text)
-        reply (service/add-reply service user-id text source-tweet-id)]
-    (log/info "Reply tweet" (f-id source-tweet-id) "from user" (f-id user-id))
+        reply (service/reply service user-id text source-tweet-id)]
+    (log/info "Reply tweet" (f-id source-tweet-id) "of user" (f-id user-id))
     (created (add-links :reply req source-tweet-id reply))))
 
-(defn add-retweet
+(defn retweet
   [req service]
   (let [user-id (get-user-id req)
         source-tweet-id (get-parameter req :tweet-id)
         retweet (service/retweet service user-id source-tweet-id)]
-    (log/info "Retweet tweet" (f-id source-tweet-id) "from user" (f-id user-id))
+    (log/info "Retweet tweet" (f-id source-tweet-id) "of user" (f-id user-id))
     (created (add-links :retweet req source-tweet-id retweet))))
 
-(defn add-retweet-with-comment
+(defn retweet-with-comment
   [req service]
   (s/validate RetweetWithCommentRequest (:body req))
   (let [user-id (get-user-id req)
         source-tweet-id (get-parameter req :tweet-id)
         comment (get-from-body req :comment)
         retweet (service/retweet-with-comment service user-id comment source-tweet-id)]
-    (log/info "Retweet tweet" (f-id source-tweet-id) "from user" (f-id user-id))
+    (log/info "Retweet tweet with comment" (f-id source-tweet-id) "of user" (f-id user-id))
     (created (add-links :retweet req source-tweet-id retweet))))
 
 (defn like
@@ -260,31 +260,29 @@
                                           :token-name "Bearer"
                                           :options    {:alg :hs512}}))
 
-;; It is need for HATEAOS.
+;; It is needed for HATEAOS.
 (def ^:private routes-map {:signup                   (path-prefix "/signup")
                            :login                    (path-prefix "/login")
                            :logout                   (path-prefix "/logout")
                            :logout-all               (path-prefix "/logout/all")
-                           :feed                     (path-prefix "/user/:user-id/feed")
+                           :feed                     (path-prefix "/feed")
                            :get-user-by-id           (path-prefix "/user/:user-id")
                            :get-tweets-by-user-id    (path-prefix "/user/:user-id/tweets")
                            :get-user-following       (path-prefix "/user/:user-id/following")
                            :get-replies-by-tweet-id  (path-prefix "/tweet/:tweet-id/replies")
                            :get-user-followers       (path-prefix "/user/:user-id/followers")
                            :get-tweet-by-id          (path-prefix "/tweet/:tweet-id")
-                           :get-tweets-with-hashtag    (path-prefix "/tweet/hashtag/:hashtag")
+                           :get-tweets-with-hashtag  (path-prefix "/tweet/hashtag/:hashtag")
                            :get-retweets-by-tweet-id (path-prefix "/tweet/:tweet-id/retweets")
                            :get-retweet-by-id        (path-prefix "/retweet/:retweet-id")
                            :follow                   (path-prefix "/user/:user-id/follow")
                            :unfollow                 (path-prefix "/user/:user-id/unfollow")
-                           :add-tweet                (path-prefix "/tweet")
-                           :add-reply                (path-prefix "/tweet/:tweet-id/reply")
-                           :add-retweet              (path-prefix "/tweet/:tweet-id/retweet")
-                           :add-retweet-with-comment (path-prefix "/tweet/:tweet-id/retweet-comment")
+                           :tweet                    (path-prefix "/tweet")
+                           :reply                    (path-prefix "/tweet/:tweet-id/reply")
+                           :retweet                  (path-prefix "/tweet/:tweet-id/retweet")
+                           :retweet-with-comment     (path-prefix "/tweet/:tweet-id/retweet-comment")
                            :like                     (path-prefix "/tweet/:tweet-id/like")
                            :unlike                   (path-prefix "/tweet/:tweet-id/unlike")})
-
-
 
 (defn public-routes
   [service]
@@ -309,13 +307,12 @@
     (GET (:get-retweet-by-id routes-map) req (get-retweet-by-id req service))
     (POST (:follow routes-map) req (follow req service))
     (POST (:unfollow routes-map) req (unfollow req service))
-    (POST (:add-tweet routes-map) req (add-tweet req service))
-    (POST (:add-reply routes-map) req (add-reply req service))
-    (POST (:add-retweet routes-map) req (add-retweet req service))
-    (POST (:add-retweet-with-comment routes-map) req (add-retweet-with-comment req service))
+    (POST (:tweet routes-map) req (tweet req service))
+    (POST (:reply routes-map) req (reply req service))
+    (POST (:retweet routes-map) req (retweet req service))
+    (POST (:retweet-with-comment routes-map) req (retweet-with-comment req service))
     (POST (:like routes-map) req (like req service))
     (POST (:unlike routes-map) req (unlike req service))))
-
 
 (defn handler
   [service]
