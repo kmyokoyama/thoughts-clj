@@ -4,6 +4,7 @@
             [taoensso.timbre :as log]
             [twitter-clj.application.core :refer :all]
             [twitter-clj.application.port.repository :as repository]
+            [twitter-clj.application.port.protocol.repository :as p]
             [clojure.java.io :as io])
   (:import [java.util Date UUID]
            [java.time ZonedDateTime ZoneId]))
@@ -221,7 +222,7 @@
     [_this]
     (log/info "Stopping Datomic repository"))
 
-  repository/UserRepository
+  p/UserRepository
   (update-user!
     [_ user]
     (do-transaction conn [(make-user user)])
@@ -298,7 +299,7 @@
           followed-uuid (UUID/fromString (:id followed))]
       (do-transaction conn [[:db/retract [:user/id follower-uuid] :user/follow [:user/id followed-uuid]]])))
 
-  repository/TweetRepository
+  p/TweetRepository
   (update-tweet!
     [_ tweet hashtags]
     (do-transaction conn [(make-tweet tweet hashtags)])

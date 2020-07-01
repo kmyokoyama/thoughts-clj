@@ -1,7 +1,8 @@
 (ns twitter-clj.adapter.repository.in-mem
   (:require [com.stuartsierra.component :as component]
             [taoensso.timbre :as log]
-            [twitter-clj.application.port.repository :as repository]))
+            [twitter-clj.application.port.repository :as repository]
+            [twitter-clj.application.port.protocol.repository :as p]))
 
 (defn- shutdown
   [repository]
@@ -31,7 +32,7 @@
     (log/info "Stopping in-memory database")
     (shutdown this))
 
-  repository/UserRepository
+  p/UserRepository
   (update-user!
     [_ {user-id :id :as user}]
     (swap! users assoc user-id user)
@@ -72,7 +73,7 @@
     [_ {follower-id :id} {followed-id :id}]
     (swap! following update follower-id (fn [following-ids] (disj (set following-ids) followed-id))))
 
-  repository/TweetRepository
+  p/TweetRepository
   (update-tweet!
     [_ {tweet-id :id :as tweet} tags]
     (swap! tweets assoc tweet-id tweet)

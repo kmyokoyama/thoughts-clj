@@ -2,7 +2,7 @@
   (:require [com.stuartsierra.component :as component]
             [taoensso.carmine :as car :refer [wcar]]
             [taoensso.timbre :as log]
-            [twitter-clj.application.port.cache :as cache]))
+            [twitter-clj.application.port.protocol.cache :as p]))
 
 (defn- key-join
   [& key-parts]
@@ -58,7 +58,7 @@
     [cache]
     (log/info "Stopping Redis cache"))
 
-  cache/Cache
+  p/Cache
   (update-session!
     [_ session]
     (let [user-id (:user-id session)

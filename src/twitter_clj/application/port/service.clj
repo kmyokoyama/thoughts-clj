@@ -1,30 +1,106 @@
-(ns twitter-clj.application.port.service)
+(ns twitter-clj.application.port.service
+  (:require [twitter-clj.application.port.protocol.service :as p]))
 
-(defprotocol UserService
-  (login [service user-id])
-  (logout [service session-id])
-  (logout-all [service user-id])
-  (new-user? [service email])
-  (user-exists? [service user-id])
-  (password-match? [service user-id password])
-  (create-user [service name email username password])
-  (get-user-by-id [service user-id])
-  (follow [service follower-id followed-id])
-  (unfollow [service follower-id followed-id])
-  (get-following [service follower-id])
-  (get-followers [service followed-id]))
+(defn login
+  [service user-id]
+  (p/login service user-id))
 
-(defprotocol TweetService
-  (tweet [service user-id text])
-  (get-tweet-by-id [service tweet-id])
-  (get-tweets-by-user [service user-id])
-  (get-tweets-with-hashtag [service hashtag])
-  (reply [service user-id text source-tweet-id])
-  (get-replies-by-tweet-id [service source-tweet-id])
-  (retweet [service user-id source-tweet-id])
-  (retweet-with-comment [service user-id comment source-tweet-id])
-  (get-retweet-by-id [service retweet-id])
-  (get-retweets-by-tweet-id [service source-tweet-id])
-  (like [service user-id tweet-id])
-  (unlike [service user-id tweet-id])
-  (get-feed [service user-id limit offset]))
+(defn logout
+  [service session-id]
+  (p/logout service session-id))
+
+(defn logout-all
+  [service user-id]
+  (p/logout-all service user-id))
+
+(defn new-user?
+  [service email]
+  (p/new-user? service email))
+
+(defn username-available?
+  [service username]
+  (p/username-available? service username))
+
+(defn user-exists?
+  [service user-id]
+  (p/user-exists? service user-id))
+
+(defn password-match?
+  [service user-id password]
+  (p/password-match? service user-id password))
+
+(defn create-user
+  [service name email username password]
+  (p/create-user service name email username password))
+
+(defn get-user-by-id
+  [service user-id]
+  (p/get-user-by-id service user-id))
+
+(defn follow
+  [service follower-id followed-id]
+  (p/follow service follower-id followed-id))
+
+(defn unfollow
+  [service follower-id followed-id]
+  (p/unfollow service follower-id followed-id))
+
+(defn get-following
+  [service follower-id]
+  (p/get-following service follower-id))
+
+(defn get-followers
+  [service followed-id]
+  (p/get-followers service followed-id))
+
+(defn tweet
+  [service user-id text]
+  (p/tweet service user-id text))
+
+(defn get-tweet-by-id
+  [service tweet-id]
+  (p/get-tweet-by-id service tweet-id))
+
+(defn get-tweets-by-user
+  [service user-id]
+  (p/get-tweets-by-user service user-id))
+
+(defn get-tweets-with-hashtag
+  [service hashtag]
+  (p/get-tweets-with-hashtag service hashtag))
+
+(defn reply
+  [service user-id text source-tweet-id]
+  (p/reply service user-id text source-tweet-id))
+
+(defn get-replies-by-tweet-id
+  [service source-tweet-id]
+  (p/get-replies-by-tweet-id service source-tweet-id))
+
+(defn retweet
+  [service user-id source-tweet-id]
+  (p/retweet service user-id source-tweet-id))
+
+(defn retweet-with-comment
+  [service user-id comment source-tweet-id]
+  (p/retweet-with-comment service user-id comment source-tweet-id))
+
+(defn get-retweet-by-id
+  [service retweet-id]
+  (p/get-retweet-by-id service retweet-id))
+
+(defn get-retweets-by-tweet-id
+  [service source-tweet-id]
+  (p/get-retweets-by-tweet-id service source-tweet-id))
+
+(defn like
+  [service user-id tweet-id]
+  (p/like service user-id tweet-id))
+
+(defn unlike
+  [service user-id tweet-id]
+  (p/unlike service user-id tweet-id))
+
+(defn get-feed
+  [service user-id limit offset]
+  (p/get-feed service user-id limit offset))

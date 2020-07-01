@@ -2,6 +2,7 @@
   (:require [clojure.test :refer :all]
             [com.stuartsierra.component :as component]
             [twitter-clj.application.test-util :refer :all]
+            [twitter-clj.adapter.cache.in-mem :refer [make-in-mem-cache]]
             [twitter-clj.adapter.repository.in-mem :refer [make-in-mem-repository]]
             [twitter-clj.adapter.repository.datomic :refer [delete-database
                                                             make-datomic-repository
