@@ -4,7 +4,8 @@
             [twitter-clj.application.core :as core]
             [twitter-clj.application.port.cache :as cache]
             [twitter-clj.application.port.repository :as repository]
-            [twitter-clj.application.port.service :as service]))
+            [twitter-clj.application.port.service :as service]
+            [twitter-clj.application.port.protocol.service :as p]))
 
 (declare throw-missing-user!)
 (declare throw-missing-tweet!)
@@ -33,7 +34,7 @@
     (log/info "Stopping application service")
     this)
 
-  service/UserService
+  p/UserService
   (login
     [service user-id]
     (let [session (core/new-session user-id)]
@@ -56,6 +57,10 @@
     [service id]
     (not (empty? (repository/fetch-users! (:repository service) {:id id}))))
 
+  (username-available?
+    [service username]
+    (empty? (repository/fetch-users! (:repository service) {:username username})))
+
   (password-match?
     [service user-id password]
     (let [actual-password (repository/fetch-password! (:repository service) user-id)]
@@ -63,12 +68,12 @@
 
   (create-user
     [service name email username password]
-    (let [lower-name (clojure.string/lower-case name)
+    (let [lower-name (clojure.string/lower-case name) ;; XXX: Should we really make it lowercase?
           lower-email (clojure.string/lower-case email)
           lower-username (clojure.string/lower-case username)
           user (core/new-user lower-name lower-email lower-username)]
       (if (service/new-user? service email)
-        (if (empty? (repository/fetch-users! (:repository service) {:username username}))
+        (if (service/username-available? service username)
           (do (repository/update-user! (:repository service) user)
               (repository/update-password! (:repository service) (:id user) (core/derive-password password))
               user)
@@ -129,7 +134,7 @@
       (repository/fetch-followers! (:repository service) followed-id)
       (throw-missing-user! followed-id)))
 
-  service/TweetService
+  p/TweetService
   (tweet
     [service user-id text]
     (let [tweet (core/new-tweet user-id text)]

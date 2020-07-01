@@ -1,7 +1,7 @@
 (ns twitter-clj.adapter.cache.in-mem
   (:require [com.stuartsierra.component :as component]
             [taoensso.timbre :as log]
-            [twitter-clj.application.port.cache :as cache])
+            [twitter-clj.application.port.protocol.cache :as p])
   (:import [java.time ZonedDateTime]))
 
 (defn- shutdown
@@ -29,7 +29,7 @@
     (log/info "Stopping in-memory cache")
     (shutdown cache))
 
-  cache/Cache
+  p/Cache
   (update-session! [_ session]
     (swap! sessions assoc (:id session) session))
 

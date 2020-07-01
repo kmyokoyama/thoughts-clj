@@ -2,6 +2,7 @@
   (:require [clojure.test :refer :all]
             [com.stuartsierra.component :as component]
             [twitter-clj.application.test-util :refer :all]
+            [twitter-clj.adapter.cache.in-mem :refer [make-in-mem-cache]]
             [twitter-clj.adapter.repository.in-mem :refer [make-in-mem-repository]]
             [twitter-clj.adapter.repository.datomic :refer [delete-database
                                                             make-datomic-repository
@@ -9,9 +10,7 @@
             [twitter-clj.application.config :refer [datomic-uri http-host http-port]]
             [twitter-clj.application.service :refer [make-service]]
             [twitter-clj.adapter.http.component :refer [make-http-controller]]
-            [twitter-clj.adapter.http.test-util :refer :all])
-  (:import (java.time ZonedDateTime)
-           (java.util Date)))
+            [twitter-clj.adapter.http.test-util :refer :all]))
 
 (def ^:private ^:const url (str "http://" http-host ":" http-port))
 
@@ -20,10 +19,11 @@
 (defn- test-system-map
   []
   (component/system-map
-    :repository (make-datomic-repository datomic-uri)
+    :repository (make-in-mem-repository)
+    :cache (make-in-mem-cache)
     :service (component/using
                (make-service)
-               [:repository])
+               [:repository :cache])
     :controller (component/using
                   (make-http-controller http-host http-port)
                   [:service])))
@@ -49,9 +49,9 @@
   (component/stop system))
 
 (use-fixtures :each (fn [f]
-                      (let [sys (start-test-system-with-datomic)]
+                      (let [sys (start-test-system-with-in-mem)]
                         (f)
-                        (stop-test-system-with-datomic sys))))
+                        (stop-test-system-with-in-mem sys))))
 
 (defn signup
   [user]
@@ -85,7 +85,7 @@
     (let [first-user (random-user)
           first-user-email (:email first-user)]
       (post (resource "signup") first-user)
-      (let [second-user {:name (random-fullname) :email first-user-email :username (random-username)}
+      (let [second-user {:name (random-fullname) :email first-user-email :username (random-username) :password (random-password)}
             {:keys [response body result]} (post-and-parse (resource "signup") second-user)]
         (is (= "failure" (:status body)))
         (is (= 400 (:status response)))                     ;; HTTP 400 Bad Request.
@@ -97,7 +97,7 @@
     (let [first-user (random-user)
           first-username (:username first-user)]
       (post (resource "signup") first-user)
-      (let [second-user {:name (random-fullname) :email (random-email) :username first-username}
+      (let [second-user {:name (random-fullname) :email (random-email) :username first-username :password (random-password)}
             {:keys [response body result]} (post-and-parse (resource "signup") second-user)]
         (is (= "failure" (:status body)))
         (is (= 400 (:status response)))                     ;; HTTP 400 Bad Request.

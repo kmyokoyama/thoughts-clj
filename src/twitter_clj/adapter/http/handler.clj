@@ -22,8 +22,9 @@
   (s/validate SignupRequest (:body req))
   (let [{:keys [name email username password]} (:body req)]
     (let [user (service/create-user service name email username password)
-          user-info (str "'" (:name user) "'" " @" (:username user) " [" (:email user) "]")]
-      (log/info "Create new user" user-info)
+          user-info (str "'" (:name user) "'" " @" (:username user) " [" (:email user) "]")
+          user-id (:id user)]
+      (log/info "Create new user" (f-id user-id) user-info)
       (created (add-links :user req user)))))
 
 (defn login
