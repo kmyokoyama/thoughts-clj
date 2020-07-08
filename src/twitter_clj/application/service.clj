@@ -139,7 +139,7 @@
     [service user-id text]
     (let [tweet (core/new-tweet user-id text)]
       (if (service/user-exists? service user-id)
-        (repository/update-tweet! (:repository service) tweet (core/get-hashtags (:text tweet)))
+        (repository/update-tweet! (:repository service) tweet (core/extract-hashtags (:text tweet)))
         (throw-missing-user! user-id))))
 
   (get-tweet-by-id
@@ -164,7 +164,7 @@
       (if-let [source-tweet (first (repository/fetch-tweets! (:repository service) {:id source-tweet-id}))]
         (let [reply (core/new-tweet user-id text)]
           (repository/update-tweet! (:repository service) (core/reply source-tweet) #{})
-          (repository/update-reply! (:repository service) source-tweet-id reply (core/get-hashtags (:text reply))))
+          (repository/update-reply! (:repository service) source-tweet-id reply (core/extract-hashtags (:text reply))))
         (throw-missing-tweet! source-tweet-id))
       (throw-missing-user! user-id)))
 
@@ -188,7 +188,7 @@
     (if (service/user-exists? service user-id)
       (if-let [source-tweet (first (repository/fetch-tweets! (:repository service) {:id source-tweet-id}))]
         (do (repository/update-tweet! (:repository service) (core/retweet source-tweet) #{})
-            (repository/update-retweet! (:repository service) (core/new-retweet user-id source-tweet-id comment) (core/get-hashtags comment)))
+            (repository/update-retweet! (:repository service) (core/new-retweet user-id source-tweet-id comment) (core/extract-hashtags comment)))
         (throw-missing-user! source-tweet-id))
       (throw-missing-user! user-id)))
 
@@ -321,10 +321,14 @@
                                         :context {:follower-id follower-id :followed-id followed-id}}))))
 
 (defn- following?
+  "Is `follower-id` following `followed-id`?
+
+  Both `follower-id` and `followed-id` are user identifiers."
   [service follower-id followed-id]
   (some #(= followed-id (:id %)) (repository/fetch-following! (:repository service) follower-id)))
 
 (defn- build-feed
+  "Creates a collection of tweets (length <= 100) from users in `following` sorted by `:publish-date`."
   [service following]
   (->> following
        (map :id)
