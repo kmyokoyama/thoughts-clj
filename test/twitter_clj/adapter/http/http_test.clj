@@ -8,7 +8,7 @@
             [twitter-clj.adapter.repository.datomic :refer [delete-database
                                                             make-datomic-repository
                                                             load-schema]]
-            [twitter-clj.application.config :refer [datomic-uri redis-uri http-host http-port test-type]]
+            [twitter-clj.application.config :refer [datomic-uri redis-uri http-host http-port integration-test-mode]]
             [twitter-clj.adapter.cache.in-mem :refer [make-in-mem-cache]]
             [twitter-clj.application.service :refer [make-service]]
             [twitter-clj.adapter.http.component :refer [make-http-controller]]
@@ -18,7 +18,7 @@
 
 (def ^:private resource (partial resource-path url))
 
-(defn- integration-test-system-map
+(defn- in-mem-test-system-map
   []
   (component/system-map
     :repository (make-in-mem-repository)
@@ -30,7 +30,7 @@
                   (make-http-controller http-host http-port)
                   [:service])))
 
-(defn- e2e-test-system-map
+(defn- full-test-system-map
   []
   (component/system-map
     :repository (make-datomic-repository datomic-uri)
@@ -42,42 +42,37 @@
                   (make-http-controller http-host http-port)
                   [:service])))
 
-(defn- start-integration-test-system
+(defn- start-in-mem-test-system
   []
-  (println "start-integration-test-system" test-type)
-  (component/start (integration-test-system-map)))
+  (println "start-in-mem-test-system" integration-test-mode)
+  (component/start (in-mem-test-system-map)))
 
-(defn- stop-integration-test-system
+(defn- stop-in-mem-test-system
   [sys]
-  (println "stop-integration-test-system")
+  (println "stop-in-mem-test-system")
   (component/stop sys))
 
-(defn- start-e2e-test-system
+(defn- start-full-test-system
   []
-  (println "start-e2e-test-system")
-  (let [sys (component/start (e2e-test-system-map))
+  (println "start-full-test-system")
+  (let [sys (component/start (full-test-system-map))
         conn (get-in sys [:repository :conn])]
     (load-schema conn "schema.edn")
     sys))
 
-(defn- stop-e2e-test-system
+(defn- stop-full-test-system
   [system]
-  (println "stop-e2e-test-system")
+  (println "stop-full-test-system")
   (delete-database datomic-uri)
   (component/stop system))
 
 (def start-stop-fns
-  {:integration [start-integration-test-system stop-integration-test-system]
-   :e2e         [start-e2e-test-system stop-e2e-test-system]})
-
-(defn select-start-stop-fn
-  [test-meta fns]
-  (cond
-    (:e2e test-meta) (:e2e fns)
-    (:integration fns)))
+  {:in-mem [start-in-mem-test-system stop-in-mem-test-system]
+   :full   [start-full-test-system stop-full-test-system]})
 
 (use-fixtures :each (fn [f]
-                      (let [[start-system! stop-system!] (select-start-stop-fn (meta f) start-stop-fns)
+                      (println "mode: " integration-test-mode)
+                      (let [[start-system! stop-system!] (integration-test-mode start-stop-fns)
                             sys (start-system!)]
                         (f)
                         (stop-system! sys))))
@@ -104,7 +99,7 @@
 
 ;; Tests.
 
-(deftest test-signup
+(deftest ^:system test-signup
   (testing "Sign up with a single user"
     (let [response (post (resource "signup") (random-user))]
       (is (= "success" (:status (get-body response))))
@@ -134,7 +129,7 @@
         (is (= "username" (get-in result [:context :attribute])))
         (is (= (clojure.string/lower-case first-username) (get-in result [:context :username])))))))
 
-(deftest test-login
+(deftest ^:system test-login
   (testing "Login returns success when user exists"
     (let [user (random-user)
           password (:password user)
@@ -161,7 +156,7 @@
       (is (= 400 (:status response)))                       ;; HTTP 400 Bad Request.
       (is ((complement contains?) result :token)))))
 
-(deftest test-logout
+(deftest ^:system test-logout
   (testing "Logout returns success when user is already logged in"
     (let [{:keys [token]} (signup-and-login)
           {:keys [response body]} (post-and-parse (resource "logout") token {})]
@@ -173,7 +168,7 @@
       (is (= "failure" (:status body)))
       (is (= 401 (:status response))))))                    ;; HTTP 401 Unauthorized.
 
-(deftest test-tweet
+(deftest ^:system test-tweet
   (testing "Add a single tweet"
     (let [{:keys [user-id token]} (signup-and-login)
           text (random-text)
@@ -184,7 +179,7 @@
       (is (= text (:text result)))
       (is (= 0 (:likes result) (:retweets result) (:replies result))))))
 
-(deftest test-get-tweets-from-user
+(deftest ^:system test-get-tweets-from-user
   (testing "Get two tweets from the same user"
     (let [{:keys [user-id token]} (signup-and-login)
           first-tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)
@@ -204,7 +199,7 @@
         (is (= 0 (:total body) (count result)))
         (is (empty? result))))))
 
-(deftest test-get-user-by-id
+(deftest ^:system test-get-user-by-id
   (testing "Get an existing user returns successfully"
     (let [expected-user (random-user)
           {:keys [user-id token]} (signup-and-login expected-user)
@@ -225,7 +220,7 @@
       (is (= "user" (:subject result)))
       (is (= (str user-id) (get-in result [:context :user-id]))))))
 
-(deftest test-get-tweet-by-id
+(deftest ^:system test-get-tweet-by-id
   (testing "Get an existing tweet returns successfully"
     (let [{:keys [user-id token]} (signup-and-login)
           expected-tweet (random-tweet)
@@ -247,7 +242,7 @@
       (is (= "tweet" (:subject result)))
       (is (= (str tweet-id) (get-in result [:context :tweet-id]))))))
 
-(deftest test-like
+(deftest ^:system test-like
   (testing "Like an existing tweet"
     (let [{:keys [token]} (signup-and-login)
           tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)
@@ -285,7 +280,7 @@
       (is (= "tweet" (:subject result)))
       (is (= (str tweet-id) (get-in result [:context :tweet-id]))))))
 
-(deftest test-unlike
+(deftest ^:system test-unlike
   (testing "Unlike an existing tweet previously liked"
     (let [{:keys [user-id token]} (signup-and-login)
           tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)]
@@ -338,7 +333,7 @@
       (is (= "tweet" (:subject result)))
       (is (= (str tweet-id) (get-in result [:context :tweet-id]))))))
 
-(deftest test-add-reply
+(deftest ^:system test-add-reply
   (testing "Add new reply to existing tweet returns success"
     (let [{:keys [user-id token]} (signup-and-login)
           tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)
@@ -361,7 +356,7 @@
       (is (= "tweet" (:subject result)))
       (is (= (str tweet-id) (get-in result [:context :tweet-id]))))))
 
-(deftest test-get-retweet-by-id
+(deftest ^:system test-get-retweet-by-id
   (testing "Get retweets from tweet not retweeted yet returns an empty list"
     (let [{:keys [token]} (signup-and-login)
           tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)
@@ -372,7 +367,7 @@
       (is (= retweet-id (:id result)))
       (is (= tweet-id (:source-tweet-id result))))))
 
-(deftest test-get-retweets
+(deftest ^:system test-get-retweets
   (testing "Get retweets from a tweet already retweeted returns all replies"
     (let [{:keys [user-id token]} (signup-and-login)
           tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet user-id)) :result :id)]
@@ -391,7 +386,7 @@
       (is (= "success" (:status body)))
       (is (empty? result)))))
 
-(deftest test-get-replies
+(deftest ^:system test-get-replies
   (testing "Get retweets from a tweet already retweeted returns all replies"
     (let [{:keys [token]} (signup-and-login)
           tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)]
@@ -409,7 +404,7 @@
       (is (= "success" (:status body)))
       (is (empty? result)))))
 
-(deftest test-follow
+(deftest ^:system test-follow
   (testing "User follows another user"
     (let [{follower-id :user-id follower-token :token} (signup-and-login)
           {followed-id :user-id} (signup-and-login)
@@ -443,7 +438,7 @@
       (is (= (str user-id) (get-in result [:context :follower-id])))
       (is (= (str followed-id) (get-in result [:context :followed-id]))))))
 
-(deftest test-unfollow
+(deftest ^:system test-unfollow
   (testing "User unfollows an user she/he follows"
     (let [{follower-id :user-id follower-token :token} (signup-and-login)
           {followed-id :user-id} (signup-and-login)
@@ -490,7 +485,7 @@
       (is (= (str user-id) (get-in result [:context :follower-id])))
       (is (= (str followed-id) (get-in result [:context :followed-id]))))))
 
-(deftest test-get-user-following
+(deftest ^:system test-get-user-following
   (testing "Get following list of an user"
     (let [{follower-id :user-id follower-token :token} (signup-and-login)
           {followed-id :user-id} (signup-and-login)
@@ -507,7 +502,7 @@
       (is (= "success" (:status body)))
       (is (empty? result)))))
 
-(deftest test-get-user-followers
+(deftest ^:system test-get-user-followers
   (testing "Get followers list of an user"
     (let [{follower-token :token} (signup-and-login)
           {followed-id :user-id} (signup-and-login)
@@ -524,7 +519,7 @@
       (is (= "success" (:status body)))
       (is (empty? result)))))
 
-(deftest test-get-feed
+(deftest ^:system test-get-feed
   (testing "Get feed of an user returns most recent tweets"
     (let [{first-user-id :user-id first-user-password :password} (signup (random-user))
           {second-user-id :user-id second-user-password :password} (signup (random-user))

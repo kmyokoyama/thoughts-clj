@@ -2,14 +2,32 @@
   (:require [environ.core :refer [env]]
             [taoensso.timbre :as log]))
 
+(defn- ->keyword
+  ([s]
+   (-> s (subs 1) keyword))
+
+  ([s default]
+   (try
+     (->keyword s)
+     (catch Exception _ default))))
+
+(defn- ->int
+  ([s]
+   (Integer/parseInt s))
+
+  ([s default]
+   (try
+     (->int s)
+     (catch NumberFormatException _ default))))
+
 (def http-host (env :http-host))
-(def http-port (Integer/parseInt (env :http-port)))
+(def http-port (->int (env :http-port) 3000))
 (def http-api-version (env :http-api-version))
 (def http-api-path-prefix (env :http-api-path-prefix))
 (def http-api-jws-secret (env :http-api-jws-secret))
 (def datomic-uri (env :datomic-uri))
 (def redis-uri (env :redis-uri))
-(def test-type (env :test-type))
+(def integration-test-mode (->keyword (env :integration-test-mode) :in-mem))
 
 (def ^:private timbre-config {:timestamp-opts {:pattern "yyyy-MM-dd'T'HH:mm:ss.SSSX"}
                               :output-fn      (fn [{:keys [timestamp_ level hostname_ msg_]}]

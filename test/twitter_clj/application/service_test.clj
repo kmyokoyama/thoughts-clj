@@ -8,7 +8,7 @@
             [clojure.string :as s])
   (:import (clojure.lang ExceptionInfo)))
 
-(deftest new-user
+(deftest ^:integration new-user
   (testing "Returns true if no user is fetched from repository"
     (let [service (map->Service {})]
       (with-redefs [repository/fetch-users! (fn [_ _] [])]
@@ -19,7 +19,7 @@
       (with-redefs [repository/fetch-users! (fn [_ _] [(random-user)])]
         (is (not (new-user? service (random-email))))))))
 
-(deftest user-exists
+(deftest ^:integration user-exists
   (testing "Returns true if the specified user is returned from repository"
     (let [service (map->Service {})
           user (random-user)
@@ -34,7 +34,7 @@
       (with-redefs [repository/fetch-users! (fn [_ _] [])]
         (is (not (user-exists? service user-id)))))))
 
-(deftest password-match
+(deftest ^:integration password-match
   (testing "Returns true if password belongs to user"
     (let [service (map->Service {})
           password (random-password)
@@ -48,7 +48,7 @@
       (with-redefs [repository/fetch-password! (fn [_ _] nil)]
         (is (not (password-match? service (random-uuid) password)))))))
 
-(deftest test-create-user
+(deftest ^:integration test-create-user
   (testing "Throws an exception if user email is already registered"
     (let [service (map->Service {})]
       (with-redefs [new-user? (fn [_ _] false)]
@@ -87,7 +87,7 @@
           (is (zero? (:following user)))
           (is (zero? (:followers user))))))))
 
-(deftest test-get-user-by-id
+(deftest ^:integration test-get-user-by-id
   (testing "Throws an exception if user ID is not found"
     (let [service (map->Service {})]
       (with-redefs [repository/fetch-users! (fn [_ _]) []]

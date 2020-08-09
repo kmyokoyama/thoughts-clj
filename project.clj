@@ -2,27 +2,28 @@
   :description "Twitter-clone API for experimentation with Clojure."
   :url "https://github.com/kmyokoyama/twitter-clj.git"
   :license {:name "MIT"
-            :url "https://choosealicense.com/licenses/mit/"}
+            :url  "https://choosealicense.com/licenses/mit/"}
   :resource-paths ["resources"]
-  :profiles {:dev {:dependencies [[cheshire "5.10.0"]
-                                  [clj-http "3.10.0"]
-                                  [faker "0.2.2"]
-                                  [midje "1.9.9"]
-                                  [org.clojure/data.generators "0.1.2"]
-                                  [ring/ring-devel "1.8.1"]]
-                   :plugins [[lein-auto "0.1.3"]
-                             [lein-midje "3.2.1"]
-                             [lein-environ "1.2.0"]]
-                   :jvm-opts ["-Dconfig.edn=resources/dev-config.edn"]
-                   :env {:http-host "127.0.0.1"
-                         :http-port 3000
-                         :http-api-version "v0"
-                         :http-api-path-prefix "api"
-                         :http-api-jws-secret "123"
-                         :datomic-uri "datomic:mem://dev-twitter"
-                         :redis-uri "redis://localhost:6379"}}
-             :debug {:jvm-opts ["-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5000"]}
-             :integration {:env {:test-type :integration}}}
+  :profiles {:dev    {:dependencies [[cheshire "5.10.0"]
+                                     [clj-http "3.10.0"]
+                                     [faker "0.2.2"]
+                                     [midje "1.9.9"]
+                                     [org.clojure/data.generators "0.1.2"]
+                                     [ring/ring-devel "1.8.1"]]
+                      :plugins      [[lein-auto "0.1.3"]
+                                     [lein-midje "3.2.1"]
+                                     [lein-environ "1.2.0"]]
+                      :jvm-opts     ["-Dconfig.edn=resources/dev-config.edn"]
+                      :env          {:http-host            "127.0.0.1"
+                                     :http-port            3000
+                                     :http-api-version     "v0"
+                                     :http-api-path-prefix "api"
+                                     :http-api-jws-secret  "123"
+                                     :datomic-uri          "datomic:mem://dev-twitter"
+                                     :redis-uri            "redis://localhost:6379"}}
+             :debug  {:jvm-opts ["-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5000"]}
+             :in-mem {:env {:integration-test-mode :in-mem}}
+             :full   {:env {:integration-test-mode :full}}}
   :dependencies [[buddy/buddy-auth "2.2.0"]
                  [buddy/buddy-hashers "1.4.0"]
                  [com.datomic/datomic-free "0.9.5697"]
@@ -42,4 +43,8 @@
                  [ring-server "0.4.0"]]
   :repl-options {:init-ns dev}
   :main twitter-clj.application.main
-  :aliases {"test-integration" ["with-profile" "+integration" "test"]})
+  :aliases {"test-system-in-mem" ["with-profile" "+in-mem" "test" ":system"]
+            "test-system-full"   ["with-profile" "+full" "test" ":system"]}
+  :test-selectors {:unit :unit
+                   :integration :integration
+                   :system :system})
