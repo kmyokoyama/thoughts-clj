@@ -4,4 +4,5 @@
  twitter-clj.application.config/http-api-path-prefix "api"
  twitter-clj.application.config/http-api-jws-secret "123"
  twitter-clj.application.config/datomic-uri "datomic:mem://dev-twitter"
- twitter-clj.application.config/redis-uri "redis://localhost:6379"}
+ twitter-clj.application.config/redis-uri "redis://localhost:6379"
+ twitter-clj.application.config/test-type #config/env "test_type"}

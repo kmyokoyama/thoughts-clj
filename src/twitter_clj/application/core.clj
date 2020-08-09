@@ -1,13 +1,40 @@
 (ns twitter-clj.application.core
-  (:require [buddy.hashers :as hashers])
+  (:require [buddy.hashers :as hashers]
+            [schema.core :as s])
   (:import (java.time ZonedDateTime)
            (java.util UUID)))
 
-(defrecord User [id active name email username following followers])
-(defrecord Tweet [id user-id text publish-date likes retweets replies])
-(defrecord Retweet [id user-id has-comment comment publish-date source-tweet-id])
-(defrecord TweetLike [id created-at user-id source-tweet-id])
-(defrecord Session [id user-id created-at])                 ;; TODO: Remove it from here.
+(s/defrecord User [id :- s/Uuid
+                   active :- s/Bool
+                   name :- s/Str
+                   email :- s/Str
+                   username :- s/Str
+                   following :- s/Int
+                   followers :- s/Int])
+
+(s/defrecord Tweet [id :- s/Uuid
+                    user-id :- s/Uuid
+                    text :- s/Str
+                    publish-date :- ZonedDateTime
+                    likes :- s/Int
+                    retweets :- s/Int
+                    replies :- s/Int])
+
+(s/defrecord Retweet [id :- s/Uuid
+                      user-id :- s/Uuid
+                      has-comment :- s/Bool
+                      comment :- s/Str
+                      publish-date :- ZonedDateTime
+                      source-tweet-id :- s/Uuid])
+
+(s/defrecord TweetLike [id :- s/Uuid
+                        created-at :- ZonedDateTime
+                        user-id :- s/Uuid
+                        source-tweet-id :- s/Uuid])
+
+(s/defrecord Session [id :- s/Uuid
+                      user-id :- s/Uuid
+                      created-at :- ZonedDateTime])         ;; TODO: Remove it from here.
 
 (defn sort-by-date
   "Sort the given collection descending by `:publish-date`."
@@ -146,6 +173,7 @@
   [follower followed]
   (vector (update follower :following inc) (update followed :followers inc)))
 
-(defn unfollow
-  [follower followed]
+(s/defn unfollow :- [(s/one User "follower") (s/one User "followed")]
+  [follower :- User
+   followed :- User]
   (vector (update follower :following dec) (update followed :followers dec)))

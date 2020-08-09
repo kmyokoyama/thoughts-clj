@@ -11,13 +11,23 @@
                                   [org.clojure/data.generators "0.1.2"]
                                   [ring/ring-devel "1.8.1"]]
                    :plugins [[lein-auto "0.1.3"]
-                             [lein-midje "3.2.1"]]
-                   :jvm-opts ["-Dconfig.edn=resources/dev-config.edn"]}
-             :debug {:jvm-opts ["-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5000"]}}
+                             [lein-midje "3.2.1"]
+                             [lein-environ "1.2.0"]]
+                   :jvm-opts ["-Dconfig.edn=resources/dev-config.edn"]
+                   :env {:http-host "127.0.0.1"
+                         :http-port 3000
+                         :http-api-version "v0"
+                         :http-api-path-prefix "api"
+                         :http-api-jws-secret "123"
+                         :datomic-uri "datomic:mem://dev-twitter"
+                         :redis-uri "redis://localhost:6379"}}
+             :debug {:jvm-opts ["-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5000"]}
+             :integration {:env {:test-type :integration}}}
   :dependencies [[buddy/buddy-auth "2.2.0"]
                  [buddy/buddy-hashers "1.4.0"]
                  [com.datomic/datomic-free "0.9.5697"]
                  [com.outpace/config "0.13.2"]
+                 [environ "1.2.0"]
                  [com.stuartsierra/component "0.4.0"]
                  [com.taoensso/carmine "2.19.1"]
                  [com.taoensso/timbre "4.10.0"]
@@ -31,4 +41,5 @@
                  [ring/ring-json "0.5.0"]
                  [ring-server "0.4.0"]]
   :repl-options {:init-ns dev}
-  :main twitter-clj.application.main)
+  :main twitter-clj.application.main
+  :aliases {"test-integration" ["with-profile" "+integration" "test"]})

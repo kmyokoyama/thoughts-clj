@@ -3,11 +3,12 @@
             [com.stuartsierra.component :as component]
             [twitter-clj.application.test-util :refer :all]
             [twitter-clj.adapter.cache.in-mem :refer [make-in-mem-cache]]
+            [twitter-clj.adapter.cache.redis :refer [make-redis-cache]]
             [twitter-clj.adapter.repository.in-mem :refer [make-in-mem-repository]]
             [twitter-clj.adapter.repository.datomic :refer [delete-database
                                                             make-datomic-repository
                                                             load-schema]]
-            [twitter-clj.application.config :refer [datomic-uri http-host http-port]]
+            [twitter-clj.application.config :refer [datomic-uri redis-uri http-host http-port test-type]]
             [twitter-clj.adapter.cache.in-mem :refer [make-in-mem-cache]]
             [twitter-clj.application.service :refer [make-service]]
             [twitter-clj.adapter.http.component :refer [make-http-controller]]
@@ -17,7 +18,7 @@
 
 (def ^:private resource (partial resource-path url))
 
-(defn- test-system-map
+(defn- integration-test-system-map
   []
   (component/system-map
     :repository (make-in-mem-repository)
@@ -29,30 +30,57 @@
                   (make-http-controller http-host http-port)
                   [:service])))
 
-(defn- start-test-system-with-in-mem
+(defn- e2e-test-system-map
   []
-  (component/start (test-system-map)))
+  (component/system-map
+    :repository (make-datomic-repository datomic-uri)
+    :cache (make-redis-cache redis-uri)
+    :service (component/using
+               (make-service)
+               [:repository :cache])
+    :controller (component/using
+                  (make-http-controller http-host http-port)
+                  [:service])))
 
-(defn- stop-test-system-with-in-mem
+(defn- start-integration-test-system
+  []
+  (println "start-integration-test-system" test-type)
+  (component/start (integration-test-system-map)))
+
+(defn- stop-integration-test-system
   [sys]
+  (println "stop-integration-test-system")
   (component/stop sys))
 
-(defn- start-test-system-with-datomic
+(defn- start-e2e-test-system
   []
-  (let [sys (component/start (test-system-map))
+  (println "start-e2e-test-system")
+  (let [sys (component/start (e2e-test-system-map))
         conn (get-in sys [:repository :conn])]
     (load-schema conn "schema.edn")
     sys))
 
-(defn- stop-test-system-with-datomic
+(defn- stop-e2e-test-system
   [system]
+  (println "stop-e2e-test-system")
   (delete-database datomic-uri)
   (component/stop system))
 
+(def start-stop-fns
+  {:integration [start-integration-test-system stop-integration-test-system]
+   :e2e         [start-e2e-test-system stop-e2e-test-system]})
+
+(defn select-start-stop-fn
+  [test-meta fns]
+  (cond
+    (:e2e test-meta) (:e2e fns)
+    (:integration fns)))
+
 (use-fixtures :each (fn [f]
-                      (let [sys (start-test-system-with-in-mem)]
+                      (let [[start-system! stop-system!] (select-start-stop-fn (meta f) start-stop-fns)
+                            sys (start-system!)]
                         (f)
-                        (stop-test-system-with-in-mem sys))))
+                        (stop-system! sys))))
 
 (defn signup
   [user]
