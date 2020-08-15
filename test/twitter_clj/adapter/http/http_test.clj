@@ -8,7 +8,7 @@
             [twitter-clj.adapter.repository.datomic :refer [delete-database
                                                             make-datomic-repository
                                                             load-schema]]
-            [twitter-clj.application.config :refer [datomic-uri redis-uri http-host http-port integration-test-mode]]
+            [twitter-clj.application.config :refer [datomic-uri redis-uri http-host http-port system-test-mode]]
             [twitter-clj.adapter.cache.in-mem :refer [make-in-mem-cache]]
             [twitter-clj.application.service :refer [make-service]]
             [twitter-clj.adapter.http.component :refer [make-http-controller]]
@@ -44,7 +44,7 @@
 
 (defn- start-in-mem-test-system
   []
-  (println "start-in-mem-test-system" integration-test-mode)
+  (println "start-in-mem-test-system" system-test-mode)
   (component/start (in-mem-test-system-map)))
 
 (defn- stop-in-mem-test-system
@@ -71,8 +71,8 @@
    :full   [start-full-test-system stop-full-test-system]})
 
 (use-fixtures :each (fn [f]
-                      (println "mode: " integration-test-mode)
-                      (let [[start-system! stop-system!] (integration-test-mode start-stop-fns)
+                      (println "mode: " system-test-mode)
+                      (let [[start-system! stop-system!] (system-test-mode start-stop-fns)
                             sys (start-system!)]
                         (f)
                         (stop-system! sys))))

@@ -27,7 +27,8 @@
 (def http-api-jws-secret (env :http-api-jws-secret))
 (def datomic-uri (env :datomic-uri))
 (def redis-uri (env :redis-uri))
-(def integration-test-mode (->keyword (env :integration-test-mode) :in-mem))
+
+(def system-test-mode (->keyword (env :system-test-mode) :in-mem))
 
 (def ^:private timbre-config {:timestamp-opts {:pattern "yyyy-MM-dd'T'HH:mm:ss.SSSX"}
                               :output-fn      (fn [{:keys [timestamp_ level hostname_ msg_]}]

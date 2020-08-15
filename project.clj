@@ -14,16 +14,16 @@
                                      [lein-midje "3.2.1"]
                                      [lein-environ "1.2.0"]]
                       :jvm-opts     ["-Dconfig.edn=resources/dev-config.edn"]
-                      :env          {:http-host            "127.0.0.1"
-                                     :http-port            3000
-                                     :http-api-version     "v0"
-                                     :http-api-path-prefix "api"
-                                     :http-api-jws-secret  "123"
-                                     :datomic-uri          "datomic:mem://dev-twitter"
-                                     :redis-uri            "redis://localhost:6379"}}
+                      :env      {:http-host            "127.0.0.1"
+                                 :http-port            3000
+                                 :http-api-version     "v0"
+                                 :http-api-path-prefix "api"
+                                 :http-api-jws-secret  "123"
+                                 :datomic-uri          "datomic:mem://dev-twitter"
+                                 :redis-uri            "redis://localhost:6379"}}
              :debug  {:jvm-opts ["-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5000"]}
-             :in-mem {:env {:integration-test-mode :in-mem}}
-             :full   {:env {:integration-test-mode :full}}}
+             :in-mem {:env {:system-test-mode :in-mem}}
+             :full   {:env {:system-test-mode :full}}}
   :dependencies [[buddy/buddy-auth "2.2.0"]
                  [buddy/buddy-hashers "1.4.0"]
                  [com.datomic/datomic-free "0.9.5697"]
@@ -45,6 +45,6 @@
   :main twitter-clj.application.main
   :aliases {"test-system-in-mem" ["with-profile" "+in-mem" "test" ":system"]
             "test-system-full"   ["with-profile" "+full" "test" ":system"]}
-  :test-selectors {:unit :unit
+  :test-selectors {:unit        :unit
                    :integration :integration
-                   :system :system})
+                   :system      :system})
