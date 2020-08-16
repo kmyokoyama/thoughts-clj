@@ -12,7 +12,8 @@
             [twitter-clj.schema.http :refer :all]
             [ring.middleware.defaults :refer [wrap-defaults api-defaults]]
             [ring.middleware.json :refer [wrap-json-body]]
-            [ring.middleware.reload :refer [wrap-reload]])
+            [ring.middleware.reload :refer [wrap-reload]]
+            [com.walmartlabs.lacinia :as lacinia])
   (:import [clojure.lang ExceptionInfo]))
 
 (declare add-links)
@@ -200,6 +201,14 @@
          (add-links :tweet req)
          (ok-with-success))))
 
+(defn graphql-handler
+  [req graphql]
+  {:status  200
+   :headers {"Content-Type" "application/json"}
+   :body    (let [query (:body req)
+                  result (lacinia/execute (:schema graphql) query nil graphql)]
+              (ok-with-success result))})
+
 ;; Exception-handling functions.
 
 (defn- format-failure-info
@@ -315,9 +324,14 @@
     (POST (:like routes-map) req (like req service))
     (POST (:unlike routes-map) req (unlike req service))))
 
+(defn graphql-routes
+  [graphql]
+  (POST (path-prefix "/graphql") req (graphql-handler req graphql)))
+
 (defn handler
-  [service]
+  [service graphql]
   (-> (compojure.core/routes
+        (graphql-routes graphql)
         (public-routes service)
         (-> (user-routes service)
             (wrap-authenticated)

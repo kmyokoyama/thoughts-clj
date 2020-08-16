@@ -5,6 +5,7 @@
             [twitter-clj.adapter.cache.in-mem :refer [make-in-mem-cache]]
             [twitter-clj.adapter.cache.redis :refer [make-redis-cache]]
             [twitter-clj.adapter.http.component :refer [make-http-controller]]
+            [twitter-clj.adapter.graphql.component :refer [make-graphql]]
             [twitter-clj.adapter.repository.datomic :refer [make-datomic-repository]]
             [twitter-clj.adapter.repository.in-mem :refer [make-in-mem-repository]]
             [twitter-clj.application.config :refer [datomic-uri http-host http-port init-system! redis-uri]]
@@ -21,7 +22,8 @@
                [:repository :cache])
     :controller (component/using
                   (make-http-controller http-host http-port)
-                  [:service])))
+                  [:service])
+    :graphql (component/using (make-graphql) [:service])))
 
 (defn- on-exit
   [sys]

@@ -4,12 +4,12 @@
             [taoensso.timbre :as log]
             [twitter-clj.adapter.http.handler :refer [handler]]))
 
-(defrecord HttpServer [host port http-server service]
+(defrecord HttpServer [host port http-server service graphql]
   component/Lifecycle
   (start [this]
     (log/info "Starting HTTP server on" (str "http://" host ":" port))
     (assoc this :http-server
-                (server/run-server (handler service) {:ip host :port port})))
+                (server/run-server (handler service graphql) {:ip host :port port})))
 
   (stop [this]
     (log/info "Stopping HTTP server" port)

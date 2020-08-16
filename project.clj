@@ -28,6 +28,7 @@
                  [buddy/buddy-hashers "1.4.0"]
                  [com.datomic/datomic-free "0.9.5697"]
                  [com.outpace/config "0.13.2"]
+                 [com.walmartlabs/lacinia "0.37.0"]
                  [environ "1.2.0"]
                  [com.stuartsierra/component "0.4.0"]
                  [com.taoensso/carmine "2.19.1"]
