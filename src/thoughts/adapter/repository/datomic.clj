@@ -1,10 +1,10 @@
-(ns twitter-clj.adapter.repository.datomic
+(ns thoughts.adapter.repository.datomic
   (:require [datomic.api :as d]
             [com.stuartsierra.component :as component]
             [taoensso.timbre :as log]
-            [twitter-clj.application.core :refer :all]
-            [twitter-clj.application.port.repository :as repository]
-            [twitter-clj.application.port.protocol.repository :as p]
+            [thoughts.application.core :refer :all]
+            [thoughts.application.port.repository :as repository]
+            [thoughts.application.port.protocol.repository :as p]
             [clojure.java.io :as io])
   (:import [java.util Date UUID]
            [java.time ZonedDateTime ZoneId]))
@@ -61,16 +61,16 @@
   [k]
   (symbol (str "?" (name k))))
 
-(def ^:private tweet-rules '[[(get-tweet-rule ?id ?user-id ?text ?created-at ?likes ?retweets ?replies ?hashtag)
-                              [?t :tweet/id ?id]
-                              [?t :tweet/created-at ?created-at]
-                              [?t :tweet/text ?text]
-                              [?t :tweet/likes ?likes]
-                              [?t :tweet/retweets ?retweets]
-                              [?t :tweet/replies ?replies]
-                              [?t :tweet/hashtags ?hashtag]
-                              [?t :tweet/user ?u]
-                              [?u :user/id ?user-id]]])
+(def ^:private thought-rules '[[(get-thought-rule ?id ?user-id ?text ?created-at ?likes ?rethoughts ?replies ?hashtag)]
+                               [?t :thought/id ?id]
+                               [?t :thought/created-at ?created-at]
+                               [?t :thought/text ?text]
+                               [?t :thought/likes ?likes]
+                               [?t :thought/rethoughts ?rethoughts]
+                               [?t :thought/replies ?replies]
+                               [?t :thought/hashtags ?hashtag]
+                               [?t :thought/user ?u]
+                               [?u :user/id ?user-id]])
 
 (def ^:private user-rules '[[(get-user-rule ?id ?active ?name ?email ?username ?following ?followers)
                              [?t :user/id ?id]
@@ -103,50 +103,50 @@
                                   [?r :user/following ?following]
                                   [?r :user/followers ?followers]]])
 
-(def ^:private like-rules '[[(get-like-rule ?id ?created-at ?user-id ?source-tweet-id)
+(def ^:private like-rules '[[(get-like-rule ?id ?created-at ?user-id ?source-thought-id)
                              [?l :like/id ?id]
                              [?l :like/created-at ?created-at]
                              [?l :like/user ?u]
                              [?u :user/id ?user-id]
-                             [?l :like/source-tweet ?s]
-                             [?s :tweet/id ?source-tweet-id]]])
+                             [?l :like/source-thought ?s]
+                             [?s :thought/id ?source-thought-id]]])
 
-;; TODO: We can probably reuse tweet-rules.
-(def ^:private reply-rules '[[(get-reply-rule ?id ?user-id ?text ?created-at ?likes ?retweets ?replies ?source-tweet-id)
-                              [?r :tweet/id ?id]
-                              [?r :tweet/created-at ?created-at]
-                              [?r :tweet/text ?text]
-                              [?r :tweet/likes ?likes]
-                              [?r :tweet/retweets ?retweets]
-                              [?r :tweet/replies ?replies]
-                              [?r :tweet/user ?u]
+;; TODO: We can probably reuse thought-rules.
+(def ^:private reply-rules '[[(get-reply-rule ?id ?user-id ?text ?created-at ?likes ?rethoughts ?replies ?source-thought-id)
+                              [?r :thought/id ?id]
+                              [?r :thought/created-at ?created-at]
+                              [?r :thought/text ?text]
+                              [?r :thought/likes ?likes]
+                              [?r :thought/rethoughts ?rethoughts]
+                              [?r :thought/replies ?replies]
+                              [?r :thought/user ?u]
                               [?u :user/id ?user-id]
-                              [?r :reply/source-tweet ?s]
-                              [?s :tweet/id ?source-tweet-id]]])
+                              [?r :reply/source-thought ?s]
+                              [?s :thought/id ?source-thought-id]]])
 
-(def ^:private retweet-rules '[[(get-retweet-rule ?id ?user-id ?has-comment ?comment ?created-at ?source-tweet-id)
-                                [?rt :retweet/id ?id]
-                                [?rt :retweet/created-at ?created-at]
-                                [?rt :retweet/has-comment ?has-comment]
-                                [?rt :retweet/comment ?comment]
-                                [?rt :retweet/user ?u]
-                                [?u :user/id ?user-id]
-                                [?rt :retweet/source-tweet ?s]
-                                [?s :tweet/id ?source-tweet-id]]])
+(def ^:private rethought-rules '[[(get-rethought-rule ?id ?user-id ?has-comment ?comment ?created-at ?source-thought-id)]
+                                 [?rt :rethought/id ?id]
+                                 [?rt :rethought/created-at ?created-at]
+                                 [?rt :rethought/has-comment ?has-comment]
+                                 [?rt :rethought/comment ?comment]
+                                 [?rt :rethought/user ?u]
+                                 [?u :user/id ?user-id]
+                                 [?rt :rethought/source-thought ?s]
+                                 [?s :thought/id ?source-thought-id]])
 
-(defn- make-tweet
-  [{:keys [id user-id text publish-date likes retweets replies]} hashtags]
+(defn- make-thought
+  [{:keys [id user-id text publish-date likes rethoughts replies]} hashtags]
   (let [uuid (UUID/fromString id)
         created-at (ZonedDateTime->inst publish-date)
         user-uuid (UUID/fromString user-id)]
-    #:tweet{:id         uuid
+    #:thought{:id         uuid}
             :created-at created-at
             :text       text
             :likes      likes
-            :retweets   retweets
+            :rethoughts   rethoughts
             :replies    replies
             :user       [:user/id user-uuid]
-            :hashtags   (set hashtags)}))
+            :hashtags   (set hashtags)))
 
 (defn- make-user
   [{:keys [id active name email username following followers]}]
@@ -160,35 +160,35 @@
            :followers followers}))
 
 (defn- make-like
-  [{:keys [id created-at user-id source-tweet-id]}]
+  [{:keys [id created-at user-id source-thought-id]}]
   (let [uuid (UUID/fromString id)
         created-at (ZonedDateTime->inst created-at)
         user-uuid (UUID/fromString user-id)
-        source-tweet-uuid (UUID/fromString source-tweet-id)]
+        source-thought-uuid (UUID/fromString source-thought-id)]
     #:like{:id           uuid
            :created-at   created-at
            :user         [:user/id user-uuid]
-           :source-tweet [:tweet/id source-tweet-uuid]}))
+           :source-thought [:thought/id source-thought-uuid]}))
 
 (defn- make-reply
-  [source-tweet-id reply hashtags]
-  (let [source-tweet-uuid (UUID/fromString source-tweet-id)]
-    (-> (make-tweet reply hashtags)
-        (assoc :reply/source-tweet [:tweet/id source-tweet-uuid]))))
+  [source-thought-id reply hashtags]
+  (let [source-thought-uuid (UUID/fromString source-thought-id)]
+    (-> (make-thought reply hashtags)
+        (assoc :reply/source-thought [:thought/id source-thought-uuid]))))
 
-(defn- make-retweet
-  [{:keys [id user-id has-comment comment publish-date source-tweet-id]} hashtags]
+(defn- make-rethought
+  [{:keys [id user-id has-comment comment publish-date source-thought-id]} hashtags]
   (let [uuid (UUID/fromString id)
         created-at (ZonedDateTime->inst publish-date)
         user-uuid (UUID/fromString user-id)
-        source-tweet-uuid (UUID/fromString source-tweet-id)]
-    #:retweet{:id           uuid
+        source-thought-uuid (UUID/fromString source-thought-id)]
+    #:rethought{:id           uuid}
               :user         [:user/id user-uuid]
               :has-comment  has-comment
-              :comment      (if has-comment comment "") ;; TODO: Fix it. Perhaps we need to rethink the retweet model.
+              :comment      (if has-comment comment "") ;; TODO: Fix it. Perhaps we need to rethink the rethought model.
               :created-at   created-at
-              :source-tweet [:tweet/id source-tweet-uuid]
-              :hashtags     hashtags}))
+              :source-thought [:thought/id source-thought-uuid]
+              :hashtags     hashtags))
 
 (defn- make-password
   [user-id password]
@@ -258,7 +258,7 @@
                        [?u :user/id ?user-id]
                        [?u :user/password ?password]]
                      db
-                     retweet-rules
+                     rethought-rules
                      user-uuid)))))
 
   (update-follow!
@@ -299,25 +299,25 @@
           followed-uuid (UUID/fromString (:id followed))]
       (do-transaction conn [[:db/retract [:user/id follower-uuid] :user/follow [:user/id followed-uuid]]])))
 
-  p/TweetRepository
-  (update-tweet!
-    [_ tweet hashtags]
-    (do-transaction conn [(make-tweet tweet hashtags)])
-    tweet)
+  p/ThoughtRepository
+  (update-thought!
+    [_ thought hashtags]
+    (do-transaction conn [(make-thought thought hashtags)])
+    thought)
 
-  (fetch-tweets!
+  (fetch-thoughts!
     [_ criteria]
     (let [db (d/db conn)]
       (let [mc (map-uuid criteria #{:id :user-id})
             params (keys mc)
             params-val (vals mc)]
         (->> (query db
-                    '(?id ?user-id ?text ?created-at ?likes ?retweets ?replies)
+                    '(?id ?user-id ?text ?created-at ?likes ?rethoughts ?replies)
                     (concat '($ %) (map v params))
-                    '((get-tweet-rule ?id ?user-id ?text ?created-at ?likes ?retweets ?replies ?hashtag))
-                    tweet-rules
+                    '((get-thought-rule ?id ?user-id ?text ?created-at ?likes ?rethoughts ?replies ?hashtag))
+                    thought-rules
                     params-val)
-             (map (fn [result] (apply ->Tweet result)))
+             (map (fn [result] (apply ->Thought result)))
              (map (fn [result] (update result :publish-date inst->ZonedDateTime)))
              (map (fn [result] (update result :id str)))
              (map (fn [result] (update result :user-id str)))))))
@@ -330,19 +330,19 @@
   (fetch-likes!
     [_ criteria]
     (let [db (d/db conn)]
-      (let [mc (map-uuid criteria #{:id :user-id :source-tweet-id})
+      (let [mc (map-uuid criteria #{:id :user-id :source-thought-id})
             params (keys mc)
             params-val (vals mc)]
         (->> (query db
-                    '(?id ?created-at ?user-id ?source-tweet-id)
+                    '(?id ?created-at ?user-id ?source-thought-id)
                     (concat '($ %) (map v params))
-                    '((get-like-rule ?id ?created-at ?user-id ?source-tweet-id))
+                    '((get-like-rule ?id ?created-at ?user-id ?source-thought-id))
                     like-rules
                     params-val)
-             (map (fn [result] (apply ->TweetLike result)))
+             (map (fn [result] (apply ->ThoughtLike result)))
              (map (fn [result] (update result :id str)))
              (map (fn [result] (update result :user-id str)))
-             (map (fn [result] (update result :source-tweet-id str)))))))
+             (map (fn [result] (update result :source-thought-id str)))))))
 
   (remove-like!
     [this criteria]
@@ -353,48 +353,48 @@
          (do-transaction conn)))
 
   (update-reply!
-    [_ source-tweet-id reply hashtags]
-    (do-transaction conn [(make-reply source-tweet-id reply hashtags)])
+    [_ source-thought-id reply hashtags]
+    (do-transaction conn [(make-reply source-thought-id reply hashtags)])
     reply)
 
   (fetch-replies!
     [_ criteria]
     (let [db (d/db conn)]
-      (let [mc (map-uuid criteria #{:id :user-id :source-tweet-id})
+      (let [mc (map-uuid criteria #{:id :user-id :source-thought-id})
             params (keys mc)
             params-val (vals mc)]
         (->> (query db
-                    '(?id ?user-id ?text ?created-at ?likes ?retweets ?replies)
+                    '(?id ?user-id ?text ?created-at ?likes ?rethoughts ?replies)
                     (concat '($ %) (map v params))
-                    '((get-reply-rule ?id ?user-id ?text ?created-at ?likes ?retweets ?replies ?source-tweet-id))
+                    '((get-reply-rule ?id ?user-id ?text ?created-at ?likes ?rethoughts ?replies ?source-thought-id))
                     reply-rules
                     params-val)
-             (map (fn [result] (apply ->Tweet result)))
+             (map (fn [result] (apply ->Thought result)))
              (map (fn [result] (update result :publish-date inst->ZonedDateTime)))
              (map (fn [result] (update result :id str)))
              (map (fn [result] (update result :user-id str)))))))
 
-  (update-retweet!
-    [_ retweet hashtags]
-    (do-transaction conn [(make-retweet retweet hashtags)])
-    retweet)
+  (update-rethought!
+    [_ rethought hashtags]
+    (do-transaction conn [(make-rethought rethought hashtags)])
+    rethought)
 
-  (fetch-retweets!
+  (fetch-rethoughts!
     [_ criteria]
     (let [db (d/db conn)]
-      (let [mc (map-uuid criteria #{:id :user-id :source-tweet-id})
+      (let [mc (map-uuid criteria #{:id :user-id :source-thought-id})
             params (keys mc)
             params-val (vals mc)]
         (->> (query db
-                    '(?id ?user-id ?has-comment ?comment ?created-at ?source-tweet-id)
+                    '(?id ?user-id ?has-comment ?comment ?created-at ?source-thought-id)
                     (concat '($ %) (map v params))
-                    '((get-retweet-rule ?id ?user-id ?has-comment ?comment ?created-at ?source-tweet-id))
-                    retweet-rules
+                    '((get-rethought-rule ?id ?user-id ?has-comment ?comment ?created-at ?source-thought-id))
+                    rethought-rules
                     params-val)
-             (map (fn [result] (apply ->Retweet result)))
+             (map (fn [result] (apply ->Rethought result)))
              (map (fn [result] (update result :id str)))
              (map (fn [result] (update result :user-id str)))
-             (map (fn [result] (update result :source-tweet-id str))))))))
+             (map (fn [result] (update result :source-thought-id str))))))))
 
 (defn make-datomic-repository
   [uri]

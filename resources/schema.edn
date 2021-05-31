@@ -33,59 +33,59 @@
     :db/valueType   :db.type/ref
     :db/cardinality :db.cardinality/many}]]
 
- :tweet
- [[{:db/ident       :tweet/id
+ :thought
+ [[{:db/ident       :thought/id
     :db/valueType   :db.type/uuid
     :db/cardinality :db.cardinality/one
     :db/unique      :db.unique/identity
     :db/index       true}
-   {:db/ident       :tweet/user
+   {:db/ident       :thought/user
     :db/valueType   :db.type/ref
     :db/cardinality :db.cardinality/one}
-   {:db/ident       :tweet/text
+   {:db/ident       :thought/text
     :db/valueType   :db.type/string
     :db/cardinality :db.cardinality/one}
-   {:db/ident       :tweet/created-at
+   {:db/ident       :thought/created-at
     :db/valueType   :db.type/instant
     :db/cardinality :db.cardinality/one}
-   {:db/ident       :tweet/likes
+   {:db/ident       :thought/likes
     :db/valueType   :db.type/long
     :db/cardinality :db.cardinality/one}
-   {:db/ident       :tweet/retweets
+   {:db/ident       :thought/rethoughts
     :db/valueType   :db.type/long
     :db/cardinality :db.cardinality/one}
-   {:db/ident       :tweet/replies
+   {:db/ident       :thought/replies
     :db/valueType   :db.type/long
     :db/cardinality :db.cardinality/one}
-   {:db/ident       :reply/source-tweet
+   {:db/ident       :reply/source-thought
     :db/valueType   :db.type/ref
     :db/cardinality :db.cardinality/one}
-   {:db/ident       :tweet/hashtags
+   {:db/ident       :thought/hashtags
     :db/valueType   :db.type/string
     :db/cardinality :db.cardinality/many}]]
 
- :retweet
- [[{:db/ident       :retweet/id
+ :rethought
+ [[{:db/ident       :rethought/id
     :db/valueType   :db.type/uuid
     :db/cardinality :db.cardinality/one
     :db/unique      :db.unique/identity
     :db/index       true}
-   {:db/ident       :retweet/user
+   {:db/ident       :rethought/user
     :db/valueType   :db.type/ref
     :db/cardinality :db.cardinality/one}
-   {:db/ident       :retweet/has-comment
+   {:db/ident       :rethought/has-comment
     :db/valueType   :db.type/boolean
     :db/cardinality :db.cardinality/one}
-   {:db/ident       :retweet/comment
+   {:db/ident       :rethought/comment
     :db/valueType   :db.type/string
     :db/cardinality :db.cardinality/one}
-   {:db/ident       :retweet/created-at
+   {:db/ident       :rethought/created-at
     :db/valueType   :db.type/instant
     :db/cardinality :db.cardinality/one}
-   {:db/ident       :retweet/source-tweet
+   {:db/ident       :rethought/source-thought
     :db/valueType   :db.type/ref
     :db/cardinality :db.cardinality/one}
-   {:db/ident       :retweet/hashtags
+   {:db/ident       :rethought/hashtags
     :db/valueType   :db.type/string
     :db/cardinality :db.cardinality/many}]]
 
@@ -101,7 +101,7 @@
    {:db/ident       :like/user
     :db/valueType   :db.type/ref
     :db/cardinality :db.cardinality/one}
-   {:db/ident       :like/source-tweet
+   {:db/ident       :like/source-thought
     :db/valueType   :db.type/ref
     :db/cardinality :db.cardinality/one}]]
 

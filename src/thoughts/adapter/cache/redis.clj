@@ -1,8 +1,8 @@
-(ns twitter-clj.adapter.cache.redis
+(ns thoughts.adapter.cache.redis
   (:require [com.stuartsierra.component :as component]
             [taoensso.carmine :as car :refer [wcar]]
             [taoensso.timbre :as log]
-            [twitter-clj.application.port.protocol.cache :as p]))
+            [thoughts.application.port.protocol.cache :as p]))
 
 (defn- key-join
   [& key-parts]

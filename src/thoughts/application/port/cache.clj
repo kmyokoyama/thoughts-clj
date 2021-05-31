@@ -1,5 +1,5 @@
-(ns twitter-clj.application.port.cache
-  (:require [twitter-clj.application.port.protocol.cache :as p]))
+(ns thoughts.application.port.cache
+  (:require [thoughts.application.port.protocol.cache :as p]))
 
 (defn update-session!
   [cache session]

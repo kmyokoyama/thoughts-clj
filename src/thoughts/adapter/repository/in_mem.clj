@@ -1,27 +1,27 @@
-(ns twitter-clj.adapter.repository.in-mem
+(ns thoughts.adapter.repository.in-mem
   (:require [com.stuartsierra.component :as component]
             [taoensso.timbre :as log]
-            [twitter-clj.application.port.repository :as repository]
-            [twitter-clj.application.port.protocol.repository :as p]))
+            [thoughts.application.port.repository :as repository]
+            [thoughts.application.port.protocol.repository :as p]))
 
 (defn- shutdown
   [repository]
   (reset! (:passwords repository) {})
   (reset! (:sessions repository) {})
   (reset! (:users repository) {})
-  (reset! (:tweets repository) {})
-  (reset! (:retweets repository) {})
+  (reset! (:thoughts repository) {})
+  (reset! (:rethoughts repository) {})
   (reset! (:likes repository) {})
-  (reset! (:join-tweet-likes repository) {})
-  (reset! (:join-tweet-replies repository) {})
-  (reset! (:join-tweet-retweets repository) {})
+  (reset! (:join-thought-likes repository) {})
+  (reset! (:join-thought-replies repository) {})
+  (reset! (:join-thought-rethoughts repository) {})
   (reset! (:following repository) {})
   repository)
 
 ;; Driven-side.
 
-(defrecord InMemoryRepository [users tweets likes retweets
-                               join-tweet-likes join-tweet-replies join-tweet-retweets
+(defrecord InMemoryRepository [users thoughts likes rethoughts
+                               join-thought-likes join-thought-replies join-thought-rethoughts
                                passwords sessions following hashtags]
   component/Lifecycle
   (start [this]
@@ -73,25 +73,25 @@
     [_ {follower-id :id} {followed-id :id}]
     (swap! following update follower-id (fn [following-ids] (disj (set following-ids) followed-id))))
 
-  p/TweetRepository
-  (update-tweet!
-    [_ {tweet-id :id :as tweet} tags]
-    (swap! tweets assoc tweet-id tweet)
+  p/ThoughtRepository
+  (update-thought!
+    [_ {thought-id :id :as thought} tags]
+    (swap! thoughts assoc thought-id thought)
     (doseq [tag tags]
-      (swap! hashtags update tag (fn [tweet-ids] (conj (vec tweet-ids) tweet-id))))
-    tweet)
+      (swap! hashtags update tag (fn [thought-ids] (conj (vec thought-ids) thought-id))))
+    thought)
 
-  (fetch-tweets!
+  (fetch-thoughts!
     [_ criteria]
     (if (= :hashtag (key (first criteria)))
       (->> (get @hashtags (val (first criteria)) [])
-           (map (fn [tweet-id] (get @tweets tweet-id))))
-      (filter (fn [e] (= criteria (select-keys e (keys criteria)))) (vals @tweets))))
+           (map (fn [thought-id] (get @thoughts thought-id))))
+      (filter (fn [e] (= criteria (select-keys e (keys criteria)))) (vals @thoughts))))
 
   (update-like!
-    [_ {like-id :id source-tweet-id :source-tweet-id :as like}]
+    [_ {like-id :id source-thought-id :source-thought-id :as like}]
     (swap! likes assoc like-id like)
-    (swap! join-tweet-likes update source-tweet-id (fn [like-ids] (conj (vec like-ids) like-id)))
+    (swap! join-thought-likes update source-thought-id (fn [like-ids] (conj (vec like-ids) like-id)))
     like)
 
   (fetch-likes!
@@ -105,36 +105,36 @@
          (map (fn [like-id] (swap! likes dissoc like-id)))))
 
   (update-reply!
-    [this source-tweet-id {reply-id :id :as reply} tags]
-    (swap! join-tweet-replies update source-tweet-id (fn [reply-ids] (conj (vec reply-ids) reply-id)))
-    (repository/update-tweet! this reply tags)
+    [this source-thought-id {reply-id :id :as reply} tags]
+    (swap! join-thought-replies update source-thought-id (fn [reply-ids] (conj (vec reply-ids) reply-id)))
+    (repository/update-thought! this reply tags)
     reply)
 
   (fetch-replies!
     [_ criteria]
-    (->> (get @join-tweet-replies (:source-tweet-id criteria) [])
-         (map (fn [reply-id] (get @tweets reply-id)))))
+    (->> (get @join-thought-replies (:source-thought-id criteria) [])
+         (map (fn [reply-id] (get @thoughts reply-id)))))
 
-  (update-retweet!
-    [_ {retweet-id :id :as retweet} tags] ;; TODO: Consider hashtags for retweets.
-    (swap! retweets assoc retweet-id retweet)
-    (swap! join-tweet-retweets update (:source-tweet-id retweet) (fn [retweet-ids] (conj (vec retweet-ids) retweet-id)))
-    retweet)
+  (update-rethought!
+    [_ {rethought-id :id :as rethought} tags] ;; TODO: Consider hashtags for rethoughts.
+    (swap! rethoughts assoc rethought-id rethought)
+    (swap! join-thought-rethoughts update (:source-thought-id rethought) (fn [rethought-ids] (conj (vec rethought-ids) rethought-id)))
+    rethought)
 
-  (fetch-retweets!
+  (fetch-rethoughts!
     [_ criteria]
-    (filter (fn [e] (= criteria (select-keys e (keys criteria)))) (vals @retweets))))
+    (filter (fn [e] (= criteria (select-keys e (keys criteria)))) (vals @rethoughts))))
 
 (defn make-in-mem-repository                                ;; Constructor.
   []
   (map->InMemoryRepository {:passwords           (atom {})
                             :sessions            (atom {})
                             :users               (atom {})
-                            :tweets              (atom {})
-                            :retweets            (atom {})
+                            :thoughts              (atom {})
+                            :rethoughts            (atom {})
                             :likes               (atom {})
-                            :join-tweet-likes    (atom {})
-                            :join-tweet-replies  (atom {})
-                            :join-tweet-retweets (atom {})
+                            :join-thought-likes    (atom {})
+                            :join-thought-replies  (atom {})
+                            :join-thought-rethoughts (atom {})
                             :following           (atom {})
                             :hashtags            (atom {})}))

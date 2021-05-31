@@ -1,5 +1,5 @@
-(ns twitter-clj.application.port.repository
-  (:require [twitter-clj.application.port.protocol.repository :as p]))
+(ns thoughts.application.port.repository
+  (:require [thoughts.application.port.protocol.repository :as p]))
 
 (defn update-user!
   [repository user]
@@ -33,13 +33,13 @@
   [repository follower-id followed-id]
   (p/remove-follow! repository follower-id followed-id))
 
-(defn update-tweet!
-  [repository tweet hashtags]
-  (p/update-tweet! repository tweet hashtags))
+(defn update-thought!
+  [repository thought hashtags]
+  (p/update-thought! repository thought hashtags))
 
-(defn fetch-tweets!
+(defn fetch-thoughts!
   [repository criteria]
-  (p/fetch-tweets! repository criteria))
+  (p/fetch-thoughts! repository criteria))
 
 (defn update-like!
   [repository like]
@@ -54,17 +54,17 @@
   (p/remove-like! repository criteria))
 
 (defn update-reply!
-  [repository source-tweet-id reply hashtags]
-  (p/update-reply! repository source-tweet-id reply hashtags))
+  [repository source-thought-id reply hashtags]
+  (p/update-reply! repository source-thought-id reply hashtags))
 
 (defn fetch-replies!
   [repository criteria]
   (p/fetch-replies! repository criteria))
 
-(defn update-retweet!
-  [repository retweet hashtags]
-  (p/update-retweet! repository retweet hashtags))
+(defn update-rethought!
+  [repository rethought hashtags]
+  (p/update-rethought! repository rethought hashtags))
 
-(defn fetch-retweets!
+(defn fetch-rethoughts!
   [repository criteria]
-  (p/fetch-retweets! repository criteria))
+  (p/fetch-rethoughts! repository criteria))

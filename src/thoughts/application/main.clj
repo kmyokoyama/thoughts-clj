@@ -1,14 +1,14 @@
-(ns twitter-clj.application.main
+(ns thoughts.application.main
   (:require [com.stuartsierra.component :as component]
             [ring.middleware.defaults :refer :all]
             [taoensso.timbre :as log]
-            [twitter-clj.adapter.cache.in-mem :refer [make-in-mem-cache]]
-            [twitter-clj.adapter.cache.redis :refer [make-redis-cache]]
-            [twitter-clj.adapter.http.component :refer [make-http-controller]]
-            [twitter-clj.adapter.repository.datomic :refer [make-datomic-repository]]
-            [twitter-clj.adapter.repository.in-mem :refer [make-in-mem-repository]]
-            [twitter-clj.application.config :refer [datomic-uri http-host http-port init-system! redis-uri]]
-            [twitter-clj.application.service :refer [make-service]])
+            [thoughts.adapter.cache.in-mem :refer [make-in-mem-cache]]
+            [thoughts.adapter.cache.redis :refer [make-redis-cache]]
+            [thoughts.adapter.http.component :refer [make-http-controller]]
+            [thoughts.adapter.repository.datomic :refer [make-datomic-repository]]
+            [thoughts.adapter.repository.in-mem :refer [make-in-mem-repository]]
+            [thoughts.application.config :refer [datomic-uri http-host http-port init-system! redis-uri]]
+            [thoughts.application.service :refer [make-service]])
   (:gen-class))
 
 (defn- system-map

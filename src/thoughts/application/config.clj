@@ -1,4 +1,4 @@
-(ns twitter-clj.application.config
+(ns thoughts.application.config
   (:require [environ.core :refer [env]]
             [taoensso.timbre :as log]))
 

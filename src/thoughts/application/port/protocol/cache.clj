@@ -1,4 +1,4 @@
-(ns twitter-clj.application.port.protocol.cache)
+(ns thoughts.application.port.protocol.cache)
 
 (defprotocol Cache
   (update-session! [cache session])

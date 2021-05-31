@@ -1,5 +1,5 @@
-(ns twitter-clj.application.port.service
-  (:require [twitter-clj.application.port.protocol.service :as p]))
+(ns thoughts.application.port.service
+  (:require [thoughts.application.port.protocol.service :as p]))
 
 (defn login
   [service user-id]
@@ -53,53 +53,53 @@
   [service followed-id]
   (p/get-followers service followed-id))
 
-(defn tweet
+(defn thought
   [service user-id text]
-  (p/tweet service user-id text))
+  (p/thought service user-id text))
 
-(defn get-tweet-by-id
-  [service tweet-id]
-  (p/get-tweet-by-id service tweet-id))
+(defn get-thought-by-id
+  [service thought-id]
+  (p/get-thought-by-id service thought-id))
 
-(defn get-tweets-by-user
+(defn get-thoughts-by-user
   [service user-id]
-  (p/get-tweets-by-user service user-id))
+  (p/get-thoughts-by-user service user-id))
 
-(defn get-tweets-with-hashtag
+(defn get-thoughts-with-hashtag
   [service hashtag]
-  (p/get-tweets-with-hashtag service hashtag))
+  (p/get-thoughts-with-hashtag service hashtag))
 
 (defn reply
-  [service user-id text source-tweet-id]
-  (p/reply service user-id text source-tweet-id))
+  [service user-id text source-thought-id]
+  (p/reply service user-id text source-thought-id))
 
-(defn get-replies-by-tweet-id
-  [service source-tweet-id]
-  (p/get-replies-by-tweet-id service source-tweet-id))
+(defn get-replies-by-thought-id
+  [service source-thought-id]
+  (p/get-replies-by-thought-id service source-thought-id))
 
-(defn retweet
-  [service user-id source-tweet-id]
-  (p/retweet service user-id source-tweet-id))
+(defn rethought
+  [service user-id source-thought-id]
+  (p/rethought service user-id source-thought-id))
 
-(defn retweet-with-comment
-  [service user-id comment source-tweet-id]
-  (p/retweet-with-comment service user-id comment source-tweet-id))
+(defn rethought-with-comment
+  [service user-id comment source-thought-id]
+  (p/rethought-with-comment service user-id comment source-thought-id))
 
-(defn get-retweet-by-id
-  [service retweet-id]
-  (p/get-retweet-by-id service retweet-id))
+(defn get-rethought-by-id
+  [service rethought-id]
+  (p/get-rethought-by-id service rethought-id))
 
-(defn get-retweets-by-tweet-id
-  [service source-tweet-id]
-  (p/get-retweets-by-tweet-id service source-tweet-id))
+(defn get-rethoughts-by-thought-id
+  [service source-thought-id]
+  (p/get-rethoughts-by-thought-id service source-thought-id))
 
 (defn like
-  [service user-id tweet-id]
-  (p/like service user-id tweet-id))
+  [service user-id thought-id]
+  (p/like service user-id thought-id))
 
 (defn unlike
-  [service user-id tweet-id]
-  (p/unlike service user-id tweet-id))
+  [service user-id thought-id]
+  (p/unlike service user-id thought-id))
 
 (defn get-feed
   [service user-id limit offset]

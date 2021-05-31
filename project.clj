@@ -42,7 +42,7 @@
                  [ring/ring-json "0.5.0"]
                  [ring-server "0.4.0"]]
   :repl-options {:init-ns dev}
-  :main twitter-clj.application.main
+  :main thoughts.application.main
   :aliases {"test-system-in-mem" ["with-profile" "+in-mem" "test" ":system"]
             "test-system-full"   ["with-profile" "+full" "test" ":system"]}
   :test-selectors {:unit        :unit

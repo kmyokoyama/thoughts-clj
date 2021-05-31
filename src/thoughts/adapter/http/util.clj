@@ -1,8 +1,8 @@
-(ns twitter-clj.adapter.http.util
+(ns thoughts.adapter.http.util
   (:require [buddy.sign.jwt :as jwt]
             [clojure.data.json :as json]
             [taoensso.timbre :as log]
-            [twitter-clj.application.config :refer [http-api-jws-secret http-api-path-prefix http-api-version]]))
+            [thoughts.application.config :refer [http-api-jws-secret http-api-path-prefix http-api-version]]))
 
 ;; Private functions.
 

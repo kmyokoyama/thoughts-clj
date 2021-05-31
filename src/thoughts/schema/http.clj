@@ -1,4 +1,4 @@
-(ns twitter-clj.schema.http
+(ns thoughts.schema.http
   (:require [schema.core :as s]))
 
 (def SignupRequest
@@ -11,10 +11,10 @@
   {:user-id s/Str
    :password s/Str})
 
-(def Tweet {:text s/Str})
+(def Thought {:text s/Str})
 
-(def CreateTweetRequest Tweet)
-(def ReplyRequest Tweet)
+(def CreateThoughtRequest Thought)
+(def ReplyRequest Thought)
 
-(def RetweetWithCommentRequest
+(def RethoughtWithCommentRequest
   {:comment s/Str})

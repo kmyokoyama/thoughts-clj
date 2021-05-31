@@ -1,4 +1,4 @@
-(ns twitter-clj.application.core
+(ns thoughts.application.core
   (:require [buddy.hashers :as hashers]
             [schema.core :as s])
   (:import (java.time ZonedDateTime)
@@ -12,25 +12,25 @@
                    following :- s/Int
                    followers :- s/Int])
 
-(s/defrecord Tweet [id :- s/Uuid
-                    user-id :- s/Uuid
-                    text :- s/Str
-                    publish-date :- ZonedDateTime
-                    likes :- s/Int
-                    retweets :- s/Int
-                    replies :- s/Int])
-
-(s/defrecord Retweet [id :- s/Uuid
+(s/defrecord Thought [id :- s/Uuid
                       user-id :- s/Uuid
-                      has-comment :- s/Bool
-                      comment :- s/Str
+                      text :- s/Str
                       publish-date :- ZonedDateTime
-                      source-tweet-id :- s/Uuid])
+                      likes :- s/Int
+                      rethoughts :- s/Int
+                      replies :- s/Int])
 
-(s/defrecord TweetLike [id :- s/Uuid
-                        created-at :- ZonedDateTime
+(s/defrecord Rethought [id :- s/Uuid
                         user-id :- s/Uuid
-                        source-tweet-id :- s/Uuid])
+                        has-comment :- s/Bool
+                        comment :- s/Str
+                        publish-date :- ZonedDateTime
+                        source-thought-id :- s/Uuid])
+
+(s/defrecord ThoughtLike [id :- s/Uuid
+                          created-at :- ZonedDateTime
+                          user-id :- s/Uuid
+                          source-thought-id :- s/Uuid])
 
 (s/defrecord Session [id :- s/Uuid
                       user-id :- s/Uuid
@@ -123,45 +123,45 @@
   [text]
   (into #{} (->> text (re-seq #"#\w+") (map #(subs % 1)))))
 
-;; Tweet-related functions.
+;; Thought-related functions.
 
-(defn new-tweet
+(defn new-thought
   [user-id text]
-  (let [tweet-id (str (UUID/randomUUID))]
-    (->Tweet tweet-id user-id text (ZonedDateTime/now) 0 0 0)))
+  (let [thought-id (str (UUID/randomUUID))]
+    (->Thought thought-id user-id text (ZonedDateTime/now) 0 0 0)))
 
 (defn new-like
-  [user-id tweet-id]
-  (->TweetLike (str (UUID/randomUUID)) (ZonedDateTime/now) user-id tweet-id))
+  [user-id thought-id]
+  (->ThoughtLike (str (UUID/randomUUID)) (ZonedDateTime/now) user-id thought-id))
 
 (defn like
-  [tweet]
-  (update tweet :likes inc))
+  [thought]
+  (update thought :likes inc))
 
 (defn unlike
-  [tweet]
-  (if (pos? (:likes tweet))
-    (update tweet :likes dec)
-    tweet))
+  [thought]
+  (if (pos? (:likes thought))
+    (update thought :likes dec)
+    thought))
 
-;; Retweet-related functions.
+;; Rethought-related functions.
 
-(defn new-retweet
-  ([user-id source-tweet-id]
-   (->Retweet (str (UUID/randomUUID)) user-id false nil (ZonedDateTime/now) source-tweet-id))
+(defn new-rethought
+  ([user-id source-thought-id]
+   (->Rethought (str (UUID/randomUUID)) user-id false nil (ZonedDateTime/now) source-thought-id))
 
-  ([user-id source-tweet-id comment]
-   (->Retweet (str (UUID/randomUUID)) user-id true comment (ZonedDateTime/now) source-tweet-id)))
+  ([user-id source-thought-id comment]
+   (->Rethought (str (UUID/randomUUID)) user-id true comment (ZonedDateTime/now) source-thought-id)))
 
-(defn retweet
-  [retweeted]
-  (update retweeted :retweets inc))
+(defn rethought
+  [rethoughted]
+  (update rethoughted :rethoughts inc))
 
 ;; Reply-related functions.
 
 (defn reply
-  [tweet]
-  (update tweet :replies inc))
+  [thought]
+  (update thought :replies inc))
 
 ;; User-related functions.
 

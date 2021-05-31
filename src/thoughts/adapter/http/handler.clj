@@ -1,4 +1,4 @@
-(ns twitter-clj.adapter.http.handler
+(ns thoughts.adapter.http.handler
   (:require [buddy.auth :refer [authenticated?]]
             [buddy.auth.backends :as backends]
             [buddy.auth.middleware :refer [wrap-authentication]]
@@ -6,10 +6,10 @@
             [compojure.core :refer :all]
             [schema.core :as s]
             [taoensso.timbre :as log]
-            [twitter-clj.application.config :refer [http-api-jws-secret]]
-            [twitter-clj.application.port.service :as service]
-            [twitter-clj.adapter.http.util :refer :all]
-            [twitter-clj.schema.http :refer :all]
+            [thoughts.application.config :refer [http-api-jws-secret]]
+            [thoughts.application.port.service :as service]
+            [thoughts.adapter.http.util :refer :all]
+            [thoughts.schema.http :refer :all]
             [ring.middleware.defaults :refer [wrap-defaults api-defaults]]
             [ring.middleware.json :refer [wrap-json-body]]
             [ring.middleware.reload :refer [wrap-reload]])
@@ -61,8 +61,8 @@
         limit (or (str->int (get-parameter req :limit)) 50)
         offset (or (str->int (get-parameter req :offset)) 0)]
     (log/info "Get feed of user" (f-id user-id))
-    (let [tweets (service/get-feed service user-id limit offset)]
-      (ok-with-success (map (partial add-links :tweet req) tweets)))))
+    (let [thoughts (service/get-feed service user-id limit offset)]
+      (ok-with-success (map (partial add-links :thought req) thoughts)))))
 
 (defn get-user-by-id
   [req service]
@@ -71,12 +71,12 @@
     (log/info "Get user" (f user))
     (ok-with-success (add-links :user req user))))
 
-(defn get-tweets-by-user-id
+(defn get-thoughts-by-user-id
   [req service]
   (let [user-id (get-parameter req :user-id)
-        tweets (service/get-tweets-by-user service user-id)]
-    (log/info "Get tweets from user" (f-id user-id))
-    (ok-with-success (map (partial add-links :tweet req) tweets))))
+        thoughts (service/get-thoughts-by-user service user-id)]
+    (log/info "Get thoughts from user" (f-id user-id))
+    (ok-with-success (map (partial add-links :thought req) thoughts))))
 
 (defn get-user-following
   [req service]
@@ -92,40 +92,40 @@
     (log/info "Get list of followers of user" (f-id user-id))
     (ok-with-success (map (partial add-links :user req) followers))))
 
-(defn get-tweet-by-id
+(defn get-thought-by-id
   [req service]
-  (let [tweet-id (get-parameter req :tweet-id)
-        tweet (service/get-tweet-by-id service tweet-id)]
-    (log/info "Get tweet" (f tweet))
-    (ok-with-success (add-links :tweet req tweet))))
+  (let [thought-id (get-parameter req :thought-id)
+        thought (service/get-thought-by-id service thought-id)]
+    (log/info "Get thought" (f thought))
+    (ok-with-success (add-links :thought req thought))))
 
-(defn get-tweets-with-hashtag
+(defn get-thoughts-with-hashtag
   [req service]
   (let [hashtag (get-parameter req :hashtag)
-        tweets (service/get-tweets-with-hashtag service hashtag)]
-    (log/info "Get tweets with hashtag" (str "#" hashtag))
-    (ok-with-success (map (partial add-links :tweet req) tweets))))
+        thoughts (service/get-thoughts-with-hashtag service hashtag)]
+    (log/info "Get thoughts with hashtag" (str "#" hashtag))
+    (ok-with-success (map (partial add-links :thought req) thoughts))))
 
-(defn get-replies-by-tweet-id
+(defn get-replies-by-thought-id
   [req service]
-  (let [source-tweet-id (get-parameter req :tweet-id)
-        replies (service/get-replies-by-tweet-id service source-tweet-id)]
-    (log/info "Get replies of tweet" (f-id source-tweet-id))
-    (ok-with-success (map (partial add-links :reply req source-tweet-id) replies))))
+  (let [source-thought-id (get-parameter req :thought-id)
+        replies (service/get-replies-by-thought-id service source-thought-id)]
+    (log/info "Get replies of thought" (f-id source-thought-id))
+    (ok-with-success (map (partial add-links :reply req source-thought-id) replies))))
 
-(defn get-retweets-by-tweet-id
+(defn get-rethoughts-by-thought-id
   [req service]
-  (let [source-tweet-id (get-parameter req :tweet-id)
-        retweets (service/get-retweets-by-tweet-id service source-tweet-id)]
-    (log/info "Get retweets of tweet" (f-id source-tweet-id))
-    (ok-with-success (map (partial add-links :retweet req source-tweet-id) retweets))))
+  (let [source-thought-id (get-parameter req :thought-id)
+        rethoughts (service/get-rethoughts-by-thought-id service source-thought-id)]
+    (log/info "Get rethoughts of thought" (f-id source-thought-id))
+    (ok-with-success (map (partial add-links :rethought req source-thought-id) rethoughts))))
 
-(defn get-retweet-by-id
+(defn get-rethought-by-id
   [req service]
-  (let [retweet-id (get-parameter req :retweet-id)
-        retweet (service/get-retweet-by-id service retweet-id)]
-    (log/info "Get retweet" (f-id retweet-id))
-    (ok-with-success (add-links :retweet req (:source-tweet-id retweet) retweet))))
+  (let [rethought-id (get-parameter req :rethought-id)
+        rethought (service/get-rethought-by-id service rethought-id)]
+    (log/info "Get rethought" (f-id rethought-id))
+    (ok-with-success (add-links :rethought req (:source-thought-id rethought) rethought))))
 
 (defn follow
   [req service]
@@ -145,59 +145,59 @@
          (add-links :user req)
          (ok-with-success))))
 
-(defn tweet
+(defn thought
   [req service]
-  (s/validate CreateTweetRequest (:body req))
+  (s/validate CreateThoughtRequest (:body req))
   (let [user-id (get-user-id req)
         text (get-from-body req :text)
-        tweet (service/tweet service user-id text)]
-    (log/info "Create new tweet" (f tweet) "of user" (f-id user-id))
-    (created (add-links :tweet req tweet))))
+        thought (service/thought service user-id text)]
+    (log/info "Create new thought" (f thought) "of user" (f-id user-id))
+    (created (add-links :thought req thought))))
 
 (defn reply
   [req service]
   (s/validate ReplyRequest (:body req))
   (let [user-id (get-user-id req)
-        source-tweet-id (get-parameter req :tweet-id)
+        source-thought-id (get-parameter req :thought-id)
         text (get-from-body req :text)
-        reply (service/reply service user-id text source-tweet-id)]
-    (log/info "Reply tweet" (f-id source-tweet-id) "of user" (f-id user-id))
-    (created (add-links :reply req source-tweet-id reply))))
+        reply (service/reply service user-id text source-thought-id)]
+    (log/info "Reply thought" (f-id source-thought-id) "of user" (f-id user-id))
+    (created (add-links :reply req source-thought-id reply))))
 
-(defn retweet
+(defn rethought
   [req service]
   (let [user-id (get-user-id req)
-        source-tweet-id (get-parameter req :tweet-id)
-        retweet (service/retweet service user-id source-tweet-id)]
-    (log/info "Retweet tweet" (f-id source-tweet-id) "of user" (f-id user-id))
-    (created (add-links :retweet req source-tweet-id retweet))))
+        source-thought-id (get-parameter req :thought-id)
+        rethought (service/rethought service user-id source-thought-id)]
+    (log/info "Rethought thought" (f-id source-thought-id) "of user" (f-id user-id))
+    (created (add-links :rethought req source-thought-id rethought))))
 
-(defn retweet-with-comment
+(defn rethought-with-comment
   [req service]
-  (s/validate RetweetWithCommentRequest (:body req))
+  (s/validate RethoughtWithCommentRequest (:body req))
   (let [user-id (get-user-id req)
-        source-tweet-id (get-parameter req :tweet-id)
+        source-thought-id (get-parameter req :thought-id)
         comment (get-from-body req :comment)
-        retweet (service/retweet-with-comment service user-id comment source-tweet-id)]
-    (log/info "Retweet tweet with comment" (f-id source-tweet-id) "of user" (f-id user-id))
-    (created (add-links :retweet req source-tweet-id retweet))))
+        rethought (service/rethought-with-comment service user-id comment source-thought-id)]
+    (log/info "Rethought thought with comment" (f-id source-thought-id) "of user" (f-id user-id))
+    (created (add-links :rethought req source-thought-id rethought))))
 
 (defn like
   [req service]
   (let [user-id (get-user-id req)
-        tweet-id (get-parameter req :tweet-id)]
-    (log/info "Like tweet" (f-id tweet-id))
-    (->> (service/like service user-id tweet-id)
-         (add-links :tweet req)
+        thought-id (get-parameter req :thought-id)]
+    (log/info "Like thought" (f-id thought-id))
+    (->> (service/like service user-id thought-id)
+         (add-links :thought req)
          (ok-with-success))))
 
 (defn unlike
   [req service]
   (let [user-id (get-user-id req)
-        tweet-id (get-parameter req :tweet-id)]
-    (log/info "Unlike tweet" (f-id tweet-id))
-    (->> (service/unlike service user-id tweet-id)
-         (add-links :tweet req)
+        thought-id (get-parameter req :thought-id)]
+    (log/info "Unlike thought" (f-id thought-id))
+    (->> (service/unlike service user-id thought-id)
+         (add-links :thought req)
          (ok-with-success))))
 
 ;; Exception-handling functions.
@@ -268,22 +268,22 @@
                            :logout-all               (path-prefix "/logout/all")
                            :feed                     (path-prefix "/feed")
                            :get-user-by-id           (path-prefix "/user/:user-id")
-                           :get-tweets-by-user-id    (path-prefix "/user/:user-id/tweets")
+                           :get-thoughts-by-user-id    (path-prefix "/user/:user-id/thoughts")
                            :get-user-following       (path-prefix "/user/:user-id/following")
-                           :get-replies-by-tweet-id  (path-prefix "/tweet/:tweet-id/replies")
+                           :get-replies-by-thought-id  (path-prefix "/thought/:thought-id/replies")
                            :get-user-followers       (path-prefix "/user/:user-id/followers")
-                           :get-tweet-by-id          (path-prefix "/tweet/:tweet-id")
-                           :get-tweets-with-hashtag  (path-prefix "/tweet/hashtag/:hashtag")
-                           :get-retweets-by-tweet-id (path-prefix "/tweet/:tweet-id/retweets")
-                           :get-retweet-by-id        (path-prefix "/retweet/:retweet-id")
+                           :get-thought-by-id          (path-prefix "/thought/:thought-id")
+                           :get-thoughts-with-hashtag  (path-prefix "/thought/hashtag/:hashtag")
+                           :get-rethoughts-by-thought-id (path-prefix "/thought/:thought-id/rethoughts")
+                           :get-rethought-by-id        (path-prefix "/rethought/:rethought-id")
                            :follow                   (path-prefix "/user/:user-id/follow")
                            :unfollow                 (path-prefix "/user/:user-id/unfollow")
-                           :tweet                    (path-prefix "/tweet")
-                           :reply                    (path-prefix "/tweet/:tweet-id/reply")
-                           :retweet                  (path-prefix "/tweet/:tweet-id/retweet")
-                           :retweet-with-comment     (path-prefix "/tweet/:tweet-id/retweet-comment")
-                           :like                     (path-prefix "/tweet/:tweet-id/like")
-                           :unlike                   (path-prefix "/tweet/:tweet-id/unlike")})
+                           :thought                    (path-prefix "/thought")
+                           :reply                    (path-prefix "/thought/:thought-id/reply")
+                           :rethought                  (path-prefix "/thought/:thought-id/rethought")
+                           :rethought-with-comment     (path-prefix "/thought/:thought-id/rethought-comment")
+                           :like                     (path-prefix "/thought/:thought-id/like")
+                           :unlike                   (path-prefix "/thought/:thought-id/unlike")})
 
 (defn public-routes
   [service]
@@ -298,20 +298,20 @@
     (POST (:logout-all routes-map) req (logout-all req service))
     (GET (:feed routes-map) req (feed req service))
     (GET (:get-user-by-id routes-map) req (get-user-by-id req service))
-    (GET (:get-tweets-by-user-id routes-map) req (get-tweets-by-user-id req service))
+    (GET (:get-thoughts-by-user-id routes-map) req (get-thoughts-by-user-id req service))
     (GET (:get-user-following routes-map) req (get-user-following req service))
     (GET (:get-user-followers routes-map) req (get-user-followers req service))
-    (GET (:get-tweet-by-id routes-map) req (get-tweet-by-id req service))
-    (GET (:get-tweets-with-hashtag routes-map) req (get-tweets-with-hashtag req service))
-    (GET (:get-replies-by-tweet-id routes-map) req (get-replies-by-tweet-id req service))
-    (GET (:get-retweets-by-tweet-id routes-map) req (get-retweets-by-tweet-id req service))
-    (GET (:get-retweet-by-id routes-map) req (get-retweet-by-id req service))
+    (GET (:get-thought-by-id routes-map) req (get-thought-by-id req service))
+    (GET (:get-thoughts-with-hashtag routes-map) req (get-thoughts-with-hashtag req service))
+    (GET (:get-replies-by-thought-id routes-map) req (get-replies-by-thought-id req service))
+    (GET (:get-rethoughts-by-thought-id routes-map) req (get-rethoughts-by-thought-id req service))
+    (GET (:get-rethought-by-id routes-map) req (get-rethought-by-id req service))
     (POST (:follow routes-map) req (follow req service))
     (POST (:unfollow routes-map) req (unfollow req service))
-    (POST (:tweet routes-map) req (tweet req service))
+    (POST (:thought routes-map) req (thought req service))
     (POST (:reply routes-map) req (reply req service))
-    (POST (:retweet routes-map) req (retweet req service))
-    (POST (:retweet-with-comment routes-map) req (retweet-with-comment req service))
+    (POST (:rethought routes-map) req (rethought req service))
+    (POST (:rethought-with-comment routes-map) req (rethought-with-comment req service))
     (POST (:like routes-map) req (like req service))
     (POST (:unlike routes-map) req (unlike req service))))
 
@@ -355,33 +355,33 @@
 (defmulti add-links (fn [selector-key & _args] selector-key))
 
 (defmethod add-links :user
-  [_ req tweet]
-  (let [{:keys [id]} tweet]
-    (make-links-map (get-host req) tweet {:self      [:get-user-by-id {:user-id id}]
-                                          :tweets    [:get-tweets-by-user-id {:user-id id}]
+  [_ req thought]
+  (let [{:keys [id]} thought]
+    (make-links-map (get-host req) thought {:self      [:get-user-by-id {:user-id id}]}
+                                          :thoughts    [:get-thoughts-by-user-id {:user-id id}]
                                           :following [:get-user-following {:user-id id}]
-                                          :followers [:get-user-followers {:user-id id}]})))
+                                          :followers [:get-user-followers {:user-id id}])))
 
-(defmethod add-links :tweet
-  [_ req tweet]
-  (let [{:keys [id user-id]} tweet]
-    (make-links-map (get-host req) tweet {:self     [:get-tweet-by-id {:tweet-id id}]
+(defmethod add-links :thought
+  [_ req thought]
+  (let [{:keys [id user-id]} thought]
+    (make-links-map (get-host req) thought {:self     [:get-thought-by-id {:thought-id id}]}
                                           :user     [:get-user-by-id {:user-id user-id}]
-                                          :replies  [:get-replies-by-tweet-id {:tweet-id id}]
-                                          :retweets [:get-retweets-by-tweet-id {:tweet-id id}]})))
+                                          :replies  [:get-replies-by-thought-id {:thought-id id}]
+                                          :rethoughts [:get-rethoughts-by-thought-id {:thought-id id}])))
 
 (defmethod add-links :reply
-  [_ req source-tweet-id tweet]
-  (let [{:keys [id user-id]} tweet]
-    (make-links-map (get-host req) tweet {:self         [:get-tweet-by-id {:tweet-id id}]
+  [_ req source-thought-id thought]
+  (let [{:keys [id user-id]} thought]
+    (make-links-map (get-host req) thought {:self         [:get-thought-by-id {:thought-id id}]}
                                           :user         [:get-user-by-id {:user-id user-id}]
-                                          :replies      [:get-replies-by-tweet-id {:tweet-id id}]
-                                          :retweets     [:get-retweets-by-tweet-id {:tweet-id id}]
-                                          :source-tweet [:get-tweet-by-id {:tweet-id source-tweet-id}]})))
+                                          :replies      [:get-replies-by-thought-id {:thought-id id}]
+                                          :rethoughts     [:get-rethoughts-by-thought-id {:thought-id id}]
+                                          :source-thought [:get-thought-by-id {:thought-id source-thought-id}])))
 
-(defmethod add-links :retweet
-  [_ req source-tweet-id retweet]
-  (let [{:keys [id user-id]} retweet]
-    (make-links-map (get-host req) retweet {:self         [:get-retweet-by-id {:retweet-id id}]
+(defmethod add-links :rethought
+  [_ req source-thought-id rethought]
+  (let [{:keys [id user-id]} rethought]
+    (make-links-map (get-host req) rethought {:self         [:get-rethought-by-id {:rethought-id id}]}
                                             :user         [:get-user-by-id {:user-id user-id}]
-                                            :source-tweet [:get-tweet-by-id {:tweet-id source-tweet-id}]})))
+                                            :source-thought [:get-thought-by-id {:thought-id source-thought-id}])))

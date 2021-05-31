@@ -1,8 +1,8 @@
-(ns twitter-clj.adapter.http.component
+(ns thoughts.adapter.http.component
   (:require [com.stuartsierra.component :as component]
             [org.httpkit.server :as server]
             [taoensso.timbre :as log]
-            [twitter-clj.adapter.http.handler :refer [handler]]))
+            [thoughts.adapter.http.handler :refer [handler]]))
 
 (defrecord HttpServer [host port http-server service]
   component/Lifecycle

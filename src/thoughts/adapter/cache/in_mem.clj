@@ -1,7 +1,7 @@
-(ns twitter-clj.adapter.cache.in-mem
+(ns thoughts.adapter.cache.in-mem
   (:require [com.stuartsierra.component :as component]
             [taoensso.timbre :as log]
-            [twitter-clj.application.port.protocol.cache :as p])
+            [thoughts.application.port.protocol.cache :as p])
   (:import [java.time ZonedDateTime]))
 
 (defn- shutdown

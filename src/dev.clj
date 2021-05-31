@@ -1,11 +1,11 @@
 (ns dev
   (:require [datomic.api :as d]
             [com.stuartsierra.component :as component]
-            [twitter-clj.application.config :refer [datomic-uri]]
-            [twitter-clj.adapter.repository.datomic :refer [delete-database
-                                                            make-datomic-repository
-                                                            load-schema]]
-            [twitter-clj.application.service :refer [make-service]]))
+            [thoughts.application.config :refer [datomic-uri]]
+            [thoughts.adapter.repository.datomic :refer [delete-database
+                                                         make-datomic-repository
+                                                         load-schema]]
+            [thoughts.application.service :refer [make-service]]))
 
 ;; To remember:
 
@@ -13,9 +13,9 @@
 ;(def conn (get-conn sys))
 ;(def db (get-db sys))
 ;(def repository (get-in sys [:repository]))
-;(require '[twitter-clj.application.core :as core])
-;(require '[twitter-clj.application.port.repository :refer :all])
-;(require '[twitter-clj.adapter.repository.datomic :as datomic])
+;(require '[thoughts.application.core :as core])
+;(require '[thoughts.application.port.repository :refer :all])
+;(require '[thoughts.adapter.repository.datomic :as datomic])
 ;(require '[taoensso.carmine :as car :refer [wcar])
 ;(def first-user (core/new-user "First User" "first.user@gmail.com" "first.user"))
 ;(def second-user (core/new-user "second User" "second.user@gmail.com" "second.user"))

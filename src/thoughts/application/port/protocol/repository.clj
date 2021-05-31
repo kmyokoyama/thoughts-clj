@@ -1,4 +1,4 @@
-(ns twitter-clj.application.port.protocol.repository)
+(ns thoughts.application.port.protocol.repository)
 
 (defprotocol UserRepository
   (update-user! [this user])
@@ -12,16 +12,16 @@
   (fetch-followers! [this followed-id])
   (remove-follow! [this follower-id followed-id]))
 
-(defprotocol TweetRepository
-  (update-tweet! [this tweet hashtags])
-  (fetch-tweets! [this criteria])
+(defprotocol ThoughtRepository
+  (update-thought! [this thought hashtags])
+  (fetch-thoughts! [this criteria])
 
   (update-like! [this like])
   (fetch-likes! [this criteria])
   (remove-like! [this criteria])
 
-  (update-reply! [this source-tweet-id reply hashtags])
+  (update-reply! [this source-thought-id reply hashtags])
   (fetch-replies! [this criteria])
 
-  (update-retweet! [this retweet hashtags])
-  (fetch-retweets! [this criteria]))
+  (update-rethought! [this rethought hashtags])
+  (fetch-rethoughts! [this criteria]))
