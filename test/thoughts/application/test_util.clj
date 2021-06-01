@@ -1,4 +1,4 @@
-(ns twitter-clj.application.test-util
+(ns thoughts.application.test-util
   (:require [clojure.test :refer :all]
             [clojure.data.generators :as random]
             [faker.name :as name]
@@ -47,9 +47,9 @@
   []
   {:name (random-fullname) :email (random-email) :username (random-username) :password (random-password)})
 
-(defn random-tweet
+(defn random-thought
   ([]
-   (random-tweet (random-uuid)))
+   (random-thought (random-uuid)))
 
   ([text]
    {:text text}))

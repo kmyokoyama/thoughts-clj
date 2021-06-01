@@ -1,10 +1,10 @@
-(ns twitter-clj.application.service-test
+(ns thoughts.application.service-test
   (:require [clojure.test :refer :all]
-            [twitter-clj.application.port.repository :as repository]
-            [twitter-clj.application.test-util :refer :all]
-            [twitter-clj.application.port.service :refer :all]
-            [twitter-clj.application.service :refer :all]
-            [twitter-clj.application.core :as core]
+            [thoughts.application.port.repository :as repository]
+            [thoughts.application.test-util :refer :all]
+            [thoughts.application.port.service :refer :all]
+            [thoughts.application.service :refer :all]
+            [thoughts.application.core :as core]
             [clojure.string :as s])
   (:import (clojure.lang ExceptionInfo)))
 

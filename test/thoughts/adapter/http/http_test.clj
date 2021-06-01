@@ -1,18 +1,18 @@
-(ns twitter-clj.adapter.http.http-test
+(ns thoughts.adapter.http.http-test
   (:require [clojure.test :refer :all]
             [com.stuartsierra.component :as component]
-            [twitter-clj.application.test-util :refer :all]
-            [twitter-clj.adapter.cache.in-mem :refer [make-in-mem-cache]]
-            [twitter-clj.adapter.cache.redis :refer [make-redis-cache]]
-            [twitter-clj.adapter.repository.in-mem :refer [make-in-mem-repository]]
-            [twitter-clj.adapter.repository.datomic :refer [delete-database
-                                                            make-datomic-repository
-                                                            load-schema]]
-            [twitter-clj.application.config :refer [datomic-uri redis-uri http-host http-port system-test-mode]]
-            [twitter-clj.adapter.cache.in-mem :refer [make-in-mem-cache]]
-            [twitter-clj.application.service :refer [make-service]]
-            [twitter-clj.adapter.http.component :refer [make-http-controller]]
-            [twitter-clj.adapter.http.test-util :refer :all]))
+            [thoughts.application.test-util :refer :all]
+            [thoughts.adapter.cache.in-mem :refer [make-in-mem-cache]]
+            [thoughts.adapter.cache.redis :refer [make-redis-cache]]
+            [thoughts.adapter.repository.in-mem :refer [make-in-mem-repository]]
+            [thoughts.adapter.repository.datomic :refer [delete-database
+                                                         make-datomic-repository
+                                                         load-schema]]
+            [thoughts.application.config :refer [datomic-uri redis-uri http-host http-port system-test-mode]]
+            [thoughts.adapter.cache.in-mem :refer [make-in-mem-cache]]
+            [thoughts.application.service :refer [make-service]]
+            [thoughts.adapter.http.component :refer [make-http-controller]]
+            [thoughts.adapter.http.test-util :refer :all]))
 
 (def ^:private ^:const url (str "http://" http-host ":" http-port))
 
@@ -168,32 +168,32 @@
       (is (= "failure" (:status body)))
       (is (= 401 (:status response))))))                    ;; HTTP 401 Unauthorized.
 
-(deftest ^:system test-tweet
-  (testing "Add a single tweet"
+(deftest ^:system test-thought
+  (testing "Add a single thought"
     (let [{:keys [user-id token]} (signup-and-login)
           text (random-text)
-          {:keys [response body result]} (post-and-parse (resource "tweet") token (random-tweet text))]
+          {:keys [response body result]} (post-and-parse (resource "thought") token (random-thought text))]
       (is (= "success" (:status body)))
       (is (= 201 (:status response)))                       ;; HTTP 201 Created.
       (is (= user-id (:user-id result)))
       (is (= text (:text result)))
-      (is (= 0 (:likes result) (:retweets result) (:replies result))))))
+      (is (= 0 (:likes result) (:rethoughts result) (:replies result))))))
 
-(deftest ^:system test-get-tweets-from-user
-  (testing "Get two tweets from the same user"
+(deftest ^:system test-get-thoughts-from-user
+  (testing "Get two thoughts from the same user"
     (let [{:keys [user-id token]} (signup-and-login)
-          first-tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)
-          second-tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)
-          {:keys [response body result]} (get-and-parse (resource (str "user/" user-id "/tweets")) token)]
+          first-thought-id (-> (post-and-parse (resource "thought") token (random-thought)) :result :id)
+          second-thought-id (-> (post-and-parse (resource "thought") token (random-thought)) :result :id)
+          {:keys [response body result]} (get-and-parse (resource (str "user/" user-id "/thoughts")) token)]
       (is (= "success" (:status body)))
       (is (= 200 (:status response)))                       ;; HTTP 200 OK.
       (is (= 2 (:total body) (count result)))
-      (is (= #{first-tweet-id second-tweet-id} (into #{} (map :id result))))))
+      (is (= #{first-thought-id second-thought-id} (into #{} (map :id result))))))
 
-  (testing "Returns no tweet if user has not tweet yet"
+  (testing "Returns no thought if user has not thought yet"
     (let [{:keys [user-id token]} (signup-and-login)]
-      ;; No tweet.
-      (let [{:keys [response body result]} (get-and-parse (resource (str "user/" user-id "/tweets")) token)]
+      ;; No thought.
+      (let [{:keys [response body result]} (get-and-parse (resource (str "user/" user-id "/thoughts")) token)]
         (is (= "success" (:status body)))
         (is (= 200 (:status response)))                     ;; HTTP 200 OK.
         (is (= 0 (:total body) (count result)))
@@ -220,186 +220,186 @@
       (is (= "user" (:subject result)))
       (is (= (str user-id) (get-in result [:context :user-id]))))))
 
-(deftest ^:system test-get-tweet-by-id
-  (testing "Get an existing tweet returns successfully"
+(deftest ^:system test-get-thought-by-id
+  (testing "Get an existing thought returns successfully"
     (let [{:keys [user-id token]} (signup-and-login)
-          expected-tweet (random-tweet)
-          tweet-id (-> (post-and-parse (resource "tweet") token expected-tweet) :result :id)
-          {:keys [response result]} (get-and-parse (resource (str "tweet/" tweet-id)) token)
-          zeroed-attributes [:likes :retweets :replies]]
+          expected-thought (random-thought)
+          thought-id (-> (post-and-parse (resource "thought") token expected-thought) :result :id)
+          {:keys [response result]} (get-and-parse (resource (str "thought/" thought-id)) token)
+          zeroed-attributes [:likes :rethoughts :replies]]
       (is (= 200 (:status response)))                       ;; HTTP 200 OK.
       (is (= user-id (:user-id result)))
-      (is (= (:text expected-tweet) (:text result)))
-      (is (every? zero? (vals (select-keys expected-tweet zeroed-attributes))))))
+      (is (= (:text expected-thought) (:text result)))
+      (is (every? zero? (vals (select-keys expected-thought zeroed-attributes))))))
 
-  (testing "Get a missing tweet returns failure"
+  (testing "Get a missing thought returns failure"
     (let [{:keys [token]} (signup-and-login)
-          tweet-id (random-uuid)
-          {:keys [response body result]} (get-and-parse (resource (str "tweet/" tweet-id)) token)]
+          thought-id (random-uuid)
+          {:keys [response body result]} (get-and-parse (resource (str "thought/" thought-id)) token)]
       (is (= 400 (:status response)))                       ;; HTTP 400 Bad Request.
       (is (= "failure" (:status body)))
       (is (= "resource not found" (:type result)))
-      (is (= "tweet" (:subject result)))
-      (is (= (str tweet-id) (get-in result [:context :tweet-id]))))))
+      (is (= "thought" (:subject result)))
+      (is (= (str thought-id) (get-in result [:context :thought-id]))))))
 
 (deftest ^:system test-like
-  (testing "Like an existing tweet"
+  (testing "Like an existing thought"
     (let [{:keys [token]} (signup-and-login)
-          tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)
-          {:keys [response body result]} (post-and-parse (resource (str "tweet/" tweet-id "/like"))
+          thought-id (-> (post-and-parse (resource "thought") token (random-thought)) :result :id)
+          {:keys [response body result]} (post-and-parse (resource (str "thought/" thought-id "/like"))
                                                          token
                                                          {})]
       (is (= 200 (:status response)))                       ;; HTTP 200 OK.
       (is (= "success" (:status body)))
-      (is (= tweet-id (:id result)))
+      (is (= thought-id (:id result)))
       (is (= 1 (:likes result)))))
 
-  (testing "Like the same tweet twice does not have any effect"
+  (testing "Like the same thought twice does not have any effect"
     (let [{:keys [user-id token]} (signup-and-login)
-          tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)]
-      (post (resource (str "tweet/" tweet-id "/like")) token {})
-      (let [{:keys [response body result]} (post-and-parse (resource (str "tweet/" tweet-id "/like"))
+          thought-id (-> (post-and-parse (resource "thought") token (random-thought)) :result :id)]
+      (post (resource (str "thought/" thought-id "/like")) token {})
+      (let [{:keys [response body result]} (post-and-parse (resource (str "thought/" thought-id "/like"))
                                                            token
                                                            {})]
         (is (= 400 (:status response)))                     ;; HTTP 400 Bad Request.
         (is (= "failure" (:status body)))
         (is (= "invalid action" (:type result)))
         (is (= "like" (:subject result)))
-        (is (= (str tweet-id) (get-in result [:context :tweet-id])))
+        (is (= (str thought-id) (get-in result [:context :thought-id])))
         (is (= (str user-id) (get-in result [:context :user-id]))))))
 
-  (testing "Like a missing tweet returns failure"
+  (testing "Like a missing thought returns failure"
     (let [{:keys [user-id token]} (signup-and-login)
-          tweet-id (random-uuid)
-          {:keys [response body result]} (post-and-parse (resource (str "tweet/" tweet-id "/like"))
+          thought-id (random-uuid)
+          {:keys [response body result]} (post-and-parse (resource (str "thought/" thought-id "/like"))
                                                          token
                                                          {})]
       (is (= 400 (:status response)))                       ;; HTTP 400 Bad Request.
       (is (= "failure" (:status body)))
       (is (= "resource not found" (:type result)))
-      (is (= "tweet" (:subject result)))
-      (is (= (str tweet-id) (get-in result [:context :tweet-id]))))))
+      (is (= "thought" (:subject result)))
+      (is (= (str thought-id) (get-in result [:context :thought-id]))))))
 
 (deftest ^:system test-unlike
-  (testing "Unlike an existing tweet previously liked"
+  (testing "Unlike an existing thought previously liked"
     (let [{:keys [user-id token]} (signup-and-login)
-          tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)]
-      (post (resource (str "tweet/" tweet-id "/like")) token {})
-      (let [{:keys [response body result]} (post-and-parse (resource (str "tweet/" tweet-id "/unlike"))
+          thought-id (-> (post-and-parse (resource "thought") token (random-thought)) :result :id)]
+      (post (resource (str "thought/" thought-id "/like")) token {})
+      (let [{:keys [response body result]} (post-and-parse (resource (str "thought/" thought-id "/unlike"))
                                                            token
                                                            {})]
         (is (= 200 (:status response)))                     ;; HTTP 200 OK.
         (is (= "success" (:status body)))
-        (is (= tweet-id (:id result)))
+        (is (= thought-id (:id result)))
         (is (= 0 (:likes result))))))
 
-  (testing "Unlike an existing tweet not previously liked"
+  (testing "Unlike an existing thought not previously liked"
     (let [{:keys [user-id token]} (signup-and-login)
-          tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)
-          {:keys [response body result]} (post-and-parse (resource (str "tweet/" tweet-id "/unlike"))
+          thought-id (-> (post-and-parse (resource "thought") token (random-thought)) :result :id)
+          {:keys [response body result]} (post-and-parse (resource (str "thought/" thought-id "/unlike"))
                                                          token
                                                          {})]
       (is (= 400 (:status response)))                       ;; HTTP 400 Bad Request.
       (is (= "failure" (:status body)))
       (is (= "invalid action" (:type result)))
       (is (= "unlike" (:subject result)))
-      (is (= (str tweet-id) (get-in result [:context :tweet-id])))
+      (is (= (str thought-id) (get-in result [:context :thought-id])))
       (is (= (str user-id) (get-in result [:context :user-id])))))
 
-  (testing "Unlike an existing tweet with another user does not have any effect"
+  (testing "Unlike an existing thought with another user does not have any effect"
     (let [{:keys [token]} (signup-and-login)
           {other-user-id :user-id other-token :token} (signup-and-login)
-          tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)]
-      (post (resource (str "tweet/" tweet-id "/like")) token {})
-      (let [{:keys [response body result]} (post-and-parse (resource (str "tweet/" tweet-id "/unlike"))
+          thought-id (-> (post-and-parse (resource "thought") token (random-thought)) :result :id)]
+      (post (resource (str "thought/" thought-id "/like")) token {})
+      (let [{:keys [response body result]} (post-and-parse (resource (str "thought/" thought-id "/unlike"))
                                                            other-token
                                                            {})]
         (is (= 400 (:status response)))                     ;; HTTP 400 Bad Request.
         (is (= "failure" (:status body)))
         (is (= "invalid action" (:type result)))
         (is (= "unlike" (:subject result)))
-        (is (= (str tweet-id) (get-in result [:context :tweet-id])))
+        (is (= (str thought-id) (get-in result [:context :thought-id])))
         (is (= (str other-user-id) (get-in result [:context :user-id]))))))
 
-  (testing "Unlike a missing tweet returns failure"
+  (testing "Unlike a missing thought returns failure"
     (let [{:keys [token]} (signup-and-login)
-          tweet-id (random-uuid)
-          {:keys [response body result]} (post-and-parse (resource (str "tweet/" tweet-id "/unlike"))
+          thought-id (random-uuid)
+          {:keys [response body result]} (post-and-parse (resource (str "thought/" thought-id "/unlike"))
                                                          token
                                                          {})]
       (is (= 400 (:status response)))                       ;; HTTP 400 Bad Request.
       (is (= "failure" (:status body)))
       (is (= "resource not found" (:type result)))
-      (is (= "tweet" (:subject result)))
-      (is (= (str tweet-id) (get-in result [:context :tweet-id]))))))
+      (is (= "thought" (:subject result)))
+      (is (= (str thought-id) (get-in result [:context :thought-id]))))))
 
 (deftest ^:system test-add-reply
-  (testing "Add new reply to existing tweet returns success"
+  (testing "Add new reply to existing thought returns success"
     (let [{:keys [user-id token]} (signup-and-login)
-          tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)
+          thought-id (-> (post-and-parse (resource "thought") token (random-thought)) :result :id)
           reply-text (random-text)
-          {:keys [response body result]} (post-and-parse (resource (str "tweet/" tweet-id "/reply")) token {:text reply-text})]
+          {:keys [response body result]} (post-and-parse (resource (str "thought/" thought-id "/reply")) token {:text reply-text})]
       (is (= "success" (:status body)))
       (is (= 201 (:status response)))                       ;; HTTP 201 Created.
       (is (= user-id (:user-id result)))
       (is (= reply-text (:text result)))
-      (is (= 0 (:likes result) (:retweets result) (:replies result)))))
+      (is (= 0 (:likes result) (:rethoughts result) (:replies result)))))
 
-  (testing "Add new reply to missing tweet fails"
+  (testing "Add new reply to missing thought fails"
     (let [{:keys [token]} (signup-and-login)
-          tweet-id (random-uuid)
+          thought-id (random-uuid)
           reply-text (random-text)
-          {:keys [response body result]} (post-and-parse (resource (str "tweet/" tweet-id "/reply")) token {:text reply-text})]
+          {:keys [response body result]} (post-and-parse (resource (str "thought/" thought-id "/reply")) token {:text reply-text})]
       (is (= 400 (:status response)))                       ;; HTTP 400 Bad Request.
       (is (= "failure" (:status body)))
       (is (= "resource not found" (:type result)))
-      (is (= "tweet" (:subject result)))
-      (is (= (str tweet-id) (get-in result [:context :tweet-id]))))))
+      (is (= "thought" (:subject result)))
+      (is (= (str thought-id) (get-in result [:context :thought-id]))))))
 
-(deftest ^:system test-get-retweet-by-id
-  (testing "Get retweets from tweet not retweeted yet returns an empty list"
+(deftest ^:system test-get-rethought-by-id
+  (testing "Get rethoughts from thought not rethoughted yet returns an empty list"
     (let [{:keys [token]} (signup-and-login)
-          tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)
-          retweet-id (-> (post-and-parse (resource (str "tweet/" tweet-id "/retweet")) token {}) :result :id)
-          {:keys [response body result]} (get-and-parse (resource (str "retweet/" retweet-id)) token)]
+          thought-id (-> (post-and-parse (resource "thought") token (random-thought)) :result :id)
+          rethought-id (-> (post-and-parse (resource (str "thought/" thought-id "/rethought")) token {}) :result :id)
+          {:keys [response body result]} (get-and-parse (resource (str "rethought/" rethought-id)) token)]
       (is (= 200 (:status response)))                       ;; HTTP 200 OK.
       (is (= "success" (:status body)))
-      (is (= retweet-id (:id result)))
-      (is (= tweet-id (:source-tweet-id result))))))
+      (is (= rethought-id (:id result)))
+      (is (= thought-id (:source-thought-id result))))))
 
-(deftest ^:system test-get-retweets
-  (testing "Get retweets from a tweet already retweeted returns all replies"
+(deftest ^:system test-get-rethoughts
+  (testing "Get rethoughts from a thought already rethoughted returns all replies"
     (let [{:keys [user-id token]} (signup-and-login)
-          tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet user-id)) :result :id)]
-      (dotimes [_ 5] (post (resource (str "tweet/" tweet-id "/retweet")) token {}))
-      (dotimes [_ 5] (post (resource (str "tweet/" tweet-id "/retweet-comment")) token {:comment (random-text)}))
-      (let [{:keys [response body result]} (get-and-parse (resource (str "tweet/" tweet-id "/retweets")) token)]
+          thought-id (-> (post-and-parse (resource "thought") token (random-thought user-id)) :result :id)]
+      (dotimes [_ 5] (post (resource (str "thought/" thought-id "/rethought")) token {}))
+      (dotimes [_ 5] (post (resource (str "thought/" thought-id "/rethought-comment")) token {:comment (random-text)}))
+      (let [{:keys [response body result]} (get-and-parse (resource (str "thought/" thought-id "/rethoughts")) token)]
         (is (= 200 (:status response)))                     ;; HTTP 200 OK.
         (is (= "success" (:status body)))
         (is (= 10 (:total body) (count result))))))
 
-  (testing "Get retweets from tweet not retweeted yet returns an empty list"
+  (testing "Get rethoughts from thought not rethoughted yet returns an empty list"
     (let [{:keys [token]} (signup-and-login)
-          tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)
-          {:keys [response body result]} (get-and-parse (resource (str "tweet/" tweet-id "/retweets")) token)]
+          thought-id (-> (post-and-parse (resource "thought") token (random-thought)) :result :id)
+          {:keys [response body result]} (get-and-parse (resource (str "thought/" thought-id "/rethoughts")) token)]
       (is (= 200 (:status response)))                       ;; HTTP 200 OK.
       (is (= "success" (:status body)))
       (is (empty? result)))))
 
 (deftest ^:system test-get-replies
-  (testing "Get retweets from a tweet already retweeted returns all replies"
+  (testing "Get rethoughts from a thought already rethoughted returns all replies"
     (let [{:keys [token]} (signup-and-login)
-          tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)]
-      (dotimes [_ 5] (post (resource (str "tweet/" tweet-id "/reply")) token {:text (random-text)}))
-      (let [{:keys [response body result]} (get-and-parse (resource (str "tweet/" tweet-id "/replies")) token)]
+          thought-id (-> (post-and-parse (resource "thought") token (random-thought)) :result :id)]
+      (dotimes [_ 5] (post (resource (str "thought/" thought-id "/reply")) token {:text (random-text)}))
+      (let [{:keys [response body result]} (get-and-parse (resource (str "thought/" thought-id "/replies")) token)]
         (is (= 200 (:status response)))                     ;; HTTP 200 OK.
         (is (= "success" (:status body)))
         (is (= 5 (:total body) (count result))))))
 
-  (testing "Get replies from tweet not replied yet returns an empty list"
+  (testing "Get replies from thought not replied yet returns an empty list"
     (let [{:keys [token]} (signup-and-login)
-          tweet-id (-> (post-and-parse (resource "tweet") token (random-tweet)) :result :id)
-          {:keys [response body result]} (get-and-parse (resource (str "tweet/" tweet-id "/replies")) token)]
+          thought-id (-> (post-and-parse (resource "thought") token (random-thought)) :result :id)
+          {:keys [response body result]} (get-and-parse (resource (str "thought/" thought-id "/replies")) token)]
       (is (= 200 (:status response)))                       ;; HTTP 200 OK.
       (is (= "success" (:status body)))
       (is (empty? result)))))
@@ -520,15 +520,15 @@
       (is (empty? result)))))
 
 (deftest ^:system test-get-feed
-  (testing "Get feed of an user returns most recent tweets"
+  (testing "Get feed of an user returns most recent thoughts"
     (let [{first-user-id :user-id first-user-password :password} (signup (random-user))
           {second-user-id :user-id second-user-password :password} (signup (random-user))
           {third-user-id :user-id third-user-password :password} (signup (random-user))
           second-user-token (-> (login {:user-id second-user-id :password second-user-password}) :token)]
-      (dotimes [_ 5] (post (resource "tweet") second-user-token (random-tweet)))
+      (dotimes [_ 5] (post (resource "thought") second-user-token (random-thought)))
 
       (let [third-user-token (-> (login {:user-id third-user-id :password third-user-password}) :token)]
-        (dotimes [_ 5] (post (resource "tweet") third-user-token (random-tweet)))
+        (dotimes [_ 5] (post (resource "thought") third-user-token (random-thought)))
 
         (let [first-user-token (-> (login {:user-id first-user-id :password first-user-password}) :token)]
           (post (resource (str "user/" second-user-id "/follow")) first-user-token {})

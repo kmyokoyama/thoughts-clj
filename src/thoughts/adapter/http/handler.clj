@@ -357,31 +357,31 @@
 (defmethod add-links :user
   [_ req thought]
   (let [{:keys [id]} thought]
-    (make-links-map (get-host req) thought {:self      [:get-user-by-id {:user-id id}]}
-                                          :thoughts    [:get-thoughts-by-user-id {:user-id id}]
-                                          :following [:get-user-following {:user-id id}]
-                                          :followers [:get-user-followers {:user-id id}])))
+    (make-links-map (get-host req) thought {:self      [:get-user-by-id {:user-id id}]
+                                            :thoughts  [:get-thoughts-by-user-id {:user-id id}]
+                                            :following [:get-user-following {:user-id id}]
+                                            :followers [:get-user-followers {:user-id id}]}))
 
-(defmethod add-links :thought
-  [_ req thought]
-  (let [{:keys [id user-id]} thought]
-    (make-links-map (get-host req) thought {:self     [:get-thought-by-id {:thought-id id}]}
-                                          :user     [:get-user-by-id {:user-id user-id}]
-                                          :replies  [:get-replies-by-thought-id {:thought-id id}]
-                                          :rethoughts [:get-rethoughts-by-thought-id {:thought-id id}])))
+  (defmethod add-links :thought
+    [_ req thought]
+    (let [{:keys [id user-id]} thought]
+      (make-links-map (get-host req) thought {:self       [:get-thought-by-id {:thought-id id}]
+                                              :user       [:get-user-by-id {:user-id user-id}]
+                                              :replies    [:get-replies-by-thought-id {:thought-id id}]
+                                              :rethoughts [:get-rethoughts-by-thought-id {:thought-id id}]}))))
 
 (defmethod add-links :reply
   [_ req source-thought-id thought]
   (let [{:keys [id user-id]} thought]
-    (make-links-map (get-host req) thought {:self         [:get-thought-by-id {:thought-id id}]}
-                                          :user         [:get-user-by-id {:user-id user-id}]
-                                          :replies      [:get-replies-by-thought-id {:thought-id id}]
-                                          :rethoughts     [:get-rethoughts-by-thought-id {:thought-id id}]
-                                          :source-thought [:get-thought-by-id {:thought-id source-thought-id}])))
+    (make-links-map (get-host req) thought {:self           [:get-thought-by-id {:thought-id id}]
+                                            :user           [:get-user-by-id {:user-id user-id}]
+                                            :replies        [:get-replies-by-thought-id {:thought-id id}]
+                                            :rethoughts     [:get-rethoughts-by-thought-id {:thought-id id}]
+                                            :source-thought [:get-thought-by-id {:thought-id source-thought-id}]})))
 
 (defmethod add-links :rethought
   [_ req source-thought-id rethought]
   (let [{:keys [id user-id]} rethought]
-    (make-links-map (get-host req) rethought {:self         [:get-rethought-by-id {:rethought-id id}]}
-                                            :user         [:get-user-by-id {:user-id user-id}]
-                                            :source-thought [:get-thought-by-id {:thought-id source-thought-id}])))
+    (make-links-map (get-host req) rethought {:self           [:get-rethought-by-id {:rethought-id id}]
+                                              :user           [:get-user-by-id {:user-id user-id}]
+                                              :source-thought [:get-thought-by-id {:thought-id source-thought-id}]})))
