@@ -17,6 +17,6 @@
       (stop-fn)
       this)))
 
-(defn make-http-controller ;; Constructor.
+(defn make-http-controller                                  ;; Constructor.
   [host port]
   (map->HttpServer {:host host :port port}))

@@ -60,4 +60,4 @@
 (defn make-in-mem-cache
   []
   (map->InMemoryCache {:sessions (atom {})
-                       :feeds (atom {})}))
+                       :feeds    (atom {})}))

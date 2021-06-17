@@ -2,13 +2,13 @@
   (:require [schema.core :as s]))
 
 (def SignupRequest
-  {:name s/Str
-   :email s/Str
+  {:name     s/Str
+   :email    s/Str
    :username s/Str
    :password s/Str})
 
 (def LoginRequest
-  {:user-id s/Str
+  {:user-id  s/Str
    :password s/Str})
 
 (def Thought {:text s/Str})

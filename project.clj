@@ -14,13 +14,13 @@
                                      [lein-midje "3.2.1"]
                                      [lein-environ "1.2.0"]]
                       :jvm-opts     ["-Dconfig.edn=resources/dev-config.edn"]
-                      :env      {:http-host            "127.0.0.1"
-                                 :http-port            3000
-                                 :http-api-version     "v0"
-                                 :http-api-path-prefix "api"
-                                 :http-api-jws-secret  "123"
-                                 :datomic-uri          "datomic:mem://dev-twitter"
-                                 :redis-uri            "redis://localhost:6379"}}
+                      :env          {:http-host            "127.0.0.1"
+                                     :http-port            3000
+                                     :http-api-version     "v0"
+                                     :http-api-path-prefix "api"
+                                     :http-api-jws-secret  "123"
+                                     :datomic-uri          "datomic:mem://dev-twitter"
+                                     :redis-uri            "redis://localhost:6379"}}
              :debug  {:jvm-opts ["-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5000"]}
              :in-mem {:env {:system-test-mode :in-mem}}
              :full   {:env {:system-test-mode :full}}}

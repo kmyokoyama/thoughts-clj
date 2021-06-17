@@ -68,7 +68,7 @@
 
   (create-user
     [service name email username password]
-    (let [lower-name (clojure.string/lower-case name) ;; XXX: Should we really make it lowercase?
+    (let [lower-name (clojure.string/lower-case name)       ;; XXX: Should we really make it lowercase?
           lower-email (clojure.string/lower-case email)
           lower-username (clojure.string/lower-case username)
           user (core/new-user lower-name lower-email lower-username)]

@@ -116,7 +116,7 @@
          (map (fn [reply-id] (get @thoughts reply-id)))))
 
   (update-rethought!
-    [_ {rethought-id :id :as rethought} tags] ;; TODO: Consider hashtags for rethoughts.
+    [_ {rethought-id :id :as rethought} tags]               ;; TODO: Consider hashtags for rethoughts.
     (swap! rethoughts assoc rethought-id rethought)
     (swap! join-thought-rethoughts update (:source-thought-id rethought) (fn [rethought-ids] (conj (vec rethought-ids) rethought-id)))
     rethought)
@@ -127,14 +127,14 @@
 
 (defn make-in-mem-repository                                ;; Constructor.
   []
-  (map->InMemoryRepository {:passwords           (atom {})
-                            :sessions            (atom {})
-                            :users               (atom {})
-                            :thoughts              (atom {})
-                            :rethoughts            (atom {})
-                            :likes               (atom {})
-                            :join-thought-likes    (atom {})
-                            :join-thought-replies  (atom {})
+  (map->InMemoryRepository {:passwords               (atom {})
+                            :sessions                (atom {})
+                            :users                   (atom {})
+                            :thoughts                (atom {})
+                            :rethoughts              (atom {})
+                            :likes                   (atom {})
+                            :join-thought-likes      (atom {})
+                            :join-thought-replies    (atom {})
                             :join-thought-rethoughts (atom {})
-                            :following           (atom {})
-                            :hashtags            (atom {})}))
+                            :following               (atom {})
+                            :hashtags                (atom {})}))

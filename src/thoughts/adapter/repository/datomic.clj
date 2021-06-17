@@ -139,14 +139,14 @@
   (let [uuid (UUID/fromString id)
         created-at (ZonedDateTime->inst publish-date)
         user-uuid (UUID/fromString user-id)]
-    #:thought{:id         uuid}
-            :created-at created-at
-            :text       text
-            :likes      likes
-            :rethoughts   rethoughts
-            :replies    replies
-            :user       [:user/id user-uuid]
-            :hashtags   (set hashtags)))
+    #:thought{:id uuid}
+    :created-at created-at
+    :text text
+    :likes likes
+    :rethoughts rethoughts
+    :replies replies
+    :user [:user/id user-uuid]
+    :hashtags (set hashtags)))
 
 (defn- make-user
   [{:keys [id active name email username following followers]}]
@@ -165,9 +165,9 @@
         created-at (ZonedDateTime->inst created-at)
         user-uuid (UUID/fromString user-id)
         source-thought-uuid (UUID/fromString source-thought-id)]
-    #:like{:id           uuid
-           :created-at   created-at
-           :user         [:user/id user-uuid]
+    #:like{:id             uuid
+           :created-at     created-at
+           :user           [:user/id user-uuid]
            :source-thought [:thought/id source-thought-uuid]}))
 
 (defn- make-reply
@@ -182,13 +182,13 @@
         created-at (ZonedDateTime->inst publish-date)
         user-uuid (UUID/fromString user-id)
         source-thought-uuid (UUID/fromString source-thought-id)]
-    #:rethought{:id           uuid}
-              :user         [:user/id user-uuid]
-              :has-comment  has-comment
-              :comment      (if has-comment comment "") ;; TODO: Fix it. Perhaps we need to rethink the rethought model.
-              :created-at   created-at
-              :source-thought [:thought/id source-thought-uuid]
-              :hashtags     hashtags))
+    #:rethought{:id uuid}
+    :user [:user/id user-uuid]
+    :has-comment has-comment
+    :comment (if has-comment comment "")                    ;; TODO: Fix it. Perhaps we need to rethink the rethought model.
+    :created-at created-at
+    :source-thought [:thought/id source-thought-uuid]
+    :hashtags hashtags))
 
 (defn- make-password
   [user-id password]
