@@ -71,7 +71,6 @@
    :full   [start-full-test-system stop-full-test-system]})
 
 (use-fixtures :each (fn [f]
-                      (println "mode: " system-test-mode)
                       (let [[start-system! stop-system!] (system-test-mode start-stop-fns)
                             sys (start-system!)]
                         (f)
