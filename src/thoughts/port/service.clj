@@ -1,4 +1,4 @@
-(ns thoughts.application.port.service)
+(ns thoughts.port.service)
 
 (defprotocol UserService
   (login [service user-id])

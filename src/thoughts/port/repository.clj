@@ -1,4 +1,4 @@
-(ns thoughts.application.port.repository)
+(ns thoughts.port.repository)
 
 (defprotocol UserRepository
   (update-user! [this user])

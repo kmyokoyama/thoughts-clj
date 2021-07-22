@@ -2,9 +2,9 @@
   (:require [com.stuartsierra.component :as component]
             [taoensso.timbre :as log]
             [thoughts.application.core :as core]
-            [thoughts.application.port.repository :as p.repository]
-            [thoughts.application.port.service :as p.service]
-            [thoughts.application.port.cache :as p.cache]))
+            [thoughts.port.repository :as p.repository]
+            [thoughts.port.service :as p.service]
+            [thoughts.port.cache :as p.cache]))
 
 (declare throw-missing-user!)
 (declare throw-missing-thought!)

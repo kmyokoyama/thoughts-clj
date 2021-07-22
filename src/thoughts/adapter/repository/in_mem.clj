@@ -1,7 +1,7 @@
 (ns thoughts.adapter.repository.in-mem
   (:require [com.stuartsierra.component :as component]
             [taoensso.timbre :as log]
-            [thoughts.application.port.repository :as p.repository]))
+            [thoughts.port.repository :as p.repository]))
 
 (defn- shutdown
   [repository]

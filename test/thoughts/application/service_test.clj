@@ -1,8 +1,8 @@
 (ns thoughts.application.service-test
   (:require [clojure.test :refer :all]
-            [thoughts.application.port.repository :as p.repository]
+            [thoughts.port.repository :as p.repository]
             [thoughts.application.test-util :refer :all]
-            [thoughts.application.port.service :as p.service]
+            [thoughts.port.service :as p.service]
             [thoughts.application.service :refer :all]
             [thoughts.application.core :as core]
             [clojure.string :as s])

@@ -1,4 +1,4 @@
-(ns thoughts.application.port.cache)
+(ns thoughts.port.cache)
 
 (defprotocol Cache
   (update-session! [cache session])

@@ -7,7 +7,7 @@
             [schema.core :as s]
             [taoensso.timbre :as log]
             [thoughts.application.config :refer [http-api-jws-secret]]
-            [thoughts.application.port.service :as p.service]
+            [thoughts.port.service :as p.service]
             [thoughts.adapter.http.util :refer :all]
             [thoughts.schema.http :refer :all]
             [ring.middleware.defaults :refer [wrap-defaults api-defaults]]

@@ -1,7 +1,7 @@
 (ns thoughts.adapter.cache.in-mem
   (:require [com.stuartsierra.component :as component]
             [taoensso.timbre :as log]
-            [thoughts.application.port.cache :as p])
+            [thoughts.port.cache :as p])
   (:import [java.time ZonedDateTime]))
 
 (defn- shutdown

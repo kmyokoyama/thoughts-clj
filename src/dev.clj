@@ -14,7 +14,7 @@
 ;(def db (get-db sys))
 ;(def repository (get-in sys [:repository]))
 ;(require '[thoughts.application.core :as core])
-;(require '[thoughts.application.port.repository :refer :all])
+;(require '[thoughts.port.repository :refer :all])
 ;(require '[thoughts.adapter.repository.datomic :as datomic])
 ;(require '[taoensso.carmine :as car :refer [wcar])
 ;(def first-user (core/new-user "First User" "first.user@gmail.com" "first.user"))
