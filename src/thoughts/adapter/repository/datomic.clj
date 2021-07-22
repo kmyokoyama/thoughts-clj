@@ -3,8 +3,7 @@
             [com.stuartsierra.component :as component]
             [taoensso.timbre :as log]
             [thoughts.application.core :refer :all]
-            [thoughts.application.port.repository :as repository]
-            [thoughts.application.port.protocol.repository :as p]
+            [thoughts.application.port.repository :as p.repository]
             [clojure.java.io :as io])
   (:import [java.util Date UUID]
            [java.time ZonedDateTime ZoneId]))
@@ -222,7 +221,7 @@
     [_this]
     (log/info "Stopping Datomic repository"))
 
-  p/UserRepository
+  p.repository/UserRepository
   (update-user!
     [_ user]
     (do-transaction conn [(make-user user)])
@@ -299,7 +298,7 @@
           followed-uuid (UUID/fromString (:id followed))]
       (do-transaction conn [[:db/retract [:user/id follower-uuid] :user/follow [:user/id followed-uuid]]])))
 
-  p/ThoughtRepository
+  p.repository/ThoughtRepository
   (update-thought!
     [_ thought hashtags]
     (do-transaction conn [(make-thought thought hashtags)])
@@ -346,7 +345,7 @@
 
   (remove-like!
     [this criteria]
-    (->> (repository/fetch-likes! this criteria)
+    (->> (p.repository/fetch-likes! this criteria)
          (map :id)
          (map (fn [id] (UUID/fromString id)))
          (map (fn [uuid] [:db/retractEntity [:like/id uuid]]))

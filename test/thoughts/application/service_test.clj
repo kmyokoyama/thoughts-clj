@@ -1,8 +1,8 @@
 (ns thoughts.application.service-test
   (:require [clojure.test :refer :all]
-            [thoughts.application.port.repository :as repository]
+            [thoughts.application.port.repository :as p.repository]
             [thoughts.application.test-util :refer :all]
-            [thoughts.application.port.service :refer :all]
+            [thoughts.application.port.service :as p.service]
             [thoughts.application.service :refer :all]
             [thoughts.application.core :as core]
             [clojure.string :as s])
@@ -11,94 +11,99 @@
 (deftest ^:integration new-user
   (testing "Returns true if no user is fetched from repository"
     (let [service (map->Service {})]
-      (with-redefs [repository/fetch-users! (fn [_ _] [])]
-        (is (new-user? service (random-email))))))
+      (with-redefs [p.repository/fetch-users! (fn [_ _] [])]
+        (is (p.service/new-user? service (random-email))))))
 
   (testing "Returns false if at least one user is fetched from repository"
     (let [service (map->Service {})]
-      (with-redefs [repository/fetch-users! (fn [_ _] [(random-user)])]
-        (is (not (new-user? service (random-email))))))))
+      (with-redefs [p.repository/fetch-users! (fn [_ _] [(random-user)])]
+        (is (not (p.service/new-user? service (random-email))))))))
 
 (deftest ^:integration user-exists
   (testing "Returns true if the specified user is returned from repository"
     (let [service (map->Service {})
           user (random-user)
           user-id (:id user)]
-      (with-redefs [repository/fetch-users! (fn [_ _] [user])]
-        (is (user-exists? service user-id)))))
+      (with-redefs [p.repository/fetch-users! (fn [_ _] [user])]
+        (is (p.service/user-exists? service user-id)))))
 
   (testing "Returns false if no user is returned from repository"
     (let [service (map->Service {})
           user (random-user)
           user-id (:id user)]
-      (with-redefs [repository/fetch-users! (fn [_ _] [])]
-        (is (not (user-exists? service user-id)))))))
+      (with-redefs [p.repository/fetch-users! (fn [_ _] [])]
+        (is (not (p.service/user-exists? service user-id)))))))
 
 (deftest ^:integration password-match
   (testing "Returns true if password belongs to user"
-    (let [service (map->Service {})
-          password (random-password)
-          hashed-password (core/derive-password password)]
-      (with-redefs [repository/fetch-password! (fn [_ _] hashed-password)]
-        (is (password-match? service (random-uuid) password)))))
+    (let [password (random-password)
+          hashed-password (core/derive-password password)
+          mock-repository (reify p.repository/UserRepository (p.repository/fetch-password! [_ _] hashed-password))
+          service (map->Service {:repository mock-repository})]
+      (is (p.service/password-match? service (random-uuid) password))))
 
   (testing "Returns false if password does not belong to user"
-    (let [service (map->Service {})
-          password (random-password)]
-      (with-redefs [repository/fetch-password! (fn [_ _] nil)]
-        (is (not (password-match? service (random-uuid) password)))))))
+    (let [password (random-password)
+          mock-repository (reify p.repository/UserRepository (p.repository/fetch-password! [_ _] nil))
+          service (map->Service {:repository mock-repository})]
+      (is (not (p.service/password-match? service (random-uuid) password))))))
 
 (deftest ^:integration test-create-user
   (testing "Throws an exception if user email is already registered"
-    (let [service (map->Service {})]
-      (with-redefs [new-user? (fn [_ _] false)]
-        (is (thrown-with-msg? ExceptionInfo #".*email.*already exists"
-                              (create-user service
-                                           (random-fullname)
-                                           (random-email)
-                                           (random-username)
-                                           (random-password)))))))
+    (let [mock-repository (reify p.repository/UserRepository (p.repository/fetch-users! [_ _] [:mock-user]))
+          service (map->Service {:repository mock-repository})]
+      (is (thrown-with-msg? ExceptionInfo #".*email.*already exists"
+                            (p.service/create-user service
+                                                   (random-fullname)
+                                                   (random-email)
+                                                   (random-username)
+                                                   (random-password))))))
 
   (testing "Throws an exception if username is already taken"
-    (let [service (map->Service {})]
-      (with-redefs [new-user? (fn [_ _] true)
-                    username-available? (fn [_ _] false)]
-        (is (thrown-with-msg? ExceptionInfo #".*username.*already exists"
-                              (create-user service
-                                           (random-fullname)
-                                           (random-email)
-                                           (random-username)
-                                           (random-password)))))))
+    (let [mock-repository (reify p.repository/UserRepository
+                            (p.repository/fetch-users! [_ criteria]
+                              (cond
+                                (:id criteria) []
+                                (:username criteria) [:mock-user])))
+          service (map->Service {:repository mock-repository})]
+      (is (thrown-with-msg? ExceptionInfo #".*username.*already exists"
+                            (p.service/create-user service
+                                                   (random-fullname)
+                                                   (random-email)
+                                                   (random-username)
+                                                   (random-password))))))
 
   (testing "Returns the created user"
-    (let [service (map->Service {})
+    (let [mock-repository (reify p.repository/UserRepository
+                            (p.repository/fetch-users! [_ _] [])
+                            (p.repository/update-user! [_ _] nil)
+                            (p.repository/update-password! [_ _ _] nil))
+          service (map->Service {:repository mock-repository})
           name (random-fullname)
           email (random-email)
           username (random-username)
           password (random-password)]
-      (with-redefs [new-user? (fn [_ _] true)
-                    username-available? (fn [_ _] true)
-                    repository/update-user! (fn [_ _])
-                    repository/update-password! (fn [_ _ _])]
-        (let [user (create-user service name email username password)]
-          (is (= (s/lower-case name) (:name user)))
-          (is (= (s/lower-case email) (:email user)))
-          (is (= (s/lower-case username) (:username user)))
-          (is (zero? (:following user)))
-          (is (zero? (:followers user))))))))
+      (let [user (p.service/create-user service name email username password)]
+        (is (= (s/lower-case name) (:name user)))
+        (is (= (s/lower-case email) (:email user)))
+        (is (= (s/lower-case username) (:username user)))
+        (is (zero? (:following user)))
+        (is (zero? (:followers user)))))))
 
 (deftest ^:integration test-get-user-by-id
   (testing "Throws an exception if user ID is not found"
-    (let [service (map->Service {})]
-      (with-redefs [repository/fetch-users! (fn [_ _]) []]
-        (is (thrown-with-msg? ExceptionInfo #".*User.*not found" (get-user-by-id service (random-uuid)))))))
+    (let [mock-repository (reify p.repository/UserRepository
+                            (p.repository/fetch-users! [_ _] []))
+          service (map->Service {:repository mock-repository})]
+      (is (thrown-with-msg? ExceptionInfo #".*User.*not found" (p.service/get-user-by-id service (random-uuid))))))
 
   (testing "Returns the user with the given ID as it is on repository if it exists"
-    (let [service (map->Service {})
-          user (random-user)
-          user-id (:id user)]
-      (with-redefs [repository/fetch-users! (fn [_ {uid :user-id}]
-                                              (if (= uid user-id)
-                                                [user]
-                                                []))]
-        (is (= user (get-user-by-id service user-id)))))))
+    (let [user (random-user)
+          user-id (:id user)
+          mock-repository (reify p.repository/UserRepository
+                            (p.repository/fetch-users! [_ {uid :user-id}]
+                              (if (= uid user-id)
+                                [user]
+                                [])))
+          service (map->Service {:repository mock-repository})]
+      (is (= user (p.service/get-user-by-id service user-id))))))

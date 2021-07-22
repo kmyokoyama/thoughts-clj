@@ -44,17 +44,14 @@
 
 (defn- start-in-mem-test-system
   []
-  (println "start-in-mem-test-system" system-test-mode)
   (component/start (in-mem-test-system-map)))
 
 (defn- stop-in-mem-test-system
   [sys]
-  (println "stop-in-mem-test-system")
   (component/stop sys))
 
 (defn- start-full-test-system
   []
-  (println "start-full-test-system")
   (let [sys (component/start (full-test-system-map))
         conn (get-in sys [:repository :conn])]
     (load-schema conn "schema.edn")
@@ -62,7 +59,6 @@
 
 (defn- stop-full-test-system
   [system]
-  (println "stop-full-test-system")
   (delete-database datomic-uri)
   (component/stop system))
 

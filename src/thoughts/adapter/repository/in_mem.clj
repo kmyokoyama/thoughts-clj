@@ -1,8 +1,7 @@
 (ns thoughts.adapter.repository.in-mem
   (:require [com.stuartsierra.component :as component]
             [taoensso.timbre :as log]
-            [thoughts.application.port.repository :as repository]
-            [thoughts.application.port.protocol.repository :as p]))
+            [thoughts.application.port.repository :as p.repository]))
 
 (defn- shutdown
   [repository]
@@ -32,7 +31,7 @@
     (log/info "Stopping in-memory database")
     (shutdown this))
 
-  p/UserRepository
+  p.repository/UserRepository
   (update-user!
     [_ {user-id :id :as user}]
     (swap! users assoc user-id user)
@@ -73,7 +72,7 @@
     [_ {follower-id :id} {followed-id :id}]
     (swap! following update follower-id (fn [following-ids] (disj (set following-ids) followed-id))))
 
-  p/ThoughtRepository
+  p.repository/ThoughtRepository
   (update-thought!
     [_ {thought-id :id :as thought} tags]
     (swap! thoughts assoc thought-id thought)
@@ -107,7 +106,7 @@
   (update-reply!
     [this source-thought-id {reply-id :id :as reply} tags]
     (swap! join-thought-replies update source-thought-id (fn [reply-ids] (conj (vec reply-ids) reply-id)))
-    (repository/update-thought! this reply tags)
+    (p.repository/update-thought! this reply tags)
     reply)
 
   (fetch-replies!

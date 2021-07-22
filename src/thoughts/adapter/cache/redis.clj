@@ -2,7 +2,7 @@
   (:require [com.stuartsierra.component :as component]
             [taoensso.carmine :as car :refer [wcar]]
             [taoensso.timbre :as log]
-            [thoughts.application.port.protocol.cache :as p]))
+            [thoughts.application.port.cache :as p]))
 
 (defn- key-join
   [& key-parts]

@@ -2,10 +2,9 @@
   (:require [com.stuartsierra.component :as component]
             [taoensso.timbre :as log]
             [thoughts.application.core :as core]
-            [thoughts.application.port.cache :as cache]
-            [thoughts.application.port.repository :as repository]
-            [thoughts.application.port.service :as service]
-            [thoughts.application.port.protocol.service :as p]))
+            [thoughts.application.port.repository :as p.repository]
+            [thoughts.application.port.service :as p.service]
+            [thoughts.application.port.cache :as p.cache]))
 
 (declare throw-missing-user!)
 (declare throw-missing-thought!)
@@ -34,36 +33,36 @@
     (log/info "Stopping application service")
     this)
 
-  p/UserService
+  p.service/UserService
   (login
     [service user-id]
     (let [session (core/new-session user-id)]
-      (cache/update-session! (:cache service) session)
+      (p.cache/update-session! (:cache service) session)
       (:id session)))
 
   (logout
     [service session-id]
-    (cache/remove-session! (:cache service) {:session-id session-id}))
+    (p.cache/remove-session! (:cache service) {:session-id session-id}))
 
   (logout-all
     [service user-id]
-    (cache/remove-session! (:cache service) {:user-id user-id}))
+    (p.cache/remove-session! (:cache service) {:user-id user-id}))
 
   (new-user?
     [service email]
-    (empty? (repository/fetch-users! (:repository service) {:email email})))
+    (empty? (p.repository/fetch-users! (:repository service) {:email email})))
 
   (user-exists?
     [service id]
-    (not (empty? (repository/fetch-users! (:repository service) {:id id}))))
+    (not (empty? (p.repository/fetch-users! (:repository service) {:id id}))))
 
   (username-available?
     [service username]
-    (empty? (repository/fetch-users! (:repository service) {:username username})))
+    (empty? (p.repository/fetch-users! (:repository service) {:username username})))
 
   (password-match?
     [service user-id password]
-    (let [actual-password (repository/fetch-password! (:repository service) user-id)]
+    (let [actual-password (p.repository/fetch-password! (:repository service) user-id)]
       (core/password-match? password actual-password)))
 
   (create-user
@@ -72,32 +71,32 @@
           lower-email (clojure.string/lower-case email)
           lower-username (clojure.string/lower-case username)
           user (core/new-user lower-name lower-email lower-username)]
-      (if (service/new-user? service email)
-        (if (service/username-available? service username)
-          (do (repository/update-user! (:repository service) user)
-              (repository/update-password! (:repository service) (:id user) (core/derive-password password))
+      (if (p.service/new-user? service email)
+        (if (p.service/username-available? service username)
+          (do (p.repository/update-user! (:repository service) user)
+              (p.repository/update-password! (:repository service) (:id user) (core/derive-password password))
               user)
           (throw-duplicate-username! username))
         (throw-duplicate-user-email! email))))
 
   (get-user-by-id
     [service user-id]
-    (if-let [user (first (repository/fetch-users! (:repository service) {:id user-id}))]
+    (if-let [user (first (p.repository/fetch-users! (:repository service) {:id user-id}))]
       user
       (throw-missing-user! user-id)))
 
   (follow
     [service follower-id followed-id]
-    (if (service/user-exists? service follower-id)
-      (if (service/user-exists? service followed-id)
+    (if (p.service/user-exists? service follower-id)
+      (if (p.service/user-exists? service followed-id)
         (if-not (= follower-id followed-id)
           (if-not (following? service follower-id followed-id)
-            (let [follower (first (repository/fetch-users! (:repository service) {:id follower-id}))
-                  followed (first (repository/fetch-users! (:repository service) {:id followed-id}))
+            (let [follower (first (p.repository/fetch-users! (:repository service) {:id follower-id}))
+                  followed (first (p.repository/fetch-users! (:repository service) {:id followed-id}))
                   [updated-follower updated-followed] (core/follow follower followed)]
-              (do (repository/update-user! (:repository service) updated-follower)
-                  (repository/update-user! (:repository service) updated-followed)
-                  (repository/update-follow! (:repository service) updated-follower updated-followed)
+              (do (p.repository/update-user! (:repository service) updated-follower)
+                  (p.repository/update-user! (:repository service) updated-followed)
+                  (p.repository/update-follow! (:repository service) updated-follower updated-followed)
                   updated-followed))
             (throw-invalid-follow! :already-following follower-id followed-id))
           (throw-invalid-follow! :follow-yourself follower-id followed-id))
@@ -106,16 +105,16 @@
 
   (unfollow
     [service follower-id followed-id]
-    (if (service/user-exists? service follower-id)
-      (if (service/user-exists? service followed-id)
+    (if (p.service/user-exists? service follower-id)
+      (if (p.service/user-exists? service followed-id)
         (if-not (= follower-id followed-id)
           (if (following? service follower-id followed-id)
-            (let [follower (first (repository/fetch-users! (:repository service) {:id follower-id}))
-                  followed (first (repository/fetch-users! (:repository service) {:id followed-id}))
+            (let [follower (first (p.repository/fetch-users! (:repository service) {:id follower-id}))
+                  followed (first (p.repository/fetch-users! (:repository service) {:id followed-id}))
                   [updated-follower updated-followed] (core/unfollow follower followed)]
-              (do (repository/update-user! (:repository service) updated-follower)
-                  (repository/update-user! (:repository service) updated-followed)
-                  (repository/remove-follow! (:repository service) updated-follower updated-followed)
+              (do (p.repository/update-user! (:repository service) updated-follower)
+                  (p.repository/update-user! (:repository service) updated-followed)
+                  (p.repository/remove-follow! (:repository service) updated-follower updated-followed)
                   updated-followed))
             (throw-invalid-unfollow! :not-following-yet follower-id followed-id))
           (throw-invalid-unfollow! :unfollow-yourself follower-id followed-id))
@@ -124,115 +123,115 @@
 
   (get-following
     [service follower-id]
-    (if (service/user-exists? service follower-id)
-      (repository/fetch-following! (:repository service) follower-id)
+    (if (p.service/user-exists? service follower-id)
+      (p.repository/fetch-following! (:repository service) follower-id)
       (throw-missing-user! follower-id)))
 
   (get-followers
     [service followed-id]
-    (if (service/user-exists? service followed-id)
-      (repository/fetch-followers! (:repository service) followed-id)
+    (if (p.service/user-exists? service followed-id)
+      (p.repository/fetch-followers! (:repository service) followed-id)
       (throw-missing-user! followed-id)))
 
-  p/ThoughtService
+  p.service/ThoughtService
   (thought
     [service user-id text]
     (let [thought (core/new-thought user-id text)]
-      (if (service/user-exists? service user-id)
-        (repository/update-thought! (:repository service) thought (core/extract-hashtags (:text thought)))
+      (if (p.service/user-exists? service user-id)
+        (p.repository/update-thought! (:repository service) thought (core/extract-hashtags (:text thought)))
         (throw-missing-user! user-id))))
 
   (get-thought-by-id
     [service thought-id]
-    (if-let [thought (first (repository/fetch-thoughts! (:repository service) {:id thought-id}))]
+    (if-let [thought (first (p.repository/fetch-thoughts! (:repository service) {:id thought-id}))]
       thought
       (throw-missing-thought! thought-id)))
 
   (get-thoughts-by-user
     [service user-id]
-    (if (service/user-exists? service user-id)
-      (repository/fetch-thoughts! (:repository service) {:user-id user-id})
+    (if (p.service/user-exists? service user-id)
+      (p.repository/fetch-thoughts! (:repository service) {:user-id user-id})
       (throw-missing-user! user-id)))
 
   (get-thoughts-with-hashtag
     [service hashtag]
-    (repository/fetch-thoughts! (:repository service) {:hashtag hashtag}))
+    (p.repository/fetch-thoughts! (:repository service) {:hashtag hashtag}))
 
   (reply
     [service user-id text source-thought-id]
-    (if (service/user-exists? service user-id)
-      (if-let [source-thought (first (repository/fetch-thoughts! (:repository service) {:id source-thought-id}))]
+    (if (p.service/user-exists? service user-id)
+      (if-let [source-thought (first (p.repository/fetch-thoughts! (:repository service) {:id source-thought-id}))]
         (let [reply (core/new-thought user-id text)]
-          (repository/update-thought! (:repository service) (core/reply source-thought) #{})
-          (repository/update-reply! (:repository service) source-thought-id reply (core/extract-hashtags (:text reply))))
+          (p.repository/update-thought! (:repository service) (core/reply source-thought) #{})
+          (p.repository/update-reply! (:repository service) source-thought-id reply (core/extract-hashtags (:text reply))))
         (throw-missing-thought! source-thought-id))
       (throw-missing-user! user-id)))
 
   (get-replies-by-thought-id
     [service source-thought-id]
-    (if-not (empty? (repository/fetch-thoughts! (:repository service) {:id source-thought-id}))
-      (repository/fetch-replies! (:repository service) {:source-thought-id source-thought-id})
+    (if-not (empty? (p.repository/fetch-thoughts! (:repository service) {:id source-thought-id}))
+      (p.repository/fetch-replies! (:repository service) {:source-thought-id source-thought-id})
       (throw-missing-thought! source-thought-id)))
 
   (rethought
     [service user-id source-thought-id]
-    (if (service/user-exists? service user-id)
-      (if-let [source-thought (first (repository/fetch-thoughts! (:repository service) {:id source-thought-id}))]
-        (do (repository/update-thought! (:repository service) (core/rethought source-thought) #{})
-            (repository/update-rethought! (:repository service) (core/new-rethought user-id source-thought-id) #{}))
+    (if (p.service/user-exists? service user-id)
+      (if-let [source-thought (first (p.repository/fetch-thoughts! (:repository service) {:id source-thought-id}))]
+        (do (p.repository/update-thought! (:repository service) (core/rethought source-thought) #{})
+            (p.repository/update-rethought! (:repository service) (core/new-rethought user-id source-thought-id) #{}))
         (throw-missing-user! source-thought-id))
       (throw-missing-user! user-id)))
 
   (rethought-with-comment
     [service user-id comment source-thought-id]
-    (if (service/user-exists? service user-id)
-      (if-let [source-thought (first (repository/fetch-thoughts! (:repository service) {:id source-thought-id}))]
-        (do (repository/update-thought! (:repository service) (core/rethought source-thought) #{})
-            (repository/update-rethought! (:repository service) (core/new-rethought user-id source-thought-id comment) (core/extract-hashtags comment)))
+    (if (p.service/user-exists? service user-id)
+      (if-let [source-thought (first (p.repository/fetch-thoughts! (:repository service) {:id source-thought-id}))]
+        (do (p.repository/update-thought! (:repository service) (core/rethought source-thought) #{})
+            (p.repository/update-rethought! (:repository service) (core/new-rethought user-id source-thought-id comment) (core/extract-hashtags comment)))
         (throw-missing-user! source-thought-id))
       (throw-missing-user! user-id)))
 
   (get-rethought-by-id
     [service rethought-id]
-    (if-let [rethought (first (repository/fetch-rethoughts! (:repository service) {:id rethought-id}))]
+    (if-let [rethought (first (p.repository/fetch-rethoughts! (:repository service) {:id rethought-id}))]
       rethought
       (throw-missing-rethought! rethought-id)))
 
   (get-rethoughts-by-thought-id
     [service source-thought-id]
-    (if-let [rethoughts (repository/fetch-rethoughts! (:repository service) {:source-thought-id source-thought-id})]
+    (if-let [rethoughts (p.repository/fetch-rethoughts! (:repository service) {:source-thought-id source-thought-id})]
       rethoughts
       (throw-missing-thought! source-thought-id)))
 
   (like
     [service user-id thought-id]
-    (if-let [thought (first (repository/fetch-thoughts! (:repository service) {:id thought-id}))]
-      (if (empty? (repository/fetch-likes! (:repository service) {:user-id user-id :source-thought-id thought-id}))
-        (do (repository/update-like! (:repository service) (core/new-like user-id thought-id))
-            (repository/update-thought! (:repository service) (core/like thought) #{}))
+    (if-let [thought (first (p.repository/fetch-thoughts! (:repository service) {:id thought-id}))]
+      (if (empty? (p.repository/fetch-likes! (:repository service) {:user-id user-id :source-thought-id thought-id}))
+        (do (p.repository/update-like! (:repository service) (core/new-like user-id thought-id))
+            (p.repository/update-thought! (:repository service) (core/like thought) #{}))
         (throw-invalid-like! thought-id user-id))
       (throw-missing-thought! thought-id)))
 
   (unlike
     [service user-id thought-id]
-    (if-let [thought (first (repository/fetch-thoughts! (:repository service) {:id thought-id}))]
-      (if-not (empty? (repository/fetch-likes! (:repository service) {:user-id user-id :source-thought-id thought-id}))
-        (do (repository/remove-like! (:repository service) {:user-id user-id :source-thought-id thought-id})
-            (repository/update-thought! (:repository service) (core/unlike thought) #{}))
+    (if-let [thought (first (p.repository/fetch-thoughts! (:repository service) {:id thought-id}))]
+      (if-not (empty? (p.repository/fetch-likes! (:repository service) {:user-id user-id :source-thought-id thought-id}))
+        (do (p.repository/remove-like! (:repository service) {:user-id user-id :source-thought-id thought-id})
+            (p.repository/update-thought! (:repository service) (core/unlike thought) #{}))
         (throw-invalid-unlike! thought-id user-id))
       (throw-missing-thought! thought-id)))
 
   (get-feed
     [service user-id limit offset]
-    (if (service/user-exists? service user-id)
-      (let [feed-cache (cache/fetch-feed! (:cache service) user-id limit offset)]
+    (if (p.service/user-exists? service user-id)
+      (let [feed-cache (p.cache/fetch-feed! (:cache service) user-id limit offset)]
         (if-not (empty? feed-cache)
           feed-cache
-          (let [following (repository/fetch-following! (:repository service) user-id)
+          (let [following (p.repository/fetch-following! (:repository service) user-id)
                 feed (build-feed service following)]
             (if-not (empty? feed)
-              (do (cache/update-feed! (:cache service) user-id feed 360)
-                  (cache/fetch-feed! (:cache service) user-id limit offset))
+              (do (p.cache/update-feed! (:cache service) user-id feed 360)
+                  (p.cache/fetch-feed! (:cache service) user-id limit offset))
               feed))))                                      ;; TTL of 5 minutes.
       (throw-missing-user! user-id))))
 
@@ -325,7 +324,7 @@
 
   Both `follower-id` and `followed-id` are user identifiers."
   [service follower-id followed-id]
-  (some #(= followed-id (:id %)) (repository/fetch-following! (:repository service) follower-id)))
+  (some #(= followed-id (:id %)) (p.repository/fetch-following! (:repository service) follower-id)))
 
 (defn- build-feed
   "Creates a collection of thoughts (length <= 100) from users in `following` sorted by `:publish-date`."
@@ -333,6 +332,6 @@
   (->> following
        (map :id)
        (map (fn [user-id] {:user-id user-id}))
-       (map (fn [user-id-criteria] (repository/fetch-thoughts! (:repository service) user-id-criteria)))
+       (map (fn [user-id-criteria] (p.repository/fetch-thoughts! (:repository service) user-id-criteria)))
        (map (fn [user-thoughts] (core/sort-by-date user-thoughts)))
        (core/merge-by-date 100)))
