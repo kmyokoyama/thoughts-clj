@@ -12,7 +12,8 @@
                                      [ring/ring-devel "1.8.1"]]
                       :plugins      [[lein-auto "0.1.3"]
                                      [lein-midje "3.2.1"]
-                                     [lein-environ "1.2.0"]]
+                                     [lein-environ "1.2.0"]
+                                     [lein-nsorg "0.3.0"]]
                       :jvm-opts     ["-Dconfig.edn=resources/dev-config.edn"]
                       :env          {:http-host            "127.0.0.1"
                                      :http-port            3000
