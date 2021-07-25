@@ -1,5 +1,5 @@
 (ns thoughts.application.config
-  (:require [environ.core :refer [env]]
+  (:require [environ.core :as environ]
             [taoensso.timbre :as log]))
 
 (defn- ->keyword
@@ -20,15 +20,15 @@
      (->int s)
      (catch NumberFormatException _ default))))
 
-(def http-host (env :http-host))
-(def http-port (->int (env :http-port) 3000))
-(def http-api-version (env :http-api-version))
-(def http-api-path-prefix (env :http-api-path-prefix))
-(def http-api-jws-secret (env :http-api-jws-secret))
-(def datomic-uri (env :datomic-uri))
-(def redis-uri (env :redis-uri))
+(def http-host (environ/env :http-host))
+(def http-port (->int (environ/env :http-port) 3000))
+(def http-api-version (environ/env :http-api-version))
+(def http-api-path-prefix (environ/env :http-api-path-prefix))
+(def http-api-jws-secret (environ/env :http-api-jws-secret))
+(def datomic-uri (environ/env :datomic-uri))
+(def redis-uri (environ/env :redis-uri))
 
-(def system-test-mode (->keyword (env :system-test-mode) :in-mem))
+(def system-test-mode (->keyword (environ/env :system-test-mode) :in-mem))
 
 (def ^:private timbre-config {:timestamp-opts {:pattern "yyyy-MM-dd'T'HH:mm:ss.SSSX"}
                               :output-fn      (fn [{:keys [timestamp_ level hostname_ msg_]}]

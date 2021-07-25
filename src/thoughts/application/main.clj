@@ -2,25 +2,23 @@
   (:require [com.stuartsierra.component :as component]
             [ring.middleware.defaults :refer :all]
             [taoensso.timbre :as log]
-            [thoughts.adapter.cache.in-mem :refer [make-in-mem-cache]]
-            [thoughts.adapter.cache.redis :refer [make-redis-cache]]
-            [thoughts.adapter.http.component :refer [make-http-controller]]
-            [thoughts.adapter.repository.datomic :refer [make-datomic-repository]]
-            [thoughts.adapter.repository.in-mem :refer [make-in-mem-repository]]
-            [thoughts.application.config :refer [datomic-uri http-host http-port init-system! redis-uri]]
-            [thoughts.application.service :refer [make-service]])
+            [thoughts.adapter.cache.in-mem :as a.cache.in-mem]
+            [thoughts.adapter.http.component :as a.http.component]
+            [thoughts.adapter.repository.datomic :as a.repository.datomic]
+            [thoughts.application.config :as config]
+            [thoughts.application.service :as service])
   (:gen-class))
 
 (defn- system-map
   []
   (component/system-map
-    :repository (make-datomic-repository datomic-uri)
-    :cache (make-in-mem-cache)
+    :repository (a.repository.datomic/make-datomic-repository config/datomic-uri)
+    :cache (a.cache.in-mem/make-in-mem-cache)
     :service (component/using
-               (make-service)
+               (service/make-service)
                [:repository :cache])
     :controller (component/using
-                  (make-http-controller http-host http-port)
+                  (a.http.component/make-http-controller config/http-host config/http-port)
                   [:service])))
 
 (defn- on-exit
@@ -35,8 +33,8 @@
 
 (defn -main
   [& _args]
-  (init-system!)
+  (config/init-system!)
   (log/info "Starting system")
   (let [sys (component/start (system-map))]
-    (log/info (str "Running server at http://" http-host ":" http-port "/"))
+    (log/info (str "Running server at http://" config/http-host ":" config/http-port "/"))
     (handle-sigint on-exit sys)))
