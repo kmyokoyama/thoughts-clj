@@ -1,9 +1,6 @@
-(ns thoughts.application.test-util
-  (:require [clj-http.client :as client]
-            [clojure.data.generators :as random]
-            [clojure.data.json :as json]
-            [clojure.string :refer [join]]
-            [clojure.test :refer :all]
+(ns unit.thoughts.application.helper
+  (:require [clojure.data.generators :as generators]
+            [clojure.string :as string]
             [faker.internet :as internet]
             [faker.lorem :as lorem]
             [faker.name :as name])
@@ -29,11 +26,11 @@
    (random-password 10))
 
   ([n]
-   (->> (random/string) (take n) (apply str))))
+   (->> (generators/string) (take n) (apply str))))
 
 (defn random-text
   []
-  (join "\n" (take 2 (lorem/paragraphs))))
+  (string/join "\n" (take 2 (lorem/paragraphs))))
 
 (defn random-uuid
   []

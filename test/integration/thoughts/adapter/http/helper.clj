@@ -1,4 +1,4 @@
-(ns thoughts.adapter.http.test-util
+(ns integration.thoughts.adapter.http.helper
   (:require [clj-http.client :as client]
             [clojure.data.json :as json]
             [clojure.test :refer :all]

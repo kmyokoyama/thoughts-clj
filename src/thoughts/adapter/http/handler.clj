@@ -246,7 +246,7 @@
                 (-> failure-info (format-schema-error) (a.http.util/bad-request)))
             (throw e)))))))
 
-(defn- a.http.util/wrap-default-exception
+(defn- wrap-default-exception
   [handler]
   (fn [request]
     (try
