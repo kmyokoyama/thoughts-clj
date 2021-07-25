@@ -3,7 +3,7 @@
             [com.stuartsierra.component :as component]
             [datomic.api :as d]
             [taoensso.timbre :as log]
-            [thoughts.application.core :refer :all]
+            [thoughts.application.core :as core]
             [thoughts.port.repository :as p.repository])
   (:import [java.time ZonedDateTime ZoneId]
            [java.util Date UUID]))
@@ -239,7 +239,7 @@
                     '((get-user-rule ?id ?active ?name ?email ?username ?following ?followers))
                     user-rules
                     params-val)
-             (map (fn [result] (apply ->User result)))
+             (map (fn [result] (apply core/->User result)))
              (map (fn [result] (update result :id str)))))))
 
   (update-password!
@@ -276,7 +276,7 @@
                   db
                   following-rules
                   follower-uuid)
-             (map (fn [result] (apply ->User result)))
+             (map (fn [result] (apply core/->User result)))
              (map (fn [result] (update result :id str)))))))
 
   (fetch-followers!
@@ -289,7 +289,7 @@
                   db
                   followers-rules
                   followed-uuid)
-             (map (fn [result] (apply ->User result)))
+             (map (fn [result] (apply core/->User result)))
              (map (fn [result] (update result :id str)))))))
 
   (remove-follow!
@@ -316,7 +316,7 @@
                     '((get-thought-rule ?id ?user-id ?text ?created-at ?likes ?rethoughts ?replies ?hashtag))
                     thought-rules
                     params-val)
-             (map (fn [result] (apply ->Thought result)))
+             (map (fn [result] (apply core/->Thought result)))
              (map (fn [result] (update result :publish-date inst->ZonedDateTime)))
              (map (fn [result] (update result :id str)))
              (map (fn [result] (update result :user-id str)))))))
@@ -338,7 +338,7 @@
                     '((get-like-rule ?id ?created-at ?user-id ?source-thought-id))
                     like-rules
                     params-val)
-             (map (fn [result] (apply ->ThoughtLike result)))
+             (map (fn [result] (apply core/->ThoughtLike result)))
              (map (fn [result] (update result :id str)))
              (map (fn [result] (update result :user-id str)))
              (map (fn [result] (update result :source-thought-id str)))))))
@@ -368,7 +368,7 @@
                     '((get-reply-rule ?id ?user-id ?text ?created-at ?likes ?rethoughts ?replies ?source-thought-id))
                     reply-rules
                     params-val)
-             (map (fn [result] (apply ->Thought result)))
+             (map (fn [result] (apply core/->Thought result)))
              (map (fn [result] (update result :publish-date inst->ZonedDateTime)))
              (map (fn [result] (update result :id str)))
              (map (fn [result] (update result :user-id str)))))))
@@ -390,7 +390,7 @@
                     '((get-rethought-rule ?id ?user-id ?has-comment ?comment ?created-at ?source-thought-id))
                     rethought-rules
                     params-val)
-             (map (fn [result] (apply ->Rethought result)))
+             (map (fn [result] (apply core/->Rethought result)))
              (map (fn [result] (update result :id str)))
              (map (fn [result] (update result :user-id str)))
              (map (fn [result] (update result :source-thought-id str))))))))

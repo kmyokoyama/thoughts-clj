@@ -1,6 +1,6 @@
 (ns thoughts.adapter.cache.redis
   (:require [com.stuartsierra.component :as component]
-            [taoensso.carmine :as car :refer [wcar]]
+            [taoensso.carmine :as carmine]
             [taoensso.timbre :as log]
             [thoughts.port.cache :as p]))
 
@@ -32,18 +32,18 @@
 
 (defmethod remove-session :session-id
   [conn {session-id :session-id}]
-  (let [s (wcar conn (car/hgetall (session-key session-id)))
+  (let [s (carmine/wcar conn (carmine/hgetall (session-key session-id)))
         user-id (-> s vec->map keywordize :user-id)]
-    (wcar conn
-          (car/srem (user-sessions-key user-id) session-id)
-          (car/del (session-key session-id)))))
+    (carmine/wcar conn
+                  (carmine/srem (user-sessions-key user-id) session-id)
+                  (carmine/del (session-key session-id)))))
 
 (defmethod remove-session :user-id
   [conn {user-id :user-id}]
-  (let [session-ids (wcar conn (car/smembers (user-sessions-key user-id)))]
-    (wcar conn
-          (car/del (user-sessions-key user-id))
-          (apply car/del (map session-key session-ids)))))
+  (let [session-ids (carmine/wcar conn (carmine/smembers (user-sessions-key user-id)))]
+    (carmine/wcar conn
+                  (carmine/del (user-sessions-key user-id))
+                  (apply carmine/del (map session-key session-ids)))))
 
 (defrecord RedisCache [uri conn]
   component/Lifecycle
@@ -51,7 +51,7 @@
     [cache]
     (log/info "Starting Redis cache")
     (let [redis-conn {:pool {} :spec {:uri uri}}]
-      (wcar redis-conn (car/ping))                          ;; Throws a ConnectException preventing the component from starting.
+      (carmine/wcar redis-conn (carmine/ping))                          ;; Throws a ConnectException preventing the component from starting.
       (assoc cache :conn redis-conn)))
 
   (stop
@@ -63,22 +63,22 @@
     [_ session]
     (let [user-id (:user-id session)
           session-id (:id session)]
-      (wcar conn
-            (car/sadd (user-sessions-key user-id) session-id)
-            (apply car/hmset (session-key session-id) (reduce into [] session)))))
+      (carmine/wcar conn
+                    (carmine/sadd (user-sessions-key user-id) session-id)
+                    (apply carmine/hmset (session-key session-id) (reduce into [] session)))))
 
   (update-feed!
     [_ user-id feed ttl]
     (let [user-key (feeds-key user-id)]
-      (wcar conn (apply car/lpush user-key (reverse feed)))
-      (wcar conn (car/expire user-key ttl))
+      (carmine/wcar conn (apply carmine/lpush user-key (reverse feed)))
+      (carmine/wcar conn (carmine/expire user-key ttl))
       feed))
 
   (fetch-feed!
     [_ user-id limit offset]
     (let [user-key (feeds-key user-id)
           stop (+ offset limit -1)]
-      (wcar conn (car/lrange user-key offset stop))))
+      (carmine/wcar conn (carmine/lrange user-key offset stop))))
 
   (remove-session!
     [_ criteria]

@@ -1,7 +1,7 @@
 (ns thoughts.adapter.cache.in-mem
   (:require [com.stuartsierra.component :as component]
             [taoensso.timbre :as log]
-            [thoughts.port.cache :as p])
+            [thoughts.port.cache :as p.cache])
   (:import [java.time ZonedDateTime]))
 
 (defn- shutdown
@@ -29,7 +29,7 @@
     (log/info "Stopping in-memory cache")
     (shutdown cache))
 
-  p/Cache
+  p.cache/Cache
   (update-session! [_ session]
     (swap! sessions assoc (:id session) session))
 

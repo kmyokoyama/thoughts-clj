@@ -1,15 +1,15 @@
 (ns thoughts.adapter.http.component
   (:require [com.stuartsierra.component :as component]
-            [org.httpkit.server :as server]
+            [org.httpkit.server :as http.server]
             [taoensso.timbre :as log]
-            [thoughts.adapter.http.handler :refer [handler]]))
+            [thoughts.adapter.http.handler :as a.http.handler]))
 
 (defrecord HttpServer [host port http-server service]
   component/Lifecycle
   (start [this]
     (log/info "Starting HTTP server on" (str "http://" host ":" port))
     (assoc this :http-server
-                (server/run-server (handler service) {:ip host :port port})))
+                (http.server/run-server (a.http.handler/handler service) {:ip host :port port})))
 
   (stop [this]
     (log/info "Stopping HTTP server" port)

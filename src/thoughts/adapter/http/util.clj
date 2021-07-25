@@ -2,7 +2,7 @@
   (:require [buddy.sign.jwt :as jwt]
             [clojure.data.json :as json]
             [taoensso.timbre :as log]
-            [thoughts.application.config :refer [http-api-jws-secret http-api-path-prefix http-api-version]]))
+            [thoughts.application.config :as config]))
 
 ;; Private functions.
 
@@ -84,7 +84,7 @@
   [secret user-id role session-id]
   (jwt/sign {:user-id user-id :role role :session-id session-id} secret {:alg :hs512}))
 
-(def create-token (partial new-token http-api-jws-secret))
+(def create-token (partial new-token config/http-api-jws-secret))
 
 (defn add-leading-slash
   [path]
@@ -105,8 +105,8 @@
 
 (defn path-prefix
   [path]
-  (->> (list http-api-path-prefix
-             http-api-version
+  (->> (list config/http-api-path-prefix
+             config/http-api-version
              path)
        (apply join-path)
        (add-leading-slash)))
