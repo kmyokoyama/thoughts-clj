@@ -1,8 +1,8 @@
 (ns thoughts.application.core-test
   (:require [clojure.test :refer :all]
+            [midje.sweet :refer :all]
             [thoughts.application.core :refer :all]
-            [thoughts.application.test-util :refer :all]
-            [midje.sweet :refer :all]))
+            [thoughts.application.test-util :refer :all]))
 
 (fact "`new-thought` creates a fresh new thought entity"
       (let [user-id (random-uuid)

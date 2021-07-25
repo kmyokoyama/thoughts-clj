@@ -1,11 +1,11 @@
 (ns thoughts.application.service-test
-  (:require [clojure.test :refer :all]
-            [thoughts.port.repository :as p.repository]
-            [thoughts.application.test-util :refer :all]
-            [thoughts.port.service :as p.service]
-            [thoughts.application.service :refer :all]
+  (:require [clojure.string :as s]
+            [clojure.test :refer :all]
             [thoughts.application.core :as core]
-            [clojure.string :as s])
+            [thoughts.application.service :refer :all]
+            [thoughts.application.test-util :refer :all]
+            [thoughts.port.repository :as p.repository]
+            [thoughts.port.service :as p.service])
   (:import (clojure.lang ExceptionInfo)))
 
 (deftest ^:integration new-user

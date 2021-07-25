@@ -1,14 +1,14 @@
 (ns thoughts.application.test-util
-  (:require [clojure.test :refer :all]
+  (:require [clj-http.client :as client]
             [clojure.data.generators :as random]
-            [faker.name :as name]
+            [clojure.data.json :as json]
+            [clojure.string :refer [join]]
+            [clojure.test :refer :all]
             [faker.internet :as internet]
             [faker.lorem :as lorem]
-            [clojure.string :refer [join]]
-            [clj-http.client :as client]
-            [clojure.data.json :as json])
-  (:import [java.util UUID]
-           [java.time ZonedDateTime]))
+            [faker.name :as name])
+  (:import [java.time ZonedDateTime]
+           [java.util UUID]))
 
 ;; Random data generators.
 

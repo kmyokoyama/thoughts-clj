@@ -1,10 +1,10 @@
 (ns dev
-  (:require [datomic.api :as d]
-            [com.stuartsierra.component :as component]
-            [thoughts.application.config :refer [datomic-uri]]
+  (:require [com.stuartsierra.component :as component]
+            [datomic.api :as d]
             [thoughts.adapter.repository.datomic :refer [delete-database
-                                                         make-datomic-repository
-                                                         load-schema]]
+                                                         load-schema
+                                                         make-datomic-repository]]
+            [thoughts.application.config :refer [datomic-uri]]
             [thoughts.application.service :refer [make-service]]))
 
 ;; To remember:

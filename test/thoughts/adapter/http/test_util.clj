@@ -1,7 +1,7 @@
 (ns thoughts.adapter.http.test-util
-  (:require [clojure.test :refer :all]
-            [clj-http.client :as client]
+  (:require [clj-http.client :as client]
             [clojure.data.json :as json]
+            [clojure.test :refer :all]
             [thoughts.adapter.http.util :refer [path-prefix]])
   (:import (java.time ZonedDateTime)))
 

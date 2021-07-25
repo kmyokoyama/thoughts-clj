@@ -1,18 +1,17 @@
 (ns thoughts.adapter.http.http-test
   (:require [clojure.test :refer :all]
             [com.stuartsierra.component :as component]
-            [thoughts.application.test-util :refer :all]
             [thoughts.adapter.cache.in-mem :refer [make-in-mem-cache]]
             [thoughts.adapter.cache.redis :refer [make-redis-cache]]
-            [thoughts.adapter.repository.in-mem :refer [make-in-mem-repository]]
-            [thoughts.adapter.repository.datomic :refer [delete-database
-                                                         make-datomic-repository
-                                                         load-schema]]
-            [thoughts.application.config :refer [datomic-uri redis-uri http-host http-port system-test-mode]]
-            [thoughts.adapter.cache.in-mem :refer [make-in-mem-cache]]
-            [thoughts.application.service :refer [make-service]]
             [thoughts.adapter.http.component :refer [make-http-controller]]
-            [thoughts.adapter.http.test-util :refer :all]))
+            [thoughts.adapter.http.test-util :refer :all]
+            [thoughts.adapter.repository.datomic :refer [delete-database
+                                                         load-schema
+                                                         make-datomic-repository]]
+            [thoughts.adapter.repository.in-mem :refer [make-in-mem-repository]]
+            [thoughts.application.config :refer [datomic-uri http-host http-port redis-uri system-test-mode]]
+            [thoughts.application.service :refer [make-service]]
+            [thoughts.application.test-util :refer :all]))
 
 (def ^:private ^:const url (str "http://" http-host ":" http-port))
 

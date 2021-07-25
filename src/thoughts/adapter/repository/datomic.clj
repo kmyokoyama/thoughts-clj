@@ -1,12 +1,12 @@
 (ns thoughts.adapter.repository.datomic
-  (:require [datomic.api :as d]
+  (:require [clojure.java.io :as io]
             [com.stuartsierra.component :as component]
+            [datomic.api :as d]
             [taoensso.timbre :as log]
             [thoughts.application.core :refer :all]
-            [thoughts.port.repository :as p.repository]
-            [clojure.java.io :as io])
-  (:import [java.util Date UUID]
-           [java.time ZonedDateTime ZoneId]))
+            [thoughts.port.repository :as p.repository])
+  (:import [java.time ZonedDateTime ZoneId]
+           [java.util Date UUID]))
 
 (defn delete-database
   [uri]

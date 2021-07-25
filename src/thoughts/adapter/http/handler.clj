@@ -4,15 +4,15 @@
             [buddy.auth.middleware :refer [wrap-authentication]]
             [clojure.string :refer [split]]
             [compojure.core :refer :all]
+            [ring.middleware.defaults :refer [api-defaults wrap-defaults]]
+            [ring.middleware.json :refer [wrap-json-body]]
+            [ring.middleware.reload :refer [wrap-reload]]
             [schema.core :as s]
             [taoensso.timbre :as log]
+            [thoughts.adapter.http.util :refer :all]
             [thoughts.application.config :refer [http-api-jws-secret]]
             [thoughts.port.service :as p.service]
-            [thoughts.adapter.http.util :refer :all]
-            [thoughts.schema.http :refer :all]
-            [ring.middleware.defaults :refer [wrap-defaults api-defaults]]
-            [ring.middleware.json :refer [wrap-json-body]]
-            [ring.middleware.reload :refer [wrap-reload]])
+            [thoughts.schema.http :refer :all])
   (:import [clojure.lang ExceptionInfo]))
 
 (declare add-links)
