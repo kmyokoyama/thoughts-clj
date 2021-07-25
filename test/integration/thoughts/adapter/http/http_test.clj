@@ -64,7 +64,7 @@
    :full   [start-full-test-system stop-full-test-system]})
 
 (use-fixtures :each (fn [f]
-                      (let [[start-system! stop-system!] (config/system-test-mode start-stop-fns)
+                      (let [[start-system! stop-system!] (config/test-mode start-stop-fns)
                             sys (start-system!)]
                         (f)
                         (stop-system! sys))))
@@ -91,7 +91,7 @@
 
 ;; Tests.
 
-(deftest ^:system test-signup
+(deftest ^:integration test-signup
   (testing "Sign up with a single user"
     (let [response (http.helper/post (resource "signup") (application.helper/random-user))]
       (is (= "success" (:status (http.helper/get-body response))))
@@ -121,7 +121,7 @@
         (is (= "username" (get-in result [:context :attribute])))
         (is (= (clojure.string/lower-case first-username) (get-in result [:context :username])))))))
 
-(deftest ^:system test-login
+(deftest ^:integration test-login
   (testing "Login returns success when user exists"
     (let [user (application.helper/random-user)
           password (:password user)
@@ -148,7 +148,7 @@
       (is (= 400 (:status response)))                       ;; HTTP 400 Bad Request.
       (is ((complement contains?) result :token)))))
 
-(deftest ^:system test-logout
+(deftest ^:integration test-logout
   (testing "Logout returns success when user is already logged in"
     (let [{:keys [token]} (signup-and-login)
           {:keys [response body]} (http.helper/post-and-parse (resource "logout") token {})]
@@ -160,7 +160,7 @@
       (is (= "failure" (:status body)))
       (is (= 401 (:status response))))))                    ;; HTTP 401 Unauthorized.
 
-(deftest ^:system test-thought
+(deftest ^:integration test-thought
   (testing "Add a single thought"
     (let [{:keys [user-id token]} (signup-and-login)
           text (application.helper/random-text)
@@ -171,7 +171,7 @@
       (is (= text (:text result)))
       (is (= 0 (:likes result) (:rethoughts result) (:replies result))))))
 
-(deftest ^:system test-get-thoughts-from-user
+(deftest ^:integration test-get-thoughts-from-user
   (testing "Get two thoughts from the same user"
     (let [{:keys [user-id token]} (signup-and-login)
           first-thought-id (-> (http.helper/post-and-parse (resource "thought") token (application.helper/random-thought)) :result :id)
@@ -191,7 +191,7 @@
         (is (= 0 (:total body) (count result)))
         (is (empty? result))))))
 
-(deftest ^:system test-get-user-by-id
+(deftest ^:integration test-get-user-by-id
   (testing "Get an existing user returns successfully"
     (let [expected-user (application.helper/random-user)
           {:keys [user-id token]} (signup-and-login expected-user)
@@ -212,7 +212,7 @@
       (is (= "user" (:subject result)))
       (is (= (str user-id) (get-in result [:context :user-id]))))))
 
-(deftest ^:system test-get-thought-by-id
+(deftest ^:integration test-get-thought-by-id
   (testing "Get an existing thought returns successfully"
     (let [{:keys [user-id token]} (signup-and-login)
           expected-thought (application.helper/random-thought)
@@ -234,7 +234,7 @@
       (is (= "thought" (:subject result)))
       (is (= (str thought-id) (get-in result [:context :thought-id]))))))
 
-(deftest ^:system test-like
+(deftest ^:integration test-like
   (testing "Like an existing thought"
     (let [{:keys [token]} (signup-and-login)
           thought-id (-> (http.helper/post-and-parse (resource "thought") token (application.helper/random-thought)) :result :id)
@@ -272,7 +272,7 @@
       (is (= "thought" (:subject result)))
       (is (= (str thought-id) (get-in result [:context :thought-id]))))))
 
-(deftest ^:system test-unlike
+(deftest ^:integration test-unlike
   (testing "Unlike an existing thought previously liked"
     (let [{:keys [http.helper/user-id token]} (signup-and-login)
           thought-id (-> (http.helper/post-and-parse (resource "thought") token (application.helper/random-thought)) :result :id)]
@@ -325,7 +325,7 @@
       (is (= "thought" (:subject result)))
       (is (= (str thought-id) (get-in result [:context :thought-id]))))))
 
-(deftest ^:system test-add-reply
+(deftest ^:integration test-add-reply
   (testing "Add new reply to existing thought returns success"
     (let [{:keys [user-id token]} (signup-and-login)
           thought-id (-> (http.helper/post-and-parse (resource "thought") token (application.helper/random-thought)) :result :id)
@@ -348,7 +348,7 @@
       (is (= "thought" (:subject result)))
       (is (= (str thought-id) (get-in result [:context :thought-id]))))))
 
-(deftest ^:system test-get-rethought-by-id
+(deftest ^:integration test-get-rethought-by-id
   (testing "Get rethoughts from thought not rethoughted yet returns an empty list"
     (let [{:keys [token]} (signup-and-login)
           thought-id (-> (http.helper/post-and-parse (resource "thought") token (application.helper/random-thought)) :result :id)
@@ -359,7 +359,7 @@
       (is (= rethought-id (:id result)))
       (is (= thought-id (:source-thought-id result))))))
 
-(deftest ^:system test-get-rethoughts
+(deftest ^:integration test-get-rethoughts
   (testing "Get rethoughts from a thought already rethoughted returns all replies"
     (let [{:keys [user-id token]} (signup-and-login)
           thought-id (-> (http.helper/post-and-parse (resource "thought") token (application.helper/random-thought user-id)) :result :id)]
@@ -378,7 +378,7 @@
       (is (= "success" (:status body)))
       (is (empty? result)))))
 
-(deftest ^:system test-get-replies
+(deftest ^:integration test-get-replies
   (testing "Get rethoughts from a thought already rethoughted returns all replies"
     (let [{:keys [token]} (signup-and-login)
           thought-id (-> (http.helper/post-and-parse (resource "thought") token (application.helper/random-thought)) :result :id)]
@@ -396,7 +396,7 @@
       (is (= "success" (:status body)))
       (is (empty? result)))))
 
-(deftest ^:system test-follow
+(deftest ^:integration test-follow
   (testing "User follows another user"
     (let [{follower-id :user-id follower-token :token} (signup-and-login)
           {followed-id :user-id} (signup-and-login)
@@ -430,7 +430,7 @@
       (is (= (str user-id) (get-in result [:context :follower-id])))
       (is (= (str followed-id) (get-in result [:context :followed-id]))))))
 
-(deftest ^:system test-unfollow
+(deftest ^:integration test-unfollow
   (testing "User unfollows an user she/he follows"
     (let [{follower-id :user-id follower-token :token} (signup-and-login)
           {followed-id :user-id} (signup-and-login)
@@ -477,7 +477,7 @@
       (is (= (str user-id) (get-in result [:context :follower-id])))
       (is (= (str followed-id) (get-in result [:context :followed-id]))))))
 
-(deftest ^:system test-get-user-following
+(deftest ^:integration test-get-user-following
   (testing "Get following list of an user"
     (let [{follower-id :user-id follower-token :token} (signup-and-login)
           {followed-id :user-id} (signup-and-login)
@@ -494,7 +494,7 @@
       (is (= "success" (:status body)))
       (is (empty? result)))))
 
-(deftest ^:system test-get-user-followers
+(deftest ^:integration test-get-user-followers
   (testing "Get followers list of an user"
     (let [{follower-token :token} (signup-and-login)
           {followed-id :user-id} (signup-and-login)
@@ -511,7 +511,7 @@
       (is (= "success" (:status body)))
       (is (empty? result)))))
 
-(deftest ^:system test-get-feed
+(deftest ^:integration test-get-feed
   (testing "Get feed of an user returns most recent thoughts"
     (let [{first-user-id :user-id first-user-password :password} (signup (application.helper/random-user))
           {second-user-id :user-id second-user-password :password} (signup (application.helper/random-user))

@@ -28,7 +28,7 @@
 (def datomic-uri (environ/env :datomic-uri))
 (def redis-uri (environ/env :redis-uri))
 
-(def system-test-mode (->keyword (environ/env :system-test-mode) :in-mem))
+(def test-mode (->keyword (environ/env :test-mode) :in-mem))
 
 (def ^:private timbre-config {:timestamp-opts {:pattern "yyyy-MM-dd'T'HH:mm:ss.SSSX"}
                               :output-fn      (fn [{:keys [timestamp_ level hostname_ msg_]}]

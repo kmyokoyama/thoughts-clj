@@ -23,8 +23,8 @@
                                      :datomic-uri          "datomic:mem://dev-twitter"
                                      :redis-uri            "redis://localhost:6379"}}
              :debug  {:jvm-opts ["-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5000"]}
-             :in-mem {:env {:system-test-mode :in-mem}}
-             :full   {:env {:system-test-mode :full}}}
+             :in-mem {:env {:test-mode :in-mem}}
+             :full   {:env {:test-mode :full}}}
   :dependencies [[buddy/buddy-auth "2.2.0"]
                  [buddy/buddy-hashers "1.4.0"]
                  [com.datomic/datomic-free "0.9.5697"]
@@ -44,8 +44,7 @@
                  [ring-server "0.4.0"]]
   :repl-options {:init-ns dev}
   :main thoughts.application.main
-  :aliases {"test-system-in-mem" ["with-profile" "+in-mem" "test" ":system"]
-            "test-system-full"   ["with-profile" "+full" "test" ":system"]}
+  :aliases {"test-integration-in-mem" ["with-profile" "+in-mem" "test" ":integration"]
+            "test-integration-full"   ["with-profile" "+full" "test" ":integration"]}
   :test-selectors {:unit        :unit
-                   :integration :integration
-                   :system      :system})
+                   :integration :integration})
