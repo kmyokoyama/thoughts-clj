@@ -53,7 +53,7 @@
 
 ;; Checkers.
 
-(defn uuid-format?
+(defn uuid?
   [str]
   (try (UUID/fromString str)
        true
