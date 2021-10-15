@@ -1,6 +1,6 @@
-# twitter-clj [![CircleCI](https://circleci.com/gh/kmyokoyama/twitter-clj.svg?style=shield)](https://app.circleci.com/pipelines/github/kmyokoyama/twitter-clj?branch=master) [![GitHub](https://img.shields.io/badge/docs-apiary-blue)](https://twitterclj.docs.apiary.io/#) [![GitHub](https://img.shields.io/badge/version-0.0.1-informational)](https://twitterclj.docs.apiary.io/#) [![GitHub](https://img.shields.io/github/license/kmyokoyama/twitter-clj?color=green)](https://choosealicense.com/licenses/mit/)
+# thoughts-clj [![CircleCI](https://circleci.com/gh/kmyokoyama/twitter-clj.svg?style=shield)](https://app.circleci.com/pipelines/github/kmyokoyama/twitter-clj?branch=master) [![GitHub](https://img.shields.io/badge/docs-apiary-blue)](https://twitterclj.docs.apiary.io/#) [![GitHub](https://img.shields.io/badge/version-0.0.1-informational)](https://twitterclj.docs.apiary.io/#) [![GitHub](https://img.shields.io/github/license/kmyokoyama/twitter-clj?color=green)](https://choosealicense.com/licenses/mit/)
 
-Twitter-clone API for experimentation with Clojure.
+Twitter-like API for experimentation with Clojure.
 
 This is a toy project intended to be used as a platform for learning and experimenting with Clojure. It is like a canvas where I can try language features, libraries and tools related to back end web development with Clojure.
 

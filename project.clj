@@ -1,6 +1,6 @@
-(defproject twitter-clj "0.0.1-SNAPSHOT"
+(defproject thoughts-clj "0.0.1-SNAPSHOT"
   :description "Twitter-clone API for experimentation with Clojure."
-  :url "https://github.com/kmyokoyama/twitter-clj.git"
+  :url "https://github.com/kmyokoyama/thoughts-clj.git"
   :license {:name "MIT"
             :url  "https://choosealicense.com/licenses/mit/"}
   :resource-paths ["resources"]
@@ -19,7 +19,7 @@
                                      :http-api-version     "v0"
                                      :http-api-path-prefix "api"
                                      :http-api-jws-secret  "123"
-                                     :datomic-uri          "datomic:mem://dev-twitter"
+                                     :datomic-uri          "datomic:mem://dev-thoughts"
                                      :redis-uri            "redis://localhost:6379"}}
              :debug  {:jvm-opts ["-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5000"]}
              :in-mem {:env {:test-mode :in-mem}}
