@@ -1,4 +1,4 @@
-# thoughts-clj [![CircleCI](https://circleci.com/gh/kmyokoyama/twitter-clj.svg?style=shield)](https://app.circleci.com/pipelines/github/kmyokoyama/twitter-clj?branch=master) [![GitHub](https://img.shields.io/badge/docs-apiary-blue)](https://twitterclj.docs.apiary.io/#) [![GitHub](https://img.shields.io/badge/version-0.0.1-informational)](https://twitterclj.docs.apiary.io/#) [![GitHub](https://img.shields.io/github/license/kmyokoyama/twitter-clj?color=green)](https://choosealicense.com/licenses/mit/)
+# thoughts-clj [![CircleCI](https://circleci.com/gh/kmyokoyama/thoughts-clj.svg?style=shield)](https://app.circleci.com/pipelines/github/kmyokoyama/thoughts-clj?branch=master) [![GitHub](https://img.shields.io/badge/docs-apiary-blue)](https://twitterclj.docs.apiary.io/#) [![GitHub](https://img.shields.io/badge/version-0.0.1-informational)](https://twitterclj.docs.apiary.io/#) [![GitHub](https://img.shields.io/github/license/kmyokoyama/thoughts-clj?color=green)](https://choosealicense.com/licenses/mit/)
 
 Twitter-like API for experimentation with Clojure.
 
@@ -32,16 +32,16 @@ Configuration is specified at `resources/dev-config.edn`.
 
 ## API
 
-[Check out the current API documentation on Apiary](https://twitterclj.docs.apiary.io/#).
+[Check out the current API documentation on Apiary](https://thoughtsclj.docs.apiary.io/#).
 
 ## Features
 
-* Basic Twitter API:
+* Basic Twitter-like API:
     * Signup;
     * Login;
     * Logout;
-    * Tweet;
-    * Retweet (with and without comment);
+    * Post a thought;
+    * Re-thought (with or without comment);
     * Like/unlike a tweet;
     * Follow/unfollow another user.
     * Retrieve feed (timeline).
