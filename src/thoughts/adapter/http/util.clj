@@ -9,8 +9,8 @@
 (defn- is-better-str
   [key]
   (or
-    (= key :id)
-    (some #(.endsWith (str key) %) ["-id", "-date"])))
+   (= key :id)
+   (some #(.endsWith (str key) %) ["-id", "-date"])))
 
 (defn- value-writer
   [key value]
@@ -45,8 +45,8 @@
 (defn add-success-result
   [result]
   (cond-> status-success
-          (sequential? result) (assoc :total (count result))
-          true (assoc :result result)))
+    (sequential? result) (assoc :total (count result))
+    true (assoc :result result)))
 
 (defn add-failure-result
   [result]

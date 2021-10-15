@@ -36,10 +36,10 @@
 (defn dev-system-map
   []
   (component/system-map
-    :repository (make-datomic-repository datomic-uri)
-    :service (component/using
-               (make-service)
-               [:repository])))
+   :repository (make-datomic-repository datomic-uri)
+   :service (component/using
+             (make-service)
+             [:repository])))
 
 (defn start-dev-system
   []

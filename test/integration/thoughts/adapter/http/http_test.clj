@@ -18,26 +18,26 @@
 (defn- in-mem-test-system-map
   []
   (component/system-map
-    :repository (a.repository.in-mem/make-in-mem-repository)
-    :cache (a.cache.in-mem/make-in-mem-cache)
-    :service (component/using
-               (service/make-service)
-               [:repository :cache])
-    :controller (component/using
-                  (a.http.component/make-http-controller config/http-host config/http-port)
-                  [:service])))
+   :repository (a.repository.in-mem/make-in-mem-repository)
+   :cache (a.cache.in-mem/make-in-mem-cache)
+   :service (component/using
+             (service/make-service)
+             [:repository :cache])
+   :controller (component/using
+                (a.http.component/make-http-controller config/http-host config/http-port)
+                [:service])))
 
 (defn- full-test-system-map
   []
   (component/system-map
-    :repository (a.repository.datomic/make-datomic-repository config/datomic-uri)
-    :cache (a.cache.redis/make-redis-cache config/redis-uri)
-    :service (component/using
-               (service/make-service)
-               [:repository :cache])
-    :controller (component/using
-                  (a.http.component/make-http-controller config/http-host config/http-port)
-                  [:service])))
+   :repository (a.repository.datomic/make-datomic-repository config/datomic-uri)
+   :cache (a.cache.redis/make-redis-cache config/redis-uri)
+   :service (component/using
+             (service/make-service)
+             [:repository :cache])
+   :controller (component/using
+                (a.http.component/make-http-controller config/http-host config/http-port)
+                [:service])))
 
 (defn- start-in-mem-test-system
   []
@@ -239,8 +239,8 @@
     (let [{:keys [token]} (signup-and-login)
           thought-id (-> (http.helper/post-and-parse (resource "thought") token (application.helper/random-thought)) :result :id)
           {:keys [response body result]} (http.helper/post-and-parse (resource (str "thought/" thought-id "/like"))
-                                                         token
-                                                         {})]
+                                                                     token
+                                                                     {})]
       (is (= 200 (:status response)))                       ;; HTTP 200 OK.
       (is (= "success" (:status body)))
       (is (= thought-id (:id result)))
@@ -251,8 +251,8 @@
           thought-id (-> (http.helper/post-and-parse (resource "thought") token (application.helper/random-thought)) :result :id)]
       (http.helper/post (resource (str "thought/" thought-id "/like")) token {})
       (let [{:keys [response body result]} (http.helper/post-and-parse (resource (str "thought/" thought-id "/like"))
-                                                           token
-                                                           {})]
+                                                                       token
+                                                                       {})]
         (is (= 400 (:status response)))                     ;; HTTP 400 Bad Request.
         (is (= "failure" (:status body)))
         (is (= "invalid action" (:type result)))
@@ -264,8 +264,8 @@
     (let [{:keys [http.helper/user-id token]} (signup-and-login)
           thought-id (application.helper/random-uuid)
           {:keys [response body result]} (http.helper/post-and-parse (resource (str "thought/" thought-id "/like"))
-                                                         token
-                                                         {})]
+                                                                     token
+                                                                     {})]
       (is (= 400 (:status response)))                       ;; HTTP 400 Bad Request.
       (is (= "failure" (:status body)))
       (is (= "resource not found" (:type result)))
@@ -278,8 +278,8 @@
           thought-id (-> (http.helper/post-and-parse (resource "thought") token (application.helper/random-thought)) :result :id)]
       (http.helper/post (resource (str "thought/" thought-id "/like")) token {})
       (let [{:keys [response body result]} (http.helper/post-and-parse (resource (str "thought/" thought-id "/unlike"))
-                                                           token
-                                                           {})]
+                                                                       token
+                                                                       {})]
         (is (= 200 (:status response)))                     ;; HTTP 200 OK.
         (is (= "success" (:status body)))
         (is (= thought-id (:id result)))
@@ -289,8 +289,8 @@
     (let [{:keys [user-id token]} (signup-and-login)
           thought-id (-> (http.helper/post-and-parse (resource "thought") token (application.helper/random-thought)) :result :id)
           {:keys [response body result]} (http.helper/post-and-parse (resource (str "thought/" thought-id "/unlike"))
-                                                         token
-                                                         {})]
+                                                                     token
+                                                                     {})]
       (is (= 400 (:status response)))                       ;; HTTP 400 Bad Request.
       (is (= "failure" (:status body)))
       (is (= "invalid action" (:type result)))
@@ -304,8 +304,8 @@
           thought-id (-> (http.helper/post-and-parse (resource "thought") token (application.helper/random-thought)) :result :id)]
       (http.helper/post (resource (str "thought/" thought-id "/like")) token {})
       (let [{:keys [response body result]} (http.helper/post-and-parse (resource (str "thought/" thought-id "/unlike"))
-                                                           other-token
-                                                           {})]
+                                                                       other-token
+                                                                       {})]
         (is (= 400 (:status response)))                     ;; HTTP 400 Bad Request.
         (is (= "failure" (:status body)))
         (is (= "invalid action" (:type result)))
@@ -317,8 +317,8 @@
     (let [{:keys [token]} (signup-and-login)
           thought-id (application.helper/random-uuid)
           {:keys [response body result]} (http.helper/post-and-parse (resource (str "thought/" thought-id "/unlike"))
-                                                         token
-                                                         {})]
+                                                                     token
+                                                                     {})]
       (is (= 400 (:status response)))                       ;; HTTP 400 Bad Request.
       (is (= "failure" (:status body)))
       (is (= "resource not found" (:type result)))

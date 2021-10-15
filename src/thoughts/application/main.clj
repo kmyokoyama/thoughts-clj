@@ -12,14 +12,14 @@
 (defn- system-map
   []
   (component/system-map
-    :repository (a.repository.datomic/make-datomic-repository config/datomic-uri)
-    :cache (a.cache.in-mem/make-in-mem-cache)
-    :service (component/using
-               (service/make-service)
-               [:repository :cache])
-    :controller (component/using
-                  (a.http.component/make-http-controller config/http-host config/http-port)
-                  [:service])))
+   :repository (a.repository.datomic/make-datomic-repository config/datomic-uri)
+   :cache (a.cache.in-mem/make-in-mem-cache)
+   :service (component/using
+             (service/make-service)
+             [:repository :cache])
+   :controller (component/using
+                (a.http.component/make-http-controller config/http-host config/http-port)
+                [:service])))
 
 (defn- on-exit
   [sys]

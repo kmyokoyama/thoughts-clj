@@ -1,8 +1,8 @@
 (ns unit.thoughts.application.core-test
   (:require [clojure.test :refer :all]
+            [matcher-combinators.test :refer [match?]]
             [thoughts.application.core :as core]
-            [unit.thoughts.application.helper :as application.helper]
-            [matcher-combinators.test :refer [match?]]))
+            [unit.thoughts.application.helper :as application.helper]))
 
 (deftest ^:unit new-thought-test
   (testing "new-thought creates a fresh new thought entity"

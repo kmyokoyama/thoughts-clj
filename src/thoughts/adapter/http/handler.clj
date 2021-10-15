@@ -288,40 +288,40 @@
 (defn public-routes
   [service]
   (compojure.core/routes
-    (compojure/POST (:signup routes-map) req (signup req service))
-    (compojure/POST (:login routes-map) req (login req service))))
+   (compojure/POST (:signup routes-map) req (signup req service))
+   (compojure/POST (:login routes-map) req (login req service))))
 
 (defn user-routes
   [service]
   (compojure.core/routes
-    (compojure/POST (:logout routes-map) req (logout req service))
-    (compojure/POST (:logout-all routes-map) req (logout-all req service))
-    (compojure/GET (:feed routes-map) req (feed req service))
-    (compojure/GET (:get-user-by-id routes-map) req (get-user-by-id req service))
-    (compojure/GET (:get-thoughts-by-user-id routes-map) req (get-thoughts-by-user-id req service))
-    (compojure/GET (:get-user-following routes-map) req (get-user-following req service))
-    (compojure/GET (:get-user-followers routes-map) req (get-user-followers req service))
-    (compojure/GET (:get-thought-by-id routes-map) req (get-thought-by-id req service))
-    (compojure/GET (:get-thoughts-with-hashtag routes-map) req (get-thoughts-with-hashtag req service))
-    (compojure/GET (:get-replies-by-thought-id routes-map) req (get-replies-by-thought-id req service))
-    (compojure/GET (:get-rethoughts-by-thought-id routes-map) req (get-rethoughts-by-thought-id req service))
-    (compojure/GET (:get-rethought-by-id routes-map) req (get-rethought-by-id req service))
-    (compojure/POST (:follow routes-map) req (follow req service))
-    (compojure/POST (:unfollow routes-map) req (unfollow req service))
-    (compojure/POST (:thought routes-map) req (thought req service))
-    (compojure/POST (:reply routes-map) req (reply req service))
-    (compojure/POST (:rethought routes-map) req (rethought req service))
-    (compojure/POST (:rethought-with-comment routes-map) req (rethought-with-comment req service))
-    (compojure/POST (:like routes-map) req (like req service))
-    (compojure/POST (:unlike routes-map) req (unlike req service))))
+   (compojure/POST (:logout routes-map) req (logout req service))
+   (compojure/POST (:logout-all routes-map) req (logout-all req service))
+   (compojure/GET (:feed routes-map) req (feed req service))
+   (compojure/GET (:get-user-by-id routes-map) req (get-user-by-id req service))
+   (compojure/GET (:get-thoughts-by-user-id routes-map) req (get-thoughts-by-user-id req service))
+   (compojure/GET (:get-user-following routes-map) req (get-user-following req service))
+   (compojure/GET (:get-user-followers routes-map) req (get-user-followers req service))
+   (compojure/GET (:get-thought-by-id routes-map) req (get-thought-by-id req service))
+   (compojure/GET (:get-thoughts-with-hashtag routes-map) req (get-thoughts-with-hashtag req service))
+   (compojure/GET (:get-replies-by-thought-id routes-map) req (get-replies-by-thought-id req service))
+   (compojure/GET (:get-rethoughts-by-thought-id routes-map) req (get-rethoughts-by-thought-id req service))
+   (compojure/GET (:get-rethought-by-id routes-map) req (get-rethought-by-id req service))
+   (compojure/POST (:follow routes-map) req (follow req service))
+   (compojure/POST (:unfollow routes-map) req (unfollow req service))
+   (compojure/POST (:thought routes-map) req (thought req service))
+   (compojure/POST (:reply routes-map) req (reply req service))
+   (compojure/POST (:rethought routes-map) req (rethought req service))
+   (compojure/POST (:rethought-with-comment routes-map) req (rethought-with-comment req service))
+   (compojure/POST (:like routes-map) req (like req service))
+   (compojure/POST (:unlike routes-map) req (unlike req service))))
 
 (defn handler
   [service]
   (-> (compojure.core/routes
-        (public-routes service)
-        (-> (user-routes service)
-            (wrap-authenticated)
-            (middleware/wrap-authentication jws-backend)))
+       (public-routes service)
+       (-> (user-routes service)
+           (wrap-authenticated)
+           (middleware/wrap-authentication jws-backend)))
       (wrap-service-exception)
       (wrap-schema-exception)
       ;(wrap-default-exception)
@@ -346,11 +346,11 @@
 (defn- make-links-map
   [host response links]
   (assoc response :_links
-                  (zipmap (keys links)
-                          (map (fn [val] (let [path-key (val 0)
-                                               path-variables (val 1)]
-                                           {:href (a.http.util/join-path host (replace-path (path-key routes-map) path-variables))}))
-                               (vals links)))))
+         (zipmap (keys links)
+                 (map (fn [val] (let [path-key (val 0)
+                                      path-variables (val 1)]
+                                  {:href (a.http.util/join-path host (replace-path (path-key routes-map) path-variables))}))
+                      (vals links)))))
 
 (defmulti add-links (fn [selector-key & _args] selector-key))
 

@@ -12,6 +12,7 @@
                                      [nubank/matcher-combinators "3.3.0"]]
                       :plugins      [[lein-auto "0.1.3"]
                                      [lein-environ "1.2.0"]
+                                     [lein-cljfmt "0.8.0"]
                                      [lein-nsorg "0.3.0"]]
                       :jvm-opts     ["-Dconfig.edn=resources/dev-config.edn"]
                       :env          {:http-host            "127.0.0.1"
