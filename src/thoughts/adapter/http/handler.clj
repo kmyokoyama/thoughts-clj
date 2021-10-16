@@ -294,9 +294,9 @@
 (defn public-routes
   [service]
   (compojure.core/routes
-    (compojure/GET (:version routes-map) req (version req service))
-    (compojure/POST (:signup routes-map) req (signup req service))
-    (compojure/POST (:login routes-map) req (login req service))))
+   (compojure/GET (:version routes-map) req (version req service))
+   (compojure/POST (:signup routes-map) req (signup req service))
+   (compojure/POST (:login routes-map) req (login req service))))
 
 (defn user-routes
   [service]
