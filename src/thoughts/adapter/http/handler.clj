@@ -17,6 +17,11 @@
 
 (declare add-links)
 
+(defn version
+  [_req _service]
+  (log/info "Get version")
+  (a.http.util/ok-with-success {:version "0.0.1"}))
+
 (defn signup
   [req service]
   (s/validate s.http/SignupRequest (:body req))
@@ -262,7 +267,8 @@
                                           :options    {:alg :hs512}}))
 
 ;; It is needed for HATEAOS.
-(def ^:private routes-map {:signup                       (a.http.util/path-prefix "/signup")
+(def ^:private routes-map {:version                      (a.http.util/path-prefix "/version")
+                           :signup                       (a.http.util/path-prefix "/signup")
                            :login                        (a.http.util/path-prefix "/login")
                            :logout                       (a.http.util/path-prefix "/logout")
                            :logout-all                   (a.http.util/path-prefix "/logout/all")
@@ -288,8 +294,9 @@
 (defn public-routes
   [service]
   (compojure.core/routes
-   (compojure/POST (:signup routes-map) req (signup req service))
-   (compojure/POST (:login routes-map) req (login req service))))
+    (compojure/GET (:version routes-map) req (version req service))
+    (compojure/POST (:signup routes-map) req (signup req service))
+    (compojure/POST (:login routes-map) req (login req service))))
 
 (defn user-routes
   [service]

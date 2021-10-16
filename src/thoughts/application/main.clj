@@ -5,6 +5,7 @@
             [thoughts.adapter.cache.in-mem :as a.cache.in-mem]
             [thoughts.adapter.http.component :as a.http.component]
             [thoughts.adapter.repository.datomic :as a.repository.datomic]
+            [thoughts.adapter.repository.in-mem :as a.repository.in-mem]
             [thoughts.application.config :as config]
             [thoughts.application.service :as service])
   (:gen-class))
@@ -12,7 +13,7 @@
 (defn- system-map
   []
   (component/system-map
-   :repository (a.repository.datomic/make-datomic-repository config/datomic-uri)
+   :repository (a.repository.in-mem/make-in-mem-repository)
    :cache (a.cache.in-mem/make-in-mem-cache)
    :service (component/using
              (service/make-service)

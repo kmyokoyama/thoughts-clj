@@ -10,7 +10,7 @@
   (start [this]
     (log/info "Starting HTTP server on" (str "http://" host ":" port))
     (assoc this :http-server
-           (jetty/run-jetty (a.http.handler/handler service) {:port port :join? false})))
+                (jetty/run-jetty (a.http.handler/handler service) {:host host :port port :join? false})))
 
   (stop [this]
     (log/info "Stopping HTTP server" port)

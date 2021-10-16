@@ -44,6 +44,7 @@
                  [ring-server "0.4.0"]]
   :repl-options {:init-ns dev}
   :main thoughts.application.main
+  :aot [thoughts.application.main]
   :aliases {"test-integration-in-mem" ["with-profile" "+in-mem" "test" ":integration"]
             "test-integration-full"   ["with-profile" "+full" "test" ":integration"]
             "nsorg-fix"               ["nsorg" "--replace"]
