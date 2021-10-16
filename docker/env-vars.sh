@@ -1,0 +1,7 @@
+#!/bin/sh
+
+export HTTP_HOST=0.0.0.0
+export HTTP_PORT=3000
+export HTTP_API_VERSION=v0
+export HTTP_API_PATH_PREFIX=api
+export HTTP_API_JWS_SECRET=123
