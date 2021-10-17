@@ -3,9 +3,9 @@
             [ring.middleware.defaults :refer :all]
             [taoensso.timbre :as log]
             [thoughts.adapter.cache.in-mem :as a.cache.in-mem]
+            [thoughts.adapter.config.simple-config :as a.config.simple-config]
             [thoughts.adapter.http.component :as a.http.component]
             [thoughts.adapter.repository.in-mem :as a.repository.in-mem]
-            [thoughts.adapter.config.simple-config :as a.config.simple-config]
             [thoughts.application.config :as config]
             [thoughts.application.service :as service])
   (:gen-class))
@@ -13,15 +13,15 @@
 (defn- system-map
   []
   (component/system-map
-    :config (a.config.simple-config/make-simple-config)
-    :repository (a.repository.in-mem/make-in-mem-repository)
-    :cache (a.cache.in-mem/make-in-mem-cache)
-    :service (component/using
-                (service/make-service)
-                [:repository :cache])
-    :controller (component/using
-                   (a.http.component/make-http-controller)
-                   [:config :service])))
+   :config (a.config.simple-config/make-simple-config)
+   :repository (a.repository.in-mem/make-in-mem-repository)
+   :cache (a.cache.in-mem/make-in-mem-cache)
+   :service (component/using
+             (service/make-service)
+             [:repository :cache])
+   :controller (component/using
+                (a.http.component/make-http-controller)
+                [:config :service])))
 
 (defn- on-exit
   [sys]

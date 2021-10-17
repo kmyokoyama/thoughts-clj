@@ -1,8 +1,8 @@
 (ns thoughts.adapter.config.simple-config
   (:require [com.stuartsierra.component :as component]
+            [environ.core :as environ]
             [taoensso.timbre :as log]
-            [thoughts.port.config :as p.config]
-            [environ.core :as environ]))
+            [thoughts.port.config :as p.config]))
 
 (defn ^:private ->keyword
   ([s]

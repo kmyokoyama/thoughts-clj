@@ -13,8 +13,8 @@
           port (p.config/value-of! config :http-port)]
       (log/info "Starting HTTP server on" (str "http://" host ":" port))
       (assoc this
-        :http-server
-        (jetty/run-jetty (a.http.handler/handler config service) {:host host :port port :join? false}))))
+             :http-server
+             (jetty/run-jetty (a.http.handler/handler config service) {:host host :port port :join? false}))))
 
   (stop [this]
     (log/info "Stopping HTTP server")

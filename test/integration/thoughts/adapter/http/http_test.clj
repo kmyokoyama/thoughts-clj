@@ -4,13 +4,13 @@
             [integration.thoughts.adapter.http.helper :as http.helper]
             [thoughts.adapter.cache.in-mem :as a.cache.in-mem]
             [thoughts.adapter.cache.redis :as a.cache.redis]
+            [thoughts.adapter.config.simple-config :as a.config.simple-config]
             [thoughts.adapter.http.component :as a.http.component]
             [thoughts.adapter.repository.datomic :as a.repository.datomic]
             [thoughts.adapter.repository.in-mem :as a.repository.in-mem]
             [thoughts.application.config :as config]
             [thoughts.application.service :as service]
-            [unit.thoughts.application.helper :as application.helper]
-            [thoughts.adapter.config.simple-config :as a.config.simple-config]))
+            [unit.thoughts.application.helper :as application.helper]))
 
 (def ^:private ^:const url (str "http://" config/http-host ":" config/http-port))
 
@@ -19,7 +19,7 @@
 (defn- in-mem-test-system-map
   []
   (component/system-map
-    :config (a.config.simple-config/make-simple-config)
+   :config (a.config.simple-config/make-simple-config)
    :repository (a.repository.in-mem/make-in-mem-repository)
    :cache (a.cache.in-mem/make-in-mem-cache)
    :service (component/using
@@ -32,7 +32,7 @@
 (defn- full-test-system-map
   []
   (component/system-map
-    :config (a.config.simple-config/make-simple-config)
+   :config (a.config.simple-config/make-simple-config)
    :repository (a.repository.datomic/make-datomic-repository config/datomic-uri)
    :cache (a.cache.redis/make-redis-cache config/redis-uri)
    :service (component/using

@@ -11,9 +11,9 @@
             [taoensso.timbre :as log]
             [thoughts.adapter.http.util :as a.http.util]
             [thoughts.application.config :as config]
+            [thoughts.port.config :as p.config]
             [thoughts.port.service :as p.service]
-            [thoughts.schema.http :as s.http]
-            [thoughts.port.config :as p.config])
+            [thoughts.schema.http :as s.http])
   (:import [clojure.lang ExceptionInfo]))
 
 (declare add-links)
@@ -304,9 +304,9 @@
         api-path-prefix (p.config/value-of! config :http-api-path-prefix)
         routes-map (routes api-version api-path-prefix)]
     (compojure.core/routes
-      (compojure/GET (:version routes-map) req (version req service))
-      (compojure/POST (:signup routes-map) req (signup req service))
-      (compojure/POST (:login routes-map) req (login req service)))))
+     (compojure/GET (:version routes-map) req (version req service))
+     (compojure/POST (:signup routes-map) req (signup req service))
+     (compojure/POST (:login routes-map) req (login req service)))))
 
 (defn user-routes
   [config service]
@@ -314,26 +314,26 @@
         api-path-prefix (p.config/value-of! config :http-api-path-prefix)
         routes-map (routes api-version api-path-prefix)]
     (compojure.core/routes
-      (compojure/POST (:logout routes-map) req (logout req service))
-      (compojure/POST (:logout-all routes-map) req (logout-all req service))
-      (compojure/GET (:feed routes-map) req (feed req service))
-      (compojure/GET (:get-user-by-id routes-map) req (get-user-by-id req service))
-      (compojure/GET (:get-thoughts-by-user-id routes-map) req (get-thoughts-by-user-id req service))
-      (compojure/GET (:get-user-following routes-map) req (get-user-following req service))
-      (compojure/GET (:get-user-followers routes-map) req (get-user-followers req service))
-      (compojure/GET (:get-thought-by-id routes-map) req (get-thought-by-id req service))
-      (compojure/GET (:get-thoughts-with-hashtag routes-map) req (get-thoughts-with-hashtag req service))
-      (compojure/GET (:get-replies-by-thought-id routes-map) req (get-replies-by-thought-id req service))
-      (compojure/GET (:get-rethoughts-by-thought-id routes-map) req (get-rethoughts-by-thought-id req service))
-      (compojure/GET (:get-rethought-by-id routes-map) req (get-rethought-by-id req service))
-      (compojure/POST (:follow routes-map) req (follow req service))
-      (compojure/POST (:unfollow routes-map) req (unfollow req service))
-      (compojure/POST (:thought routes-map) req (thought req service))
-      (compojure/POST (:reply routes-map) req (reply req service))
-      (compojure/POST (:rethought routes-map) req (rethought req service))
-      (compojure/POST (:rethought-with-comment routes-map) req (rethought-with-comment req service))
-      (compojure/POST (:like routes-map) req (like req service))
-      (compojure/POST (:unlike routes-map) req (unlike req service)))))
+     (compojure/POST (:logout routes-map) req (logout req service))
+     (compojure/POST (:logout-all routes-map) req (logout-all req service))
+     (compojure/GET (:feed routes-map) req (feed req service))
+     (compojure/GET (:get-user-by-id routes-map) req (get-user-by-id req service))
+     (compojure/GET (:get-thoughts-by-user-id routes-map) req (get-thoughts-by-user-id req service))
+     (compojure/GET (:get-user-following routes-map) req (get-user-following req service))
+     (compojure/GET (:get-user-followers routes-map) req (get-user-followers req service))
+     (compojure/GET (:get-thought-by-id routes-map) req (get-thought-by-id req service))
+     (compojure/GET (:get-thoughts-with-hashtag routes-map) req (get-thoughts-with-hashtag req service))
+     (compojure/GET (:get-replies-by-thought-id routes-map) req (get-replies-by-thought-id req service))
+     (compojure/GET (:get-rethoughts-by-thought-id routes-map) req (get-rethoughts-by-thought-id req service))
+     (compojure/GET (:get-rethought-by-id routes-map) req (get-rethought-by-id req service))
+     (compojure/POST (:follow routes-map) req (follow req service))
+     (compojure/POST (:unfollow routes-map) req (unfollow req service))
+     (compojure/POST (:thought routes-map) req (thought req service))
+     (compojure/POST (:reply routes-map) req (reply req service))
+     (compojure/POST (:rethought routes-map) req (rethought req service))
+     (compojure/POST (:rethought-with-comment routes-map) req (rethought-with-comment req service))
+     (compojure/POST (:like routes-map) req (like req service))
+     (compojure/POST (:unlike routes-map) req (unlike req service)))))
 
 (defn handler
   [config service]

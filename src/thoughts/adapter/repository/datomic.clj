@@ -4,8 +4,8 @@
             [datomic.api :as d]
             [taoensso.timbre :as log]
             [thoughts.application.core :as core]
-            [thoughts.port.repository :as p.repository]
-            [thoughts.port.config :as p.config])
+            [thoughts.port.config :as p.config]
+            [thoughts.port.repository :as p.repository])
   (:import [java.time ZonedDateTime ZoneId]
            [java.util Date UUID]))
 
