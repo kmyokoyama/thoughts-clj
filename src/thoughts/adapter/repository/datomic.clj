@@ -4,7 +4,8 @@
             [datomic.api :as d]
             [taoensso.timbre :as log]
             [thoughts.application.core :as core]
-            [thoughts.port.repository :as p.repository])
+            [thoughts.port.repository :as p.repository]
+            [thoughts.port.config :as p.config])
   (:import [java.time ZonedDateTime ZoneId]
            [java.util Date UUID]))
 
@@ -202,20 +203,21 @@
     {:db/id       [:user/id follower-uuid]
      :user/follow #{[:user/id followed-uuid]}}))
 
-(defrecord DatomicRepository [uri conn]
+(defrecord DatomicRepository [conn config]
   component/Lifecycle
   (start
     [this]
     (log/info "Starting Datomic repository")
-    (if (d/create-database uri)
-      (log/info "Creating database")
-      (log/info "Database already exists"))
-    (let [conn (d/connect uri)]
-      (if (clojure.string/starts-with? uri "datomic:mem")
-        (do
-          (log/info "Loading schema into database")
-          (load-schema conn "schema.edn")))
-      (assoc this :conn conn)))
+    (let [uri (p.config/value-of! config :datomic-uri)]
+      (if (d/create-database uri)
+        (log/info "Creating database")
+        (log/info "Database already exists"))
+      (let [conn (d/connect uri)]
+        (if (clojure.string/starts-with? uri "datomic:mem")
+          (do
+            (log/info "Loading schema into database")
+            (load-schema conn "schema.edn")))
+        (assoc this :conn conn))))
 
   (stop
     [_this]
@@ -396,5 +398,5 @@
              (map (fn [result] (update result :source-thought-id str))))))))
 
 (defn make-datomic-repository
-  [uri]
-  (map->DatomicRepository {:uri uri}))
+  []
+  (map->DatomicRepository {}))

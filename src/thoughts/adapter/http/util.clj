@@ -81,10 +81,8 @@
   {:status 501 :headers {"Content-Type" "text/plain"}})
 
 (defn new-token
-  [secret user-id role session-id]
-  (jwt/sign {:user-id user-id :role role :session-id session-id} secret {:alg :hs512}))
-
-(def create-token (partial new-token config/http-api-jws-secret))
+  [jws-secret user-id role session-id]
+  (jwt/sign {:user-id user-id :role role :session-id session-id} jws-secret {:alg :hs512}))
 
 (defn add-leading-slash
   [path]
@@ -104,9 +102,9 @@
       (clojure.string/replace #"!" "://")))
 
 (defn path-prefix
-  [path]
-  (->> (list config/http-api-path-prefix
-             config/http-api-version
+  [api-version api-path-prefix path]
+  (->> (list api-path-prefix
+             api-version
              path)
        (apply join-path)
        (add-leading-slash)))

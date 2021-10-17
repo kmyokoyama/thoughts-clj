@@ -2,7 +2,8 @@
   (:require [com.stuartsierra.component :as component]
             [taoensso.carmine :as carmine]
             [taoensso.timbre :as log]
-            [thoughts.port.cache :as p]))
+            [thoughts.port.cache :as p]
+            [thoughts.port.config :as p.config]))
 
 (defn- key-join
   [& key-parts]
@@ -45,12 +46,13 @@
                   (carmine/del (user-sessions-key user-id))
                   (apply carmine/del (map session-key session-ids)))))
 
-(defrecord RedisCache [uri conn]
+(defrecord RedisCache [conn config]
   component/Lifecycle
   (start
     [cache]
     (log/info "Starting Redis cache")
-    (let [redis-conn {:pool {} :spec {:uri uri}}]
+    (let [uri (p.config/value-of! config :redis-uri)
+          redis-conn {:pool {} :spec {:uri uri}}]
       (carmine/wcar redis-conn (carmine/ping))                          ;; Throws a ConnectException preventing the component from starting.
       (assoc cache :conn redis-conn)))
 
@@ -85,5 +87,5 @@
     (remove-session conn criteria)))
 
 (defn make-redis-cache
-  [uri]
-  (map->RedisCache {:uri uri}))
+  []
+  (map->RedisCache {}))

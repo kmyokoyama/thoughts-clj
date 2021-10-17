@@ -12,7 +12,8 @@
             [thoughts.adapter.http.util :as a.http.util]
             [thoughts.application.config :as config]
             [thoughts.port.service :as p.service]
-            [thoughts.schema.http :as s.http])
+            [thoughts.schema.http :as s.http]
+            [thoughts.port.config :as p.config])
   (:import [clojure.lang ExceptionInfo]))
 
 (declare add-links)
@@ -33,13 +34,14 @@
       (a.http.util/created (add-links :user req user)))))
 
 (defn login
-  [req service]
+  [req config service]
   (s/validate s.http/LoginRequest (:body req))
   (let [{:keys [user-id password]} (:body req)]
     (if (and (p.service/user-exists? service user-id)
              (p.service/password-match? service user-id password))
       (let [session-id (p.service/login service user-id)
-            token (a.http.util/create-token user-id :user session-id)]
+            jws-secret (p.config/value-of! config :http-api-jws-secret)
+            token (a.http.util/new-token jws-secret user-id :user session-id)]
         (log/info "Login of user" (a.http.util/f-id user-id))
         (a.http.util/ok-with-success {:token token}))
       (do (a.http.util/log-failure "Login failed (wrong user ID or password)")
@@ -262,73 +264,84 @@
 
 ;; Routes.
 
-(def ^:private jws-backend (backends/jws {:secret     config/http-api-jws-secret
-                                          :token-name "Bearer"
-                                          :options    {:alg :hs512}}))
+(defn ^:private jws-backend
+  [jws-secret]
+  (backends/jws {:secret     jws-secret
+                 :token-name "Bearer"
+                 :options    {:alg :hs512}}))
 
 ;; It is needed for HATEAOS.
-(def ^:private routes-map {:version                      (a.http.util/path-prefix "/version")
-                           :signup                       (a.http.util/path-prefix "/signup")
-                           :login                        (a.http.util/path-prefix "/login")
-                           :logout                       (a.http.util/path-prefix "/logout")
-                           :logout-all                   (a.http.util/path-prefix "/logout/all")
-                           :feed                         (a.http.util/path-prefix "/feed")
-                           :get-user-by-id               (a.http.util/path-prefix "/user/:user-id")
-                           :get-thoughts-by-user-id      (a.http.util/path-prefix "/user/:user-id/thoughts")
-                           :get-user-following           (a.http.util/path-prefix "/user/:user-id/following")
-                           :get-replies-by-thought-id    (a.http.util/path-prefix "/thought/:thought-id/replies")
-                           :get-user-followers           (a.http.util/path-prefix "/user/:user-id/followers")
-                           :get-thought-by-id            (a.http.util/path-prefix "/thought/:thought-id")
-                           :get-thoughts-with-hashtag    (a.http.util/path-prefix "/thought/hashtag/:hashtag")
-                           :get-rethoughts-by-thought-id (a.http.util/path-prefix "/thought/:thought-id/rethoughts")
-                           :get-rethought-by-id          (a.http.util/path-prefix "/rethought/:rethought-id")
-                           :follow                       (a.http.util/path-prefix "/user/:user-id/follow")
-                           :unfollow                     (a.http.util/path-prefix "/user/:user-id/unfollow")
-                           :thought                      (a.http.util/path-prefix "/thought")
-                           :reply                        (a.http.util/path-prefix "/thought/:thought-id/reply")
-                           :rethought                    (a.http.util/path-prefix "/thought/:thought-id/rethought")
-                           :rethought-with-comment       (a.http.util/path-prefix "/thought/:thought-id/rethought-comment")
-                           :like                         (a.http.util/path-prefix "/thought/:thought-id/like")
-                           :unlike                       (a.http.util/path-prefix "/thought/:thought-id/unlike")})
+(defn ^:private routes
+  [api-version api-path-prefix]
+  (let [path (partial a.http.util/path-prefix api-version api-path-prefix)]
+    {:version                      (path "/version")
+     :signup                       (path "/signup")
+     :login                        (path "/login")
+     :logout                       (path "/logout")
+     :logout-all                   (path "/logout/all")
+     :feed                         (path "/feed")
+     :get-user-by-id               (path "/user/:user-id")
+     :get-thoughts-by-user-id      (path "/user/:user-id/thoughts")
+     :get-user-following           (path "/user/:user-id/following")
+     :get-replies-by-thought-id    (path "/thought/:thought-id/replies")
+     :get-user-followers           (path "/user/:user-id/followers")
+     :get-thought-by-id            (path "/thought/:thought-id")
+     :get-thoughts-with-hashtag    (path "/thought/hashtag/:hashtag")
+     :get-rethoughts-by-thought-id (path "/thought/:thought-id/rethoughts")
+     :get-rethought-by-id          (path "/rethought/:rethought-id")
+     :follow                       (path "/user/:user-id/follow")
+     :unfollow                     (path "/user/:user-id/unfollow")
+     :thought                      (path "/thought")
+     :reply                        (path "/thought/:thought-id/reply")
+     :rethought                    (path "/thought/:thought-id/rethought")
+     :rethought-with-comment       (path "/thought/:thought-id/rethought-comment")
+     :like                         (path "/thought/:thought-id/like")
+     :unlike                       (path "/thought/:thought-id/unlike")}))
 
 (defn public-routes
-  [service]
-  (compojure.core/routes
-   (compojure/GET (:version routes-map) req (version req service))
-   (compojure/POST (:signup routes-map) req (signup req service))
-   (compojure/POST (:login routes-map) req (login req service))))
+  [config service]
+  (let [api-version (p.config/value-of! config :http-api-version)
+        api-path-prefix (p.config/value-of! config :http-api-path-prefix)
+        routes-map (routes api-version api-path-prefix)]
+    (compojure.core/routes
+      (compojure/GET (:version routes-map) req (version req service))
+      (compojure/POST (:signup routes-map) req (signup req service))
+      (compojure/POST (:login routes-map) req (login req service)))))
 
 (defn user-routes
-  [service]
-  (compojure.core/routes
-   (compojure/POST (:logout routes-map) req (logout req service))
-   (compojure/POST (:logout-all routes-map) req (logout-all req service))
-   (compojure/GET (:feed routes-map) req (feed req service))
-   (compojure/GET (:get-user-by-id routes-map) req (get-user-by-id req service))
-   (compojure/GET (:get-thoughts-by-user-id routes-map) req (get-thoughts-by-user-id req service))
-   (compojure/GET (:get-user-following routes-map) req (get-user-following req service))
-   (compojure/GET (:get-user-followers routes-map) req (get-user-followers req service))
-   (compojure/GET (:get-thought-by-id routes-map) req (get-thought-by-id req service))
-   (compojure/GET (:get-thoughts-with-hashtag routes-map) req (get-thoughts-with-hashtag req service))
-   (compojure/GET (:get-replies-by-thought-id routes-map) req (get-replies-by-thought-id req service))
-   (compojure/GET (:get-rethoughts-by-thought-id routes-map) req (get-rethoughts-by-thought-id req service))
-   (compojure/GET (:get-rethought-by-id routes-map) req (get-rethought-by-id req service))
-   (compojure/POST (:follow routes-map) req (follow req service))
-   (compojure/POST (:unfollow routes-map) req (unfollow req service))
-   (compojure/POST (:thought routes-map) req (thought req service))
-   (compojure/POST (:reply routes-map) req (reply req service))
-   (compojure/POST (:rethought routes-map) req (rethought req service))
-   (compojure/POST (:rethought-with-comment routes-map) req (rethought-with-comment req service))
-   (compojure/POST (:like routes-map) req (like req service))
-   (compojure/POST (:unlike routes-map) req (unlike req service))))
+  [config service]
+  (let [api-version (p.config/value-of! config :http-api-version)
+        api-path-prefix (p.config/value-of! config :http-api-path-prefix)
+        routes-map (routes api-version api-path-prefix)]
+    (compojure.core/routes
+      (compojure/POST (:logout routes-map) req (logout req service))
+      (compojure/POST (:logout-all routes-map) req (logout-all req service))
+      (compojure/GET (:feed routes-map) req (feed req service))
+      (compojure/GET (:get-user-by-id routes-map) req (get-user-by-id req service))
+      (compojure/GET (:get-thoughts-by-user-id routes-map) req (get-thoughts-by-user-id req service))
+      (compojure/GET (:get-user-following routes-map) req (get-user-following req service))
+      (compojure/GET (:get-user-followers routes-map) req (get-user-followers req service))
+      (compojure/GET (:get-thought-by-id routes-map) req (get-thought-by-id req service))
+      (compojure/GET (:get-thoughts-with-hashtag routes-map) req (get-thoughts-with-hashtag req service))
+      (compojure/GET (:get-replies-by-thought-id routes-map) req (get-replies-by-thought-id req service))
+      (compojure/GET (:get-rethoughts-by-thought-id routes-map) req (get-rethoughts-by-thought-id req service))
+      (compojure/GET (:get-rethought-by-id routes-map) req (get-rethought-by-id req service))
+      (compojure/POST (:follow routes-map) req (follow req service))
+      (compojure/POST (:unfollow routes-map) req (unfollow req service))
+      (compojure/POST (:thought routes-map) req (thought req service))
+      (compojure/POST (:reply routes-map) req (reply req service))
+      (compojure/POST (:rethought routes-map) req (rethought req service))
+      (compojure/POST (:rethought-with-comment routes-map) req (rethought-with-comment req service))
+      (compojure/POST (:like routes-map) req (like req service))
+      (compojure/POST (:unlike routes-map) req (unlike req service)))))
 
 (defn handler
-  [service]
+  [config service]
   (-> (compojure.core/routes
-       (public-routes service)
-       (-> (user-routes service)
+       (public-routes config service)
+       (-> (user-routes config service)
            (wrap-authenticated)
-           (middleware/wrap-authentication jws-backend)))
+           (middleware/wrap-authentication (jws-backend (p.config/value-of! config :http-api-jws-secret)))))
       (wrap-service-exception)
       (wrap-schema-exception)
       ;(wrap-default-exception)
@@ -356,7 +369,7 @@
          (zipmap (keys links)
                  (map (fn [val] (let [path-key (val 0)
                                       path-variables (val 1)]
-                                  {:href (a.http.util/join-path host (replace-path (path-key routes-map) path-variables))}))
+                                  {:href (a.http.util/join-path host (replace-path (path-key (routes "v0" "api")) path-variables))}))
                       (vals links)))))
 
 (defmulti add-links (fn [selector-key & _args] selector-key))

@@ -9,7 +9,8 @@
             [thoughts.adapter.repository.in-mem :as a.repository.in-mem]
             [thoughts.application.config :as config]
             [thoughts.application.service :as service]
-            [unit.thoughts.application.helper :as application.helper]))
+            [unit.thoughts.application.helper :as application.helper]
+            [thoughts.adapter.config.simple-config :as a.config.simple-config]))
 
 (def ^:private ^:const url (str "http://" config/http-host ":" config/http-port))
 
@@ -18,26 +19,28 @@
 (defn- in-mem-test-system-map
   []
   (component/system-map
+    :config (a.config.simple-config/make-simple-config)
    :repository (a.repository.in-mem/make-in-mem-repository)
    :cache (a.cache.in-mem/make-in-mem-cache)
    :service (component/using
              (service/make-service)
              [:repository :cache])
    :controller (component/using
-                (a.http.component/make-http-controller config/http-host config/http-port)
-                [:service])))
+                (a.http.component/make-http-controller)
+                [:config :service])))
 
 (defn- full-test-system-map
   []
   (component/system-map
+    :config (a.config.simple-config/make-simple-config)
    :repository (a.repository.datomic/make-datomic-repository config/datomic-uri)
    :cache (a.cache.redis/make-redis-cache config/redis-uri)
    :service (component/using
              (service/make-service)
              [:repository :cache])
    :controller (component/using
-                (a.http.component/make-http-controller config/http-host config/http-port)
-                [:service])))
+                (a.http.component/make-http-controller)
+                [:config :service])))
 
 (defn- start-in-mem-test-system
   []
