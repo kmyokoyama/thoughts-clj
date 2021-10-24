@@ -52,8 +52,8 @@
 ;; API paths manipulation.
 
 (defn resource-path
-  [url path]
-  (str url (path-prefix path)))
+  [url api-version api-path-prefix path]
+  (str url (path-prefix api-version api-path-prefix path)))
 
 ;; Datetime manipulation.
 

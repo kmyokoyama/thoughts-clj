@@ -35,7 +35,6 @@
 
 (defn login
   [req config service]
-  (s/validate s.http/LoginRequest (:body req))
   (let [{:keys [user-id password]} (:body req)]
     (if (and (p.service/user-exists? service user-id)
              (p.service/password-match? service user-id password))
@@ -306,7 +305,7 @@
     (compojure.core/routes
      (compojure/GET (:version routes-map) req (version req service))
      (compojure/POST (:signup routes-map) req (signup req service))
-     (compojure/POST (:login routes-map) req (login req service)))))
+     (compojure/POST (:login routes-map) req (login req config service)))))
 
 (defn user-routes
   [config service]

@@ -12,9 +12,14 @@
             [thoughts.application.service :as service]
             [unit.thoughts.application.helper :as application.helper]))
 
-(def ^:private ^:const url (str "http://" config/http-host ":" config/http-port))
+(def ^:private ^:const host (a.config.simple-config/get-offline! :http-host))
+(def ^:private ^:const port (a.config.simple-config/get-offline! :http-port))
+(def ^:private ^:const api-version (a.config.simple-config/get-offline! :http-api-version))
+(def ^:private ^:const api-path-prefix (a.config.simple-config/get-offline! :http-api-path-prefix))
 
-(def ^:private resource (partial http.helper/resource-path url))
+(def ^:private ^:const url (str "http://" host ":" port))
+
+(def ^:private resource (partial http.helper/resource-path url api-version api-path-prefix))
 
 (defn- in-mem-test-system-map
   []
@@ -33,8 +38,8 @@
   []
   (component/system-map
    :config (a.config.simple-config/make-simple-config)
-   :repository (a.repository.datomic/make-datomic-repository config/datomic-uri)
-   :cache (a.cache.redis/make-redis-cache config/redis-uri)
+   :repository (component/using (a.repository.datomic/make-datomic-repository) [:config])
+   :cache (a.cache.redis/make-redis-cache)
    :service (component/using
              (service/make-service)
              [:repository :cache])
@@ -66,10 +71,13 @@
   {:in-mem [start-in-mem-test-system stop-in-mem-test-system]
    :full   [start-full-test-system stop-full-test-system]})
 
-(use-fixtures :each (fn [f]
-                      (let [[start-system! stop-system!] (config/test-mode start-stop-fns)
+(use-fixtures :each (fn [test]
+                      (let [[start-system! stop-system!] (or (some-> :test-mode
+                                                                     a.config.simple-config/get-offline!
+                                                                     start-stop-fns)
+                                                             (:in-mem start-stop-fns))
                             sys (start-system!)]
-                        (f)
+                        (test)
                         (stop-system! sys))))
 
 (defn signup

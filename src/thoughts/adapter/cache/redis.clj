@@ -57,7 +57,7 @@
       (assoc cache :conn redis-conn)))
 
   (stop
-    [cache]
+    [_cache]
     (log/info "Stopping Redis cache"))
 
   p/Cache

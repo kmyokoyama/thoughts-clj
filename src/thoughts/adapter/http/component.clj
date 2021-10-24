@@ -10,7 +10,7 @@
   component/Lifecycle
   (start [this]
     (let [host (p.config/value-of! config :http-host)
-          port (p.config/value-of! config :http-port)]
+          port (Integer/valueOf ^String (p.config/value-of! config :http-port))]
       (log/info "Starting HTTP server on" (str "http://" host ":" port))
       (assoc this
              :http-server
@@ -21,6 +21,6 @@
     (.stop ^Server (:http-server this))
     this))
 
-(defn make-http-controller                                  ;; Constructor.
+(defn make-http-controller
   []
   (map->HttpServer {}))

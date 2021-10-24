@@ -26,6 +26,10 @@
   {:http-port 3000
    :test-mode :in-mem})
 
+(defn get-offline!
+  [key]
+  (or (environ/env key) (get defaults key)))
+
 (defrecord SimpleConfig []
   component/Lifecycle
   (start
@@ -40,7 +44,7 @@
 
   p.config/Config
   (value-of!
-    [config key]
+    [_config key]
     (or (environ/env key) (get defaults key))))
 
 (defn make-simple-config
