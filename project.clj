@@ -9,7 +9,8 @@
                                      [faker "0.2.2"]
                                      [org.clojure/data.generators "0.1.2"]
                                      [ring/ring-devel "1.8.1"]
-                                     [nubank/matcher-combinators "3.3.0"]]
+                                     [nubank/matcher-combinators "3.3.0"]
+                                     [mvxcvi/puget "1.3.1"]]
                       :plugins      [[lein-auto "0.1.3"]
                                      [lein-environ "1.2.0"]
                                      [lein-cljfmt "0.8.0"]
@@ -22,9 +23,7 @@
                                      :http-api-jws-secret  "123"
                                      :datomic-uri          "datomic:mem://dev-thoughts"
                                      :redis-uri            "redis://localhost:6379"}}
-             :debug  {:jvm-opts ["-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5000"]}
-             :in-mem {:env {:test-mode :in-mem}}
-             :full   {:env {:test-mode :full}}}
+             :debug  {:jvm-opts ["-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5000"]}}
   :dependencies [[buddy/buddy-auth "2.2.0"]
                  [buddy/buddy-hashers "1.4.0"]
                  [com.datomic/datomic-free "0.9.5697"]
@@ -45,9 +44,7 @@
   :repl-options {:init-ns dev}
   :main thoughts.application.main
   :aot [thoughts.application.main]
-  :aliases {"test-integration-in-mem" ["with-profile" "+in-mem" "test" ":integration"]
-            "test-integration-full"   ["with-profile" "+full" "test" ":integration"]
-            "nsorg-fix"               ["nsorg" "--replace"]
+  :aliases {"nsorg-fix"               ["nsorg" "--replace"]
             "cljfmt-fix"              ["cljfmt" "fix"]
             "lint-fix"                ["do" ["nsorg-fix"] ["cljfmt-fix"]]}
   :test-selectors {:unit        :unit

@@ -1,8 +1,7 @@
 (ns thoughts.adapter.http.util
   (:require [buddy.sign.jwt :as jwt]
             [clojure.data.json :as json]
-            [taoensso.timbre :as log]
-            [thoughts.application.config :as config]))
+            [taoensso.timbre :as log]))
 
 ;; Private functions.
 

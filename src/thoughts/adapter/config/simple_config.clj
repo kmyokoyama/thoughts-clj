@@ -23,12 +23,7 @@
      (catch NumberFormatException _ default))))
 
 (def defaults
-  {:http-port 3000
-   :test-mode :in-mem})
-
-(defn get-offline!
-  [key]
-  (or (environ/env key) (get defaults key)))
+  {:http-port 3000})
 
 (defrecord SimpleConfig []
   component/Lifecycle

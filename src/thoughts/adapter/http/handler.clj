@@ -10,7 +10,6 @@
             [schema.core :as s]
             [taoensso.timbre :as log]
             [thoughts.adapter.http.util :as a.http.util]
-            [thoughts.application.config :as config]
             [thoughts.port.config :as p.config]
             [thoughts.port.service :as p.service]
             [thoughts.schema.http :as s.http])

@@ -2,58 +2,89 @@
   (:require [clj-http.client :as client]
             [clojure.data.json :as json]
             [clojure.test :refer :all]
-            [thoughts.adapter.http.util :refer [path-prefix]])
-  (:import (java.time ZonedDateTime)))
+            [thoughts.adapter.http.util :refer [path-prefix]]
+            [thoughts.port.config :as p.config])
+  (:import (java.time ZonedDateTime)
+           (com.stuartsierra.component Lifecycle)))
 
-;; REST API.
+;; HttpClient
 
-;; Wrappers for requests.
-
-(def ^:private unexceptional-status #(or (<= 200 % 299) (<= 400 % 401)))
-
-(defn get
-  ([url token]
-   (client/get url {:oauth-token          token
-                    :unexceptional-status unexceptional-status}))
-
-  ([url token params]
-   (client/get url {:query-params         params
-                    :oauth-token          token
-                    :unexceptional-status unexceptional-status})))
-
-(defn post
-  ([url body]
-   (client/post url {:content-type         :json
-                     :form-params          body
-                     :unexceptional-status unexceptional-status}))
-
-  ([url token body]
-   (client/post url {:content-type         :json
-                     :form-params          body
-                     :oauth-token          token
-                     :unexceptional-status unexceptional-status})))
-
-;; API responses manipulation.
+(defn ->url
+  [resource config]
+  (let [api-version (p.config/value-of! config :http-api-version)
+        api-path-prefix (p.config/value-of! config :http-api-path-prefix)
+        host (p.config/value-of! config :http-host)
+        port (p.config/value-of! config :http-port)
+        url (str "http://" host ":" port)]
+    (str url (path-prefix api-version api-path-prefix resource))))
 
 (defn get-body [{:keys [body]}]
   (if (string? body)
     (json/read-str body :key-fn keyword)
     body))
 
-(defn parse-response
+(defn ->result
   [response]
   (let [body (get-body response)]
     {:response response :body body :result (:result body)}))
 
-(def post-and-parse (comp parse-response post))
+(def ^:private unexceptional-status #(or (<= 200 % 299) (<= 400 % 401)))
 
-(def get-and-parse (comp parse-response get))
+(defprotocol HttpClient
+  (get!
+    [http-client url token]
+    [http-client url token params])
 
-;; API paths manipulation.
+  (post!
+    [http-client url token]
+    [http-client url token params]))
 
-(defn resource-path
-  [url api-version api-path-prefix path]
-  (str url (path-prefix api-version api-path-prefix path)))
+(defrecord SimpleHttpClient [config]
+  Lifecycle
+  (start
+    [this]
+    this)
+
+  (stop
+    [this]
+    this)
+
+  HttpClient
+  (get! [_this resource token]
+    (-> resource
+        (->url config)
+        (client/get {:oauth-token          token
+                     :unexceptional-status unexceptional-status})
+        ->result))
+
+  (get! [_this resource token params]
+    (-> resource
+        (->url config)
+        (client/get {:query-params         params
+                     :oauth-token          token
+                     :unexceptional-status unexceptional-status})
+        ->result))
+
+  (post! [_this resource body]
+    (-> resource
+        (->url config)
+        (client/post {:content-type         :json
+                      :form-params          body
+                      :unexceptional-status unexceptional-status})
+        ->result))
+
+  (post! [_this resource token body]
+    (-> resource
+        (->url config)
+        (client/post {:content-type         :json
+                      :form-params          body
+                      :oauth-token          token
+                      :unexceptional-status unexceptional-status})
+        ->result)))
+
+(defn make-http-client
+  []
+  (map->SimpleHttpClient {}))
 
 ;; Datetime manipulation.
 

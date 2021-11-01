@@ -4,8 +4,16 @@
             [thoughts.adapter.repository.datomic :refer [delete-database
                                                          load-schema
                                                          make-datomic-repository]]
-            [thoughts.application.config :refer [datomic-uri]]
-            [thoughts.application.service :refer [make-service]]))
+            [thoughts.application.service :refer [make-service]]
+            [puget.printer :as puget]))
+
+(defn look-reader
+  [x]
+  (let [result (eval x)]
+    (puget/cprint result)
+    result))
+
+(defmacro look [body] `(let [result# ~body] (puget/cprint result#) result#))
 
 ;; To remember:
 
@@ -36,7 +44,7 @@
 (defn dev-system-map
   []
   (component/system-map
-   :repository (make-datomic-repository datomic-uri)
+   :repository (make-datomic-repository)
    :service (component/using
              (make-service)
              [:repository])))
