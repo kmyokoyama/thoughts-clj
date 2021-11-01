@@ -4,8 +4,8 @@
             [clojure.test :refer :all]
             [thoughts.adapter.http.util :refer [path-prefix]]
             [thoughts.port.config :as p.config])
-  (:import (java.time ZonedDateTime)
-           (com.stuartsierra.component Lifecycle)))
+  (:import (com.stuartsierra.component Lifecycle)
+           (java.time ZonedDateTime)))
 
 ;; HttpClient
 

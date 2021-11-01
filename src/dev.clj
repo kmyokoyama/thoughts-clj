@@ -1,11 +1,11 @@
 (ns dev
   (:require [com.stuartsierra.component :as component]
             [datomic.api :as d]
+            [puget.printer :as puget]
             [thoughts.adapter.repository.datomic :refer [delete-database
                                                          load-schema
                                                          make-datomic-repository]]
-            [thoughts.application.service :refer [make-service]]
-            [puget.printer :as puget]))
+            [thoughts.application.service :refer [make-service]]))
 
 (defn look-reader
   [x]

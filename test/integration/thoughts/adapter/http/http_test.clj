@@ -16,30 +16,30 @@
 (defn- in-mem-test-system-map
   []
   (component/system-map
-    :http-client (component/using (http.helper/make-http-client) [:config])
-    :config (a.config.simple-config/make-simple-config)
-    :repository (a.repository.in-mem/make-in-mem-repository)
-    :cache (a.cache.in-mem/make-in-mem-cache)
-    :service (component/using
-                (service/make-service)
-                [:repository :cache])
-    :controller (component/using
-                   (a.http.component/make-http-controller)
-                   [:config :service])))
+   :http-client (component/using (http.helper/make-http-client) [:config])
+   :config (a.config.simple-config/make-simple-config)
+   :repository (a.repository.in-mem/make-in-mem-repository)
+   :cache (a.cache.in-mem/make-in-mem-cache)
+   :service (component/using
+             (service/make-service)
+             [:repository :cache])
+   :controller (component/using
+                (a.http.component/make-http-controller)
+                [:config :service])))
 
 (defn- full-test-system-map
   []
   (component/system-map
-    :http-client (component/using (http.helper/make-http-client) [:config])
-    :config (a.config.simple-config/make-simple-config)
-    :repository (component/using (a.repository.datomic/make-datomic-repository) [:config])
-    :cache (a.cache.redis/make-redis-cache)
-    :service (component/using
-                (service/make-service)
-                [:repository :cache])
-    :controller (component/using
-                   (a.http.component/make-http-controller)
-                   [:config :service])))
+   :http-client (component/using (http.helper/make-http-client) [:config])
+   :config (a.config.simple-config/make-simple-config)
+   :repository (component/using (a.repository.datomic/make-datomic-repository) [:config])
+   :cache (a.cache.redis/make-redis-cache)
+   :service (component/using
+             (service/make-service)
+             [:repository :cache])
+   :controller (component/using
+                (a.http.component/make-http-controller)
+                [:config :service])))
 
 (defn- start-in-mem-test-system
   []
@@ -240,8 +240,8 @@
     (let [{:keys [token]} (signup-and-login)
           thought-id (-> (http.helper/post! @http-client "thought" token (application.helper/random-thought)) :result :id)
           {:keys [response body result]} (http.helper/post! @http-client (str "thought/" thought-id "/like")
-                                                                     token
-                                                                     {})]
+                                                            token
+                                                            {})]
       (is (= 200 (:status response)))                       ;; HTTP 200 OK.
       (is (= "success" (:status body)))
       (is (= thought-id (:id result)))
@@ -252,8 +252,8 @@
           thought-id (-> (http.helper/post! @http-client "thought" token (application.helper/random-thought)) :result :id)]
       (http.helper/post! @http-client (str "thought/" thought-id "/like") token {})
       (let [{:keys [response body result]} (http.helper/post! @http-client (str "thought/" thought-id "/like")
-                                                                       token
-                                                                       {})]
+                                                              token
+                                                              {})]
         (is (= 400 (:status response)))                     ;; HTTP 400 Bad Request.
         (is (= "failure" (:status body)))
         (is (= "invalid action" (:type result)))
@@ -277,8 +277,8 @@
           thought-id (-> (http.helper/post! @http-client "thought" token (application.helper/random-thought)) :result :id)]
       (http.helper/post! @http-client (str "thought/" thought-id "/like") token {})
       (let [{:keys [response body result]} (http.helper/post! @http-client (str "thought/" thought-id "/unlike")
-                                                                       token
-                                                                       {})]
+                                                              token
+                                                              {})]
         (is (= 200 (:status response)))                     ;; HTTP 200 OK.
         (is (= "success" (:status body)))
         (is (= thought-id (:id result)))
@@ -288,8 +288,8 @@
     (let [{:keys [user-id token]} (signup-and-login)
           thought-id (-> (http.helper/post! @http-client "thought" token (application.helper/random-thought)) :result :id)
           {:keys [response body result]} (http.helper/post! @http-client (str "thought/" thought-id "/unlike")
-                                                                     token
-                                                                     {})]
+                                                            token
+                                                            {})]
       (is (= 400 (:status response)))                       ;; HTTP 400 Bad Request.
       (is (= "failure" (:status body)))
       (is (= "invalid action" (:type result)))
@@ -303,8 +303,8 @@
           thought-id (-> (http.helper/post! @http-client "thought" token (application.helper/random-thought)) :result :id)]
       (http.helper/post! @http-client (str "thought/" thought-id "/like") token {})
       (let [{:keys [response body result]} (http.helper/post! @http-client (str "thought/" thought-id "/unlike")
-                                                                       other-token
-                                                                       {})]
+                                                              other-token
+                                                              {})]
         (is (= 400 (:status response)))                     ;; HTTP 400 Bad Request.
         (is (= "failure" (:status body)))
         (is (= "invalid action" (:type result)))
@@ -316,8 +316,8 @@
     (let [{:keys [token]} (signup-and-login)
           thought-id (application.helper/random-uuid)
           {:keys [response body result]} (http.helper/post! @http-client (str "thought/" thought-id "/unlike")
-                                                                     token
-                                                                     {})]
+                                                            token
+                                                            {})]
       (is (= 400 (:status response)))                       ;; HTTP 400 Bad Request.
       (is (= "failure" (:status body)))
       (is (= "resource not found" (:type result)))
